@@ -4,9 +4,8 @@ package com.stripe.model;
 
 import com.stripe.model.checkout.Session;
 import com.stripe.model.issuing.Authorization;
-import com.stripe.model.issuing.CardDetails;
+import com.stripe.model.issuing.CardDesign;
 import com.stripe.model.issuing.Cardholder;
-import com.stripe.model.issuing.Transaction;
 import com.stripe.model.radar.EarlyFraudWarning;
 import com.stripe.model.radar.ValueList;
 import com.stripe.model.radar.ValueListItem;
@@ -62,11 +61,11 @@ final class EventDataClassLookup {
     classLookup.put("issuing.authorization", Authorization.class);
     classLookup.put("issuing.card", com.stripe.model.issuing.Card.class);
     classLookup.put("issuing.card_details", CardDetails.class);
+    classLookup.put("issuing.card_design", CardDesign.class);
     classLookup.put("issuing.cardholder", Cardholder.class);
     classLookup.put("issuing.dispute", com.stripe.model.issuing.Dispute.class);
     classLookup.put("issuing.transaction", com.stripe.model.issuing.Transaction.class);
     classLookup.put("issuing.settlement", com.stripe.model.issuing.Settlement.class);
-    classLookup.put("issuing.transaction", Transaction.class);
     classLookup.put("line_item", InvoiceLineItem.class);
     classLookup.put("login_link", LoginLink.class);
     classLookup.put("notification_event_data", EventData.class);
