@@ -162,6 +162,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   @SerializedName("type")
   String type;
 
+  /** Card design template */
+  @SerializedName("design")
+  CardDesign design;
+
   /** Get ID of expandable {@code replacedBy} object. */
   public String getReplacedBy() {
     return (this.replacedBy != null) ? this.replacedBy.getId() : null;

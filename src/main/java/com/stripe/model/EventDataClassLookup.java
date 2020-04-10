@@ -1,5 +1,18 @@
 package com.stripe.model;
 
+import com.stripe.model.checkout.Session;
+import com.stripe.model.issuing.Authorization;
+import com.stripe.model.issuing.CardDesign;
+import com.stripe.model.issuing.Cardholder;
+import com.stripe.model.radar.EarlyFraudWarning;
+import com.stripe.model.radar.ValueList;
+import com.stripe.model.radar.ValueListItem;
+import com.stripe.model.reporting.ReportRun;
+import com.stripe.model.reporting.ReportType;
+import com.stripe.model.sigma.ScheduledQueryRun;
+import com.stripe.model.terminal.ConnectionToken;
+import com.stripe.model.terminal.Location;
+import com.stripe.model.terminal.Reader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +59,7 @@ final class EventDataClassLookup {
     classLookup.put("issuing.authorization", Authorization.class);
     classLookup.put("issuing.card", com.stripe.model.issuing.Card.class);
     classLookup.put("issuing.card_details", CardDetails.class);
+    classLookup.put("issuing.card_design", CardDesign.class);
     classLookup.put("issuing.cardholder", Cardholder.class);
     classLookup.put("issuing.dispute", com.stripe.model.issuing.Dispute.class);
     classLookup.put("issuing.transaction", com.stripe.model.issuing.Transaction.class);
