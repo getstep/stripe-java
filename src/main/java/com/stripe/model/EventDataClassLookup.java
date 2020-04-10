@@ -162,6 +162,7 @@ final class EventDataClassLookup {
 
     classLookup.put("issuing.authorization", com.stripe.model.issuing.Authorization.class);
     classLookup.put("issuing.card", com.stripe.model.issuing.Card.class);
+    classLookup.put("issuing.card_design", com.stripe.model.issuing.CardDesign.class);
     classLookup.put("issuing.cardholder", com.stripe.model.issuing.Cardholder.class);
     classLookup.put(
         "issuing.credit_underwriting_record",
