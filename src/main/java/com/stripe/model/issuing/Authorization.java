@@ -134,6 +134,9 @@ public class Authorization extends ApiResource
   @SerializedName("request_history")
   List<RequestHistory> requestHistory;
 
+  @SerializedName("risk_score")
+  Long riskScore;
+
   /** One of `pending`, `reversed`, or `closed`. */
   @SerializedName("status")
   String status;
