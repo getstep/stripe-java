@@ -3,7 +3,6 @@ package com.stripe.model;
 import com.stripe.model.issuing.Authorization;
 import com.stripe.model.issuing.CardDesign;
 import com.stripe.model.issuing.Cardholder;
-
 import java.util.HashMap;
 import java.util.Map;
 
