@@ -44,7 +44,6 @@ final class EventDataClassLookup {
     classLookup.put("invoiceitem", InvoiceItem.class);
     classLookup.put("issuer_fraud_record", IssuerFraudRecord.class);
     classLookup.put("item", LineItem.class);
-    classLookup.put("issuing.settlement", com.stripe.model.issuing.Settlement.class);
     classLookup.put("line_item", InvoiceLineItem.class);
     classLookup.put("login_link", LoginLink.class);
     classLookup.put("mandate", Mandate.class);
@@ -92,6 +91,7 @@ final class EventDataClassLookup {
     classLookup.put("issuing.cardholder", com.stripe.model.issuing.Cardholder.class);
     classLookup.put("issuing.card_design", com.stripe.model.issuing.CardDesign.class);
     classLookup.put("issuing.dispute", com.stripe.model.issuing.Dispute.class);
+    classLookup.put("issuing.settlement", com.stripe.model.issuing.Settlement.class);
     classLookup.put("issuing.transaction", com.stripe.model.issuing.Transaction.class);
 
     classLookup.put("radar.early_fraud_warning", com.stripe.model.radar.EarlyFraudWarning.class);
