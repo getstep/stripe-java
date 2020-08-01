@@ -22,6 +22,24 @@ import lombok.Setter;
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class Dispute extends ApiResource implements HasId {
+  /**
+   * Disputed amount. Usually the amount of the {@code transaction}, but can differ (usually because
+   * of currency fluctuation or because only part of the order is disputed).
+   */
+  @SerializedName("amount")
+  Long amount;
+
+  /** Time at which the object was created. Measured in seconds since the Unix epoch. */
+  @SerializedName("created")
+  Long created;
+
+  /**
+   * Current status of dispute. One of {@code unsubmitted}, {@code under_review}, {@code won}, or
+   * {@code lost}.
+   */
+  @SerializedName("status")
+  String status;
+
   /** List of balance transactions associated with this dispute. */
   @SerializedName("balance_transactions")
   List<BalanceTransaction> balanceTransactions;
