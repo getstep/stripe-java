@@ -121,6 +121,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   @SerializedName("object")
   String object;
 
+  /** Metadata about the PIN on the card. */
+  @SerializedName("pin")
+  Pin pin;
+
   /** The latest card that replaces this card, if any. */
   @SerializedName("replaced_by")
   @Getter(lombok.AccessLevel.NONE)
@@ -342,6 +346,19 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
             Stripe.getApiBase(),
             String.format("/v1/issuing/cards/%s", ApiResource.urlEncodeId(this.getId())));
     return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Card.class, options);
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class Pin extends StripeObject {
+    /**
+     * Whether the PIN will be accepted or not.
+     *
+     * <p>One of {@code active}, or {@code blocked}.
+     */
+    @SerializedName("status")
+    String status;
   }
 
   @Getter
