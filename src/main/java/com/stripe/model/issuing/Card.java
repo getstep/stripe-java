@@ -164,6 +164,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   @SerializedName("type")
   String type;
 
+  /** Wallets eligibility information. */
+  @SerializedName("wallets")
+  Wallets wallets;
+
   /** Get ID of expandable {@code replacedBy} object. */
   public String getReplacedBy() {
     return (this.replacedBy != null) ? this.replacedBy.getId() : null;
@@ -458,5 +462,33 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
       @SerializedName("interval")
       String interval;
     }
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class Wallets extends StripeObject {
+    /** Apple Pay eligibility information. */
+    @SerializedName("apple_pay")
+    WalletEligibility applePay;
+
+    /** Google Pay eligibility information. */
+    @SerializedName("google_pay")
+    WalletEligibility googlePay;
+
+    /** Primary account ID which card was used with. */
+    @SerializedName("primary_account_identifier")
+    String primaryAccountIdentifier;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class WalletEligibility extends StripeObject {
+    @SerializedName("eligible")
+    Boolean eligible;
+
+    @SerializedName("ineligible_reason")
+    String ineligibleReason;
   }
 }
