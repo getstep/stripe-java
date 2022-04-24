@@ -67,7 +67,7 @@ git checkout --track origin/step
 
 If there's a message about diverged branches.
 ```
-git checkout step                                                                                                                                                           ↵ PIPE Ruby 2.6.3 ⎈ prd
+git checkout step
 warning: refname 'step' is ambiguous.
 Switched to branch 'step'
 Your branch and 'origin/step' have diverged,
@@ -76,7 +76,7 @@ and have 15 and 308 different commits each, respectively.
 ```
 Then reset the branch.
 ```
-git reset --hard origin/step                                                                                                                                                  Ruby 2.6.3 ⎈ prd
+git reset --hard origin/step
 HEAD is now at f44c911a35 Support Card.wallets
 ```
 
