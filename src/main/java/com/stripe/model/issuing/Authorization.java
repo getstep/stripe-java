@@ -672,9 +672,7 @@ public class Authorization extends ApiResource
     @SerializedName("expiry_check")
     String expiryCheck;
 
-    /**
-     * The outcome of the 3D Secure authentication request.
-     */
+    /** The outcome of the 3D Secure authentication request. */
     @SerializedName("three_d_secure")
     String threeDSecure;
   }
@@ -686,22 +684,20 @@ public class Authorization extends ApiResource
     /**
      * The outcome of the 3D Secure authentication request.
      *
-     * Possible enum values:
+     * <p>Possible enum values:
      *
-     * "authenticated" - Authentication successful.
+     * <p>"authenticated" - Authentication successful.
      *
-     * "failed" - Authentication failed.
+     * <p>"failed" - Authentication failed.
      *
-     * "attempt_acknowledged" - The merchant attempted to authenticate the
-     *                          authorization, but the cardholder is not
-     *                          enrolled or was unable to reach Stripe.
+     * <p>"attempt_acknowledged" - The merchant attempted to authenticate the authorization, but the
+     * cardholder is not enrolled or was unable to reach Stripe.
      *
-     * "required" - The authorization was declined because regulatory
-     *              requirements mandated an authentication for this transaction
-     *              but it wasn’t submitted correctly by the merchant, and they
-     *              didn’t claim an applicable exemption. Check out our
-     *              <a href="https://stripe.com/docs/issuing/3d-secure#prevent-fraud">3DS documentation</a>
-     *              if you want to learn more.
+     * <p>"required" - The authorization was declined because regulatory requirements mandated an
+     * authentication for this transaction but it wasn’t submitted correctly by the merchant, and
+     * they didn’t claim an applicable exemption. Check out our <a
+     * href="https://stripe.com/docs/issuing/3d-secure#prevent-fraud">3DS documentation</a> if you
+     * want to learn more.
      */
     @SerializedName("result")
     String result;
