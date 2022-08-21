@@ -674,7 +674,7 @@ public class Authorization extends ApiResource
 
     /** The outcome of the 3D Secure authentication request. */
     @SerializedName("three_d_secure")
-    String threeDSecure;
+    ThreeDSecure threeDSecure;
   }
 
   @Getter
