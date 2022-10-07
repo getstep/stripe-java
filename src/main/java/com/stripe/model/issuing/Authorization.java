@@ -183,6 +183,12 @@ public class Authorization extends ApiResource
   @SerializedName("wallet")
   String wallet;
 
+  /**
+   * Details related to stored credentials. Only set when stored credentials were used for the authorization.
+   */
+  @SerializedName("stored_credential")
+  StoredCredentials storedCredentials;
+
   /** Get ID of expandable {@code cardholder} object. */
   public String getCardholder() {
     return (this.cardholder != null) ? this.cardholder.getId() : null;
@@ -737,5 +743,19 @@ public class Authorization extends ApiResource
      */
     @SerializedName("result")
     String result;
+  }
+
+  /**
+   * Details related to stored credentials. Only set when stored credentials were used for the authorization.
+   */
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class StoredCredentials extends StripeObject {
+    /**
+     * The stored credential transaction was either recurring or an installment.
+     */
+    @SerializedName("scheduled")
+    Boolean scheduled;
   }
 }
