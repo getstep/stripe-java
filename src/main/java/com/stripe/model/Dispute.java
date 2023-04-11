@@ -129,7 +129,8 @@ public class Dispute extends ApiResource
   String status;
 
   /**
-   * The enum that describes the dispute loss outcome. If the dispute is not lost, this field will be absent.
+   * The enum that describes the dispute loss outcome. If the dispute is not lost, this field will
+   * be absent.
    */
   @SerializedName("loss_reason")
   String lossReason;
