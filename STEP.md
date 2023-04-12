@@ -2,6 +2,11 @@
 We are on the private forked version of the SDK. This is because Stripe doesn't support
 Issuing Settlement and Card Design features in their public SDK.
 
+# Use Java Version 18
+```
+asdf local java zulu-18.30.11
+```
+
 # Build Locally
 To build locally, run:
 
