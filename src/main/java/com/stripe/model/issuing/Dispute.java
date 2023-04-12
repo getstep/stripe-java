@@ -89,6 +89,13 @@ public class Dispute extends ApiResource
   @SerializedName("status")
   String status;
 
+  /**
+   * The enum that describes the dispute loss outcome. If the dispute is not lost, this field will
+   * be absent.
+   */
+  @SerializedName("loss_reason")
+  String lossReason;
+
   /** The transaction being disputed. */
   @SerializedName("transaction")
   @Getter(lombok.AccessLevel.NONE)
