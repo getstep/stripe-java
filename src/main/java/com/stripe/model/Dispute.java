@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.DisputeCloseParams;
 import com.stripe.param.DisputeListParams;
 import com.stripe.param.DisputeRetrieveParams;
@@ -18,11 +21,10 @@ import lombok.Setter;
 
 /**
  * A dispute occurs when a customer questions your charge with their card issuer. When this happens,
- * you're given the opportunity to respond to the dispute with evidence that shows that the charge
- * is legitimate. You can find more information about the dispute process in our <a
- * href="https://stripe.com/docs/disputes">Disputes and Fraud</a> documentation.
+ * you have the opportunity to respond to the dispute with evidence that shows that the charge is
+ * legitimate.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/disputes">Disputes and Fraud</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/disputes">Disputes and fraud</a>
  */
 @Getter
 @Setter
@@ -30,8 +32,8 @@ import lombok.Setter;
 public class Dispute extends ApiResource
     implements MetadataStore<Dispute>, BalanceTransactionSource {
   /**
-   * Disputed amount. Usually the amount of the charge, but can differ (usually because of currency
-   * fluctuation or because only part of the order is disputed).
+   * Disputed amount. Usually the amount of the charge, but it can differ (usually because of
+   * currency fluctuation or because only part of the order is disputed).
    */
   @SerializedName("amount")
   Long amount;
@@ -43,7 +45,7 @@ public class Dispute extends ApiResource
   @SerializedName("balance_transactions")
   List<BalanceTransaction> balanceTransactions;
 
-  /** ID of the charge that was disputed. */
+  /** ID of the charge that's disputed. */
   @SerializedName("charge")
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
@@ -72,9 +74,8 @@ public class Dispute extends ApiResource
   String id;
 
   /**
-   * If true, it is still possible to refund the disputed payment. Once the payment has been fully
-   * refunded, no further funds will be withdrawn from your Stripe account as a result of this
-   * dispute.
+   * If true, it's still possible to refund the disputed payment. After the payment has been fully
+   * refunded, no further funds are withdrawn from your Stripe account as a result of this dispute.
    */
   @SerializedName("is_charge_refundable")
   Boolean isChargeRefundable;
@@ -107,18 +108,21 @@ public class Dispute extends ApiResource
   @SerializedName("object")
   String object;
 
-  /** ID of the PaymentIntent that was disputed. */
+  /** ID of the PaymentIntent that's disputed. */
   @SerializedName("payment_intent")
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   ExpandableField<PaymentIntent> paymentIntent;
+
+  @SerializedName("payment_method_details")
+  PaymentMethodDetails paymentMethodDetails;
 
   /**
    * Reason given by cardholder for dispute. Possible values are {@code bank_cannot_process}, {@code
    * check_returned}, {@code credit_not_processed}, {@code customer_initiated}, {@code
    * debit_not_authorized}, {@code duplicate}, {@code fraudulent}, {@code general}, {@code
    * incorrect_account_details}, {@code insufficient_funds}, {@code product_not_received}, {@code
-   * product_unacceptable}, {@code subscription_canceled}, or {@code unrecognized}. Read more about
+   * product_unacceptable}, {@code subscription_canceled}, or {@code unrecognized}. Learn more about
    * <a href="https://stripe.com/docs/disputes/categories">dispute reasons</a>.
    */
   @SerializedName("reason")
@@ -127,11 +131,10 @@ public class Dispute extends ApiResource
   /**
    * Current status of dispute. Possible values are {@code warning_needs_response}, {@code
    * warning_under_review}, {@code warning_closed}, {@code needs_response}, {@code under_review},
-   * {@code charge_refunded}, {@code won}, or {@code lost}.
+   * {@code won}, or {@code lost}.
    *
-   * <p>One of {@code charge_refunded}, {@code lost}, {@code needs_response}, {@code under_review},
-   * {@code warning_closed}, {@code warning_needs_response}, {@code warning_under_review}, or {@code
-   * won}.
+   * <p>One of {@code lost}, {@code needs_response}, {@code under_review}, {@code warning_closed},
+   * {@code warning_needs_response}, {@code warning_under_review}, or {@code won}.
    */
   @SerializedName("status")
   String status;
@@ -214,12 +217,16 @@ public class Dispute extends ApiResource
    * <em>Closing a dispute is irreversible</em>.
    */
   public Dispute close(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/disputes/%s/close", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Dispute.class,
             options,
-            String.format("/v1/disputes/%s/close", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Dispute.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -241,12 +248,17 @@ public class Dispute extends ApiResource
    * <em>Closing a dispute is irreversible</em>.
    */
   public Dispute close(DisputeCloseParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/disputes/%s/close", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Dispute.class,
             options,
-            String.format("/v1/disputes/%s/close", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Dispute.class, options);
+            ApiMode.V1);
   }
 
   /** Returns a list of your disputes. */
@@ -257,8 +269,16 @@ public class Dispute extends ApiResource
   /** Returns a list of your disputes. */
   public static DisputeCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/disputes");
-    return ApiResource.requestCollection(url, params, DisputeCollection.class, options);
+    String path = "/v1/disputes";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            DisputeCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of your disputes. */
@@ -269,8 +289,17 @@ public class Dispute extends ApiResource
   /** Returns a list of your disputes. */
   public static DisputeCollection list(DisputeListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/disputes");
-    return ApiResource.requestCollection(url, params, DisputeCollection.class, options);
+    String path = "/v1/disputes";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            DisputeCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves the dispute with the given ID. */
@@ -286,23 +315,32 @@ public class Dispute extends ApiResource
   /** Retrieves the dispute with the given ID. */
   public static Dispute retrieve(String dispute, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/disputes/%s", ApiResource.urlEncodeId(dispute));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Dispute.class,
             options,
-            String.format("/v1/disputes/%s", ApiResource.urlEncodeId(dispute)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Dispute.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the dispute with the given ID. */
   public static Dispute retrieve(
       String dispute, DisputeRetrieveParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/disputes/%s", ApiResource.urlEncodeId(dispute));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Dispute.class,
             options,
-            String.format("/v1/disputes/%s", ApiResource.urlEncodeId(dispute)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Dispute.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -332,12 +370,16 @@ public class Dispute extends ApiResource
    */
   @Override
   public Dispute update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/disputes/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Dispute.class,
             options,
-            String.format("/v1/disputes/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Dispute.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -365,12 +407,17 @@ public class Dispute extends ApiResource
    * href="https://stripe.com/docs/disputes/categories">guide to dispute types</a>.
    */
   public Dispute update(DisputeUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/disputes/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Dispute.class,
             options,
-            String.format("/v1/disputes/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Dispute.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -770,5 +817,53 @@ public class Dispute extends ApiResource
      */
     @SerializedName("submission_count")
     Long submissionCount;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class PaymentMethodDetails extends StripeObject {
+    /** Card specific dispute details. */
+    @SerializedName("card")
+    Card card;
+
+    /**
+     * Payment method type.
+     *
+     * <p>Equal to {@code card}.
+     */
+    @SerializedName("type")
+    String type;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Card extends StripeObject {
+      /**
+       * Card brand. Can be {@code amex}, {@code diners}, {@code discover}, {@code eftpos_au},
+       * {@code jcb}, {@code mastercard}, {@code unionpay}, {@code visa}, or {@code unknown}.
+       */
+      @SerializedName("brand")
+      String brand;
+
+      /**
+       * The card network's specific dispute reason code, which maps to one of Stripe's primary
+       * dispute categories to simplify response guidance. The <a
+       * href="https://stripe.com/docs/disputes/categories#network-code-map">Network code map</a>
+       * lists all available dispute reason codes by network.
+       */
+      @SerializedName("network_reason_code")
+      String networkReasonCode;
+    }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(charge, responseGetter);
+    trySetResponseGetter(evidence, responseGetter);
+    trySetResponseGetter(evidenceDetails, responseGetter);
+    trySetResponseGetter(paymentIntent, responseGetter);
+    trySetResponseGetter(paymentMethodDetails, responseGetter);
   }
 }

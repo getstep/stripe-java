@@ -16,7 +16,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
-public class CustomerCashBalanceTransaction extends StripeObject implements HasId {
+public class CustomerCashBalanceTransaction extends StripeObject
+    implements BalanceTransactionSource {
+  @SerializedName("adjusted_for_overdraft")
+  AdjustedForOverdraft adjustedForOverdraft;
+
   @SerializedName("applied_to_payment")
   AppliedToPayment appliedToPayment;
 
@@ -81,11 +85,13 @@ public class CustomerCashBalanceTransaction extends StripeObject implements HasI
   RefundedFromPayment refundedFromPayment;
 
   /**
-   * The type of the cash balance transaction. One of {@code applied_to_payment}, {@code
-   * unapplied_from_payment}, {@code refunded_from_payment}, {@code funded}, {@code
-   * return_initiated}, or {@code return_canceled}. New types may be added in future. See <a
+   * The type of the cash balance transaction. New types may be added in future. See <a
    * href="https://stripe.com/docs/payments/customer-balance#types">Customer Balance</a> to learn
    * more about these types.
+   *
+   * <p>One of {@code adjusted_for_overdraft}, {@code applied_to_payment}, {@code funded}, {@code
+   * funding_reversed}, {@code refunded_from_payment}, {@code return_canceled}, {@code
+   * return_initiated}, {@code transferred_to_balance}, or {@code unapplied_from_payment}.
    */
   @SerializedName("type")
   String type;
@@ -109,6 +115,68 @@ public class CustomerCashBalanceTransaction extends StripeObject implements HasI
 
   public void setCustomerObject(Customer expandableObject) {
     this.customer = new ExpandableField<Customer>(expandableObject.getId(), expandableObject);
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class AdjustedForOverdraft extends StripeObject {
+    /**
+     * The <a href="https://stripe.com/docs/api/balance_transactions/object">Balance Transaction</a>
+     * that corresponds to funds taken out of your Stripe balance.
+     */
+    @SerializedName("balance_transaction")
+    @Getter(lombok.AccessLevel.NONE)
+    @Setter(lombok.AccessLevel.NONE)
+    ExpandableField<BalanceTransaction> balanceTransaction;
+
+    /**
+     * The <a href="https://stripe.com/docs/api/cash_balance_transactions/object">Cash Balance
+     * Transaction</a> that brought the customer balance negative, triggering the clawback of funds.
+     */
+    @SerializedName("linked_transaction")
+    @Getter(lombok.AccessLevel.NONE)
+    @Setter(lombok.AccessLevel.NONE)
+    ExpandableField<CustomerCashBalanceTransaction> linkedTransaction;
+
+    /** Get ID of expandable {@code balanceTransaction} object. */
+    public String getBalanceTransaction() {
+      return (this.balanceTransaction != null) ? this.balanceTransaction.getId() : null;
+    }
+
+    public void setBalanceTransaction(String id) {
+      this.balanceTransaction = ApiResource.setExpandableFieldId(id, this.balanceTransaction);
+    }
+
+    /** Get expanded {@code balanceTransaction}. */
+    public BalanceTransaction getBalanceTransactionObject() {
+      return (this.balanceTransaction != null) ? this.balanceTransaction.getExpanded() : null;
+    }
+
+    public void setBalanceTransactionObject(BalanceTransaction expandableObject) {
+      this.balanceTransaction =
+          new ExpandableField<BalanceTransaction>(expandableObject.getId(), expandableObject);
+    }
+
+    /** Get ID of expandable {@code linkedTransaction} object. */
+    public String getLinkedTransaction() {
+      return (this.linkedTransaction != null) ? this.linkedTransaction.getId() : null;
+    }
+
+    public void setLinkedTransaction(String id) {
+      this.linkedTransaction = ApiResource.setExpandableFieldId(id, this.linkedTransaction);
+    }
+
+    /** Get expanded {@code linkedTransaction}. */
+    public CustomerCashBalanceTransaction getLinkedTransactionObject() {
+      return (this.linkedTransaction != null) ? this.linkedTransaction.getExpanded() : null;
+    }
+
+    public void setLinkedTransactionObject(CustomerCashBalanceTransaction expandableObject) {
+      this.linkedTransaction =
+          new ExpandableField<CustomerCashBalanceTransaction>(
+              expandableObject.getId(), expandableObject);
+    }
   }
 
   @Getter
@@ -158,20 +226,29 @@ public class CustomerCashBalanceTransaction extends StripeObject implements HasI
       @SerializedName("eu_bank_transfer")
       EuBankTransfer euBankTransfer;
 
+      @SerializedName("gb_bank_transfer")
+      GbBankTransfer gbBankTransfer;
+
+      @SerializedName("jp_bank_transfer")
+      JpBankTransfer jpBankTransfer;
+
       /** The user-supplied reference field on the bank transfer. */
       @SerializedName("reference")
       String reference;
 
       /**
        * The funding method type used to fund the customer balance. Permitted values include: {@code
-       * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-       * mx_bank_transfer}.
+       * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+       * mx_bank_transfer}, or {@code us_bank_transfer}.
        *
-       * <p>One of {@code eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or
-       * {@code mx_bank_transfer}.
+       * <p>One of {@code eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer},
+       * {@code mx_bank_transfer}, or {@code us_bank_transfer}.
        */
       @SerializedName("type")
       String type;
+
+      @SerializedName("us_bank_transfer")
+      UsBankTransfer usBankTransfer;
 
       @Getter
       @Setter
@@ -184,6 +261,57 @@ public class CustomerCashBalanceTransaction extends StripeObject implements HasI
         /** The last 4 digits of the IBAN of the sender of the funding. */
         @SerializedName("iban_last4")
         String ibanLast4;
+
+        /** The full name of the sender, as supplied by the sending bank. */
+        @SerializedName("sender_name")
+        String senderName;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class GbBankTransfer extends StripeObject {
+        /** The last 4 digits of the account number of the sender of the funding. */
+        @SerializedName("account_number_last4")
+        String accountNumberLast4;
+
+        /** The full name of the sender, as supplied by the sending bank. */
+        @SerializedName("sender_name")
+        String senderName;
+
+        /** The sort code of the bank of the sender of the funding. */
+        @SerializedName("sort_code")
+        String sortCode;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class JpBankTransfer extends StripeObject {
+        /** The name of the bank of the sender of the funding. */
+        @SerializedName("sender_bank")
+        String senderBank;
+
+        /** The name of the bank branch of the sender of the funding. */
+        @SerializedName("sender_branch")
+        String senderBranch;
+
+        /** The full name of the sender, as supplied by the sending bank. */
+        @SerializedName("sender_name")
+        String senderName;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class UsBankTransfer extends StripeObject {
+        /**
+         * The banking network used for this funding.
+         *
+         * <p>One of {@code ach}, {@code domestic_wire_us}, or {@code swift}.
+         */
+        @SerializedName("network")
+        String network;
 
         /** The full name of the sender, as supplied by the sending bank. */
         @SerializedName("sender_name")

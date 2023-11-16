@@ -1,5 +1,7 @@
 package com.stripe.model;
 
+import com.stripe.net.StripeResponseGetter;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 
 /**
@@ -7,14 +9,20 @@ import java.util.Iterator;
  * pages and which is suitable for use with a <code>{@code foreach}</code> loop.
  */
 public class PagingIterable<T extends HasId> implements Iterable<T> {
-  private StripeCollectionInterface<T> page;
+  private final StripeCollectionInterface<T> page;
+  private final StripeResponseGetter responseGetter;
+  private final Type pageType;
 
-  PagingIterable(final StripeCollectionInterface<T> page) {
+  PagingIterable(
+      final StripeCollectionInterface<T> page, StripeResponseGetter responseGetter, Type pageType) {
+
     this.page = page;
+    this.responseGetter = responseGetter;
+    this.pageType = pageType;
   }
 
   @Override
   public Iterator<T> iterator() {
-    return new PagingIterator<>(page);
+    return new PagingIterator<>(page, responseGetter, pageType);
   }
 }

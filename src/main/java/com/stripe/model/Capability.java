@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.CapabilityUpdateParams;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +20,7 @@ import lombok.Setter;
  * This is an object representing a capability for a Stripe account.
  *
  * <p>Related guide: <a href="https://stripe.com/docs/connect/account-capabilities">Account
- * capabilities</a>.
+ * capabilities</a>
  */
 @Getter
 @Setter
@@ -81,42 +84,63 @@ public class Capability extends ApiResource implements HasId {
     this.account = new ExpandableField<Account>(expandableObject.getId(), expandableObject);
   }
 
-  /** Updates an existing Account Capability. */
+  /**
+   * Updates an existing Account Capability. Request or remove a capability by updating its {@code
+   * requested} parameter.
+   */
   public Capability update(Map<String, Object> params) throws StripeException {
     return update(params, (RequestOptions) null);
   }
 
-  /** Updates an existing Account Capability. */
+  /**
+   * Updates an existing Account Capability. Request or remove a capability by updating its {@code
+   * requested} parameter.
+   */
   public Capability update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/accounts/%s/capabilities/%s",
+            ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Capability.class,
             options,
-            String.format(
-                "/v1/accounts/%s/capabilities/%s",
-                ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Capability.class, options);
+            ApiMode.V1);
   }
 
-  /** Updates an existing Account Capability. */
+  /**
+   * Updates an existing Account Capability. Request or remove a capability by updating its {@code
+   * requested} parameter.
+   */
   public Capability update(CapabilityUpdateParams params) throws StripeException {
     return update(params, (RequestOptions) null);
   }
 
-  /** Updates an existing Account Capability. */
+  /**
+   * Updates an existing Account Capability. Request or remove a capability by updating its {@code
+   * requested} parameter.
+   */
   public Capability update(CapabilityUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/accounts/%s/capabilities/%s",
+            ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Capability.class,
             options,
-            String.format(
-                "/v1/accounts/%s/capabilities/%s",
-                ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Capability.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -209,13 +233,38 @@ public class Capability extends ApiResource implements HasId {
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -227,13 +276,14 @@ public class Capability extends ApiResource implements HasId {
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -354,13 +404,38 @@ public class Capability extends ApiResource implements HasId {
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -372,13 +447,14 @@ public class Capability extends ApiResource implements HasId {
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -398,5 +474,13 @@ public class Capability extends ApiResource implements HasId {
       @SerializedName("requirement")
       String requirement;
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(account, responseGetter);
+    trySetResponseGetter(futureRequirements, responseGetter);
+    trySetResponseGetter(requirements, responseGetter);
   }
 }

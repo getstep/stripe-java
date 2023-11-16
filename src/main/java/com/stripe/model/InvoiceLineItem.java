@@ -2,7 +2,14 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
+import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
+import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
+import com.stripe.param.InvoiceLineItemUpdateParams;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -14,14 +21,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
-public class InvoiceLineItem extends StripeObject implements HasId {
-  /** The amount, in %s. */
+public class InvoiceLineItem extends ApiResource implements HasId {
+  /** The amount, in cents (or local equivalent). */
   @SerializedName("amount")
   Long amount;
 
   /**
-   * The integer amount in %s representing the amount for this line item, excluding all tax and
-   * discounts.
+   * The integer amount in cents (or local equivalent) representing the amount for this line item,
+   * excluding all tax and discounts.
    */
   @SerializedName("amount_excluding_tax")
   Long amountExcludingTax;
@@ -62,7 +69,9 @@ public class InvoiceLineItem extends StripeObject implements HasId {
    * with this line item if any.
    */
   @SerializedName("invoice_item")
-  String invoiceItem;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  ExpandableField<InvoiceItem> invoiceItem;
 
   /**
    * Has the value {@code true} if the object exists in live mode or the value {@code false} if the
@@ -113,14 +122,18 @@ public class InvoiceLineItem extends StripeObject implements HasId {
 
   /** The subscription that the invoice item pertains to, if any. */
   @SerializedName("subscription")
-  String subscription;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  ExpandableField<Subscription> subscription;
 
   /**
    * The subscription item that generated this line item. Left empty if the line item is not an
    * explicit result of a subscription.
    */
   @SerializedName("subscription_item")
-  String subscriptionItem;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  ExpandableField<SubscriptionItem> subscriptionItem;
 
   /** The amount of tax calculated per tax rate for this line item. */
   @SerializedName("tax_amounts")
@@ -140,11 +153,67 @@ public class InvoiceLineItem extends StripeObject implements HasId {
   String type;
 
   /**
-   * The amount in %s representing the unit amount for this line item, excluding all tax and
-   * discounts.
+   * The amount in cents (or local equivalent) representing the unit amount for this line item,
+   * excluding all tax and discounts.
    */
   @SerializedName("unit_amount_excluding_tax")
   BigDecimal unitAmountExcludingTax;
+
+  /** Get ID of expandable {@code invoiceItem} object. */
+  public String getInvoiceItem() {
+    return (this.invoiceItem != null) ? this.invoiceItem.getId() : null;
+  }
+
+  public void setInvoiceItem(String id) {
+    this.invoiceItem = ApiResource.setExpandableFieldId(id, this.invoiceItem);
+  }
+
+  /** Get expanded {@code invoiceItem}. */
+  public InvoiceItem getInvoiceItemObject() {
+    return (this.invoiceItem != null) ? this.invoiceItem.getExpanded() : null;
+  }
+
+  public void setInvoiceItemObject(InvoiceItem expandableObject) {
+    this.invoiceItem = new ExpandableField<InvoiceItem>(expandableObject.getId(), expandableObject);
+  }
+
+  /** Get ID of expandable {@code subscription} object. */
+  public String getSubscription() {
+    return (this.subscription != null) ? this.subscription.getId() : null;
+  }
+
+  public void setSubscription(String id) {
+    this.subscription = ApiResource.setExpandableFieldId(id, this.subscription);
+  }
+
+  /** Get expanded {@code subscription}. */
+  public Subscription getSubscriptionObject() {
+    return (this.subscription != null) ? this.subscription.getExpanded() : null;
+  }
+
+  public void setSubscriptionObject(Subscription expandableObject) {
+    this.subscription =
+        new ExpandableField<Subscription>(expandableObject.getId(), expandableObject);
+  }
+
+  /** Get ID of expandable {@code subscriptionItem} object. */
+  public String getSubscriptionItem() {
+    return (this.subscriptionItem != null) ? this.subscriptionItem.getId() : null;
+  }
+
+  public void setSubscriptionItem(String id) {
+    this.subscriptionItem = ApiResource.setExpandableFieldId(id, this.subscriptionItem);
+  }
+
+  /** Get expanded {@code subscriptionItem}. */
+  public SubscriptionItem getSubscriptionItemObject() {
+    return (this.subscriptionItem != null) ? this.subscriptionItem.getExpanded() : null;
+  }
+
+  public void setSubscriptionItemObject(SubscriptionItem expandableObject) {
+    this.subscriptionItem =
+        new ExpandableField<SubscriptionItem>(expandableObject.getId(), expandableObject);
+  }
 
   /** Get IDs of expandable {@code discounts} object list. */
   public List<String> getDiscounts() {
@@ -187,11 +256,84 @@ public class InvoiceLineItem extends StripeObject implements HasId {
             : null;
   }
 
+  /**
+   * Updates an invoice’s line item. Some fields, such as {@code tax_amounts}, only live on the
+   * invoice line item, so they can only be updated through this endpoint. Other fields, such as
+   * {@code amount}, live on both the invoice item and the invoice line item, so updates on this
+   * endpoint will propagate to the invoice item as well. Updating an invoice’s line item is only
+   * possible before the invoice is finalized.
+   */
+  public InvoiceLineItem update(String invoice, Map<String, Object> params) throws StripeException {
+    return update(invoice, params, (RequestOptions) null);
+  }
+
+  /**
+   * Updates an invoice’s line item. Some fields, such as {@code tax_amounts}, only live on the
+   * invoice line item, so they can only be updated through this endpoint. Other fields, such as
+   * {@code amount}, live on both the invoice item and the invoice line item, so updates on this
+   * endpoint will propagate to the invoice item as well. Updating an invoice’s line item is only
+   * possible before the invoice is finalized.
+   */
+  public InvoiceLineItem update(String invoice, Map<String, Object> params, RequestOptions options)
+      throws StripeException {
+    String path =
+        String.format(
+            "/v1/invoices/%s/lines/%s",
+            ApiResource.urlEncodeId(invoice), ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            InvoiceLineItem.class,
+            options,
+            ApiMode.V1);
+  }
+
+  /**
+   * Updates an invoice’s line item. Some fields, such as {@code tax_amounts}, only live on the
+   * invoice line item, so they can only be updated through this endpoint. Other fields, such as
+   * {@code amount}, live on both the invoice item and the invoice line item, so updates on this
+   * endpoint will propagate to the invoice item as well. Updating an invoice’s line item is only
+   * possible before the invoice is finalized.
+   */
+  public InvoiceLineItem update(String invoice, InvoiceLineItemUpdateParams params)
+      throws StripeException {
+    return update(invoice, params, (RequestOptions) null);
+  }
+
+  /**
+   * Updates an invoice’s line item. Some fields, such as {@code tax_amounts}, only live on the
+   * invoice line item, so they can only be updated through this endpoint. Other fields, such as
+   * {@code amount}, live on both the invoice item and the invoice line item, so updates on this
+   * endpoint will propagate to the invoice item as well. Updating an invoice’s line item is only
+   * possible before the invoice is finalized.
+   */
+  public InvoiceLineItem update(
+      String invoice, InvoiceLineItemUpdateParams params, RequestOptions options)
+      throws StripeException {
+    String path =
+        String.format(
+            "/v1/invoices/%s/lines/%s",
+            ApiResource.urlEncodeId(invoice), ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            InvoiceLineItem.class,
+            options,
+            ApiMode.V1);
+  }
+
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class DiscountAmount extends StripeObject {
-    /** The amount, in %s, of the discount. */
+    /** The amount, in cents (or local equivalent), of the discount. */
     @SerializedName("amount")
     Long amount;
 
@@ -265,7 +407,7 @@ public class InvoiceLineItem extends StripeObject implements HasId {
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class TaxAmount extends StripeObject {
-    /** The amount, in %s, of the tax. */
+    /** The amount, in cents (or local equivalent), of the tax. */
     @SerializedName("amount")
     Long amount;
 
@@ -278,6 +420,23 @@ public class InvoiceLineItem extends StripeObject implements HasId {
     @Getter(lombok.AccessLevel.NONE)
     @Setter(lombok.AccessLevel.NONE)
     ExpandableField<TaxRate> taxRate;
+
+    /**
+     * The reasoning behind this tax, for example, if the product is tax exempt. The possible values
+     * for this field may be extended as new tax rules are supported.
+     *
+     * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax}, {@code
+     * not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated}, {@code
+     * portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday}, {@code
+     * proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code standard_rated},
+     * {@code taxable_basis_reduced}, or {@code zero_rated}.
+     */
+    @SerializedName("taxability_reason")
+    String taxabilityReason;
+
+    /** The amount on which tax is calculated, in cents (or local equivalent). */
+    @SerializedName("taxable_amount")
+    Long taxableAmount;
 
     /** Get ID of expandable {@code taxRate} object. */
     public String getTaxRate() {
@@ -296,5 +455,17 @@ public class InvoiceLineItem extends StripeObject implements HasId {
     public void setTaxRateObject(TaxRate expandableObject) {
       this.taxRate = new ExpandableField<TaxRate>(expandableObject.getId(), expandableObject);
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(invoiceItem, responseGetter);
+    trySetResponseGetter(period, responseGetter);
+    trySetResponseGetter(plan, responseGetter);
+    trySetResponseGetter(price, responseGetter);
+    trySetResponseGetter(prorationDetails, responseGetter);
+    trySetResponseGetter(subscription, responseGetter);
+    trySetResponseGetter(subscriptionItem, responseGetter);
   }
 }

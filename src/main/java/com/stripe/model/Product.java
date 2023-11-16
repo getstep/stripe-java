@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductListParams;
 import com.stripe.param.ProductRetrieveParams;
@@ -40,30 +43,9 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
   @SerializedName("active")
   Boolean active;
 
-  /**
-   * A list of up to 5 attributes that each SKU can provide values for (e.g., {@code ["color",
-   * "size"]}).
-   */
-  @SerializedName("attributes")
-  List<String> attributes;
-
-  /**
-   * A short one-line description of the product, meant to be displayable to the customer. Only
-   * applicable to products of {@code type=good}.
-   */
-  @SerializedName("caption")
-  String caption;
-
   /** Time at which the object was created. Measured in seconds since the Unix epoch. */
   @SerializedName("created")
   Long created;
-
-  /**
-   * An array of connect application identifiers that cannot purchase this product. Only applicable
-   * to products of {@code type=good}.
-   */
-  @SerializedName("deactivate_on")
-  List<String> deactivateOn;
 
   /**
    * The ID of the <a href="https://stripe.com/docs/api/prices">Price</a> object that is the default
@@ -85,6 +67,13 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   @SerializedName("description")
   String description;
+
+  /**
+   * A list of up to 15 features for this product. These are displayed in <a
+   * href="https://stripe.com/docs/payments/checkout/pricing-table">pricing tables</a>.
+   */
+  @SerializedName("features")
+  List<Product.Feature> features;
 
   /** Unique identifier for the object. */
   @Getter(onMethod_ = {@Override})
@@ -214,8 +203,16 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
   /** Creates a new product object. */
   public static Product create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/products");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Product.class, options);
+    String path = "/v1/products";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Product.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Creates a new product object. */
@@ -226,8 +223,17 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
   /** Creates a new product object. */
   public static Product create(ProductCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/products");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Product.class, options);
+    String path = "/v1/products";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Product.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -263,13 +269,16 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    * associated with it.
    */
   public Product delete(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/products/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            Product.class,
             options,
-            String.format("/v1/products/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Product.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -286,8 +295,16 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   public static ProductCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/products");
-    return ApiResource.requestCollection(url, params, ProductCollection.class, options);
+    String path = "/v1/products";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            ProductCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -304,8 +321,17 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   public static ProductCollection list(ProductListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/products");
-    return ApiResource.requestCollection(url, params, ProductCollection.class, options);
+    String path = "/v1/products";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ProductCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -333,12 +359,16 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   public static Product retrieve(String id, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/products/%s", ApiResource.urlEncodeId(id));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Product.class,
             options,
-            String.format("/v1/products/%s", ApiResource.urlEncodeId(id)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Product.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -348,12 +378,17 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   public static Product retrieve(String id, ProductRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/products/%s", ApiResource.urlEncodeId(id));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Product.class,
             options,
-            String.format("/v1/products/%s", ApiResource.urlEncodeId(id)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Product.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -378,8 +413,16 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   public static ProductSearchResult search(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/products/search");
-    return ApiResource.requestSearchResult(url, params, ProductSearchResult.class, options);
+    String path = "/v1/products/search";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            ProductSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -404,8 +447,17 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   public static ProductSearchResult search(ProductSearchParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/products/search");
-    return ApiResource.requestSearchResult(url, params, ProductSearchResult.class, options);
+    String path = "/v1/products/search";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ProductSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -423,12 +475,16 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    */
   @Override
   public Product update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/products/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Product.class,
             options,
-            String.format("/v1/products/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Product.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -444,12 +500,26 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
    * provided will be left unchanged.
    */
   public Product update(ProductUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/products/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Product.class,
             options,
-            String.format("/v1/products/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Product.class, options);
+            ApiMode.V1);
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class Feature extends StripeObject {
+    /** The feature's name. Up to 80 characters long. */
+    @SerializedName("name")
+    String name;
   }
 
   @Getter
@@ -471,5 +541,13 @@ public class Product extends ApiResource implements HasId, MetadataStore<Product
     /** Width, in inches. */
     @SerializedName("width")
     BigDecimal width;
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(defaultPrice, responseGetter);
+    trySetResponseGetter(packageDimensions, responseGetter);
+    trySetResponseGetter(taxCode, responseGetter);
   }
 }

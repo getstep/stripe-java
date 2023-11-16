@@ -22,7 +22,7 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
   /**
    * A non-negative decimal between 0 and 100, with at most two decimal places. This represents the
-   * percentage of the subscription invoice subtotal that will be transferred to the application
+   * percentage of the subscription invoice total that will be transferred to the application
    * owner's Stripe account. The request must be made by a platform account on a connected account
    * in order to set an application fee percentage. For more information, see the application fees
    * <a
@@ -145,7 +145,8 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
   /**
    * The subscription's description, meant to be displayable to the customer. Use this field to
-   * optionally store an explanation of the subscription for rendering in Stripe surfaces.
+   * optionally store an explanation of the subscription for rendering in Stripe surfaces and
+   * certain local payment methods UIs.
    */
   @SerializedName("description")
   String description;
@@ -495,10 +496,10 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
     /**
      * A non-negative decimal between 0 and 100, with at most two decimal places. This represents
-     * the percentage of the subscription invoice subtotal that will be transferred to the
-     * application owner's Stripe account. The request must be made by a platform account on a
-     * connected account in order to set an application fee percentage. For more information, see
-     * the application fees <a
+     * the percentage of the subscription invoice total that will be transferred to the application
+     * owner's Stripe account. The request must be made by a platform account on a connected account
+     * in order to set an application fee percentage. For more information, see the application fees
+     * <a
      * href="https://stripe.com/docs/connect/subscriptions#collecting-fees-on-subscriptions">documentation</a>.
      */
     public Builder setApplicationFeePercent(BigDecimal applicationFeePercent) {
@@ -698,7 +699,8 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
     /**
      * The subscription's description, meant to be displayable to the customer. Use this field to
-     * optionally store an explanation of the subscription for rendering in Stripe surfaces.
+     * optionally store an explanation of the subscription for rendering in Stripe surfaces and
+     * certain local payment methods UIs.
      */
     public Builder setDescription(String description) {
       this.description = description;
@@ -3212,6 +3214,9 @@ public class SubscriptionCreateParams extends ApiRequestParams {
           @SerializedName("discover")
           DISCOVER("discover"),
 
+          @SerializedName("eftpos_au")
+          EFTPOS_AU("eftpos_au"),
+
           @SerializedName("interac")
           INTERAC("interac"),
 
@@ -3375,8 +3380,8 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
           /**
            * The bank transfer type that can be used for funding. Permitted values include: {@code
-           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-           * mx_bank_transfer}.
+           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+           * mx_bank_transfer}, or {@code us_bank_transfer}.
            */
           @SerializedName("type")
           String type;
@@ -3448,8 +3453,8 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
             /**
              * The bank transfer type that can be used for funding. Permitted values include: {@code
-             * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-             * mx_bank_transfer}.
+             * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+             * mx_bank_transfer}, or {@code us_bank_transfer}.
              */
             public Builder setType(String type) {
               this.type = type;
@@ -3723,14 +3728,26 @@ public class SubscriptionCreateParams extends ApiRequestParams {
                       .FinancialConnections.Permission>
               permissions;
 
+          /** List of data features that you would like to retrieve upon account creation. */
+          @SerializedName("prefetch")
+          List<
+                  SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                      .FinancialConnections.Prefetch>
+              prefetch;
+
           private FinancialConnections(
               Map<String, Object> extraParams,
               List<
                       SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
                           .FinancialConnections.Permission>
-                  permissions) {
+                  permissions,
+              List<
+                      SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                          .FinancialConnections.Prefetch>
+                  prefetch) {
             this.extraParams = extraParams;
             this.permissions = permissions;
+            this.prefetch = prefetch;
           }
 
           public static Builder builder() {
@@ -3745,12 +3762,17 @@ public class SubscriptionCreateParams extends ApiRequestParams {
                         .FinancialConnections.Permission>
                 permissions;
 
+            private List<
+                    SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                        .FinancialConnections.Prefetch>
+                prefetch;
+
             /** Finalize and obtain parameter instance from this builder. */
             public SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
                     .FinancialConnections
                 build() {
               return new SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
-                  .FinancialConnections(this.extraParams, this.permissions);
+                  .FinancialConnections(this.extraParams, this.permissions, this.prefetch);
             }
 
             /**
@@ -3819,6 +3841,41 @@ public class SubscriptionCreateParams extends ApiRequestParams {
               this.permissions.addAll(elements);
               return this;
             }
+
+            /**
+             * Add an element to `prefetch` list. A list is initialized for the first `add/addAll`
+             * call, and subsequent calls adds additional elements to the original list. See {@link
+             * SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.FinancialConnections#prefetch}
+             * for the field documentation.
+             */
+            public Builder addPrefetch(
+                SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                        .FinancialConnections.Prefetch
+                    element) {
+              if (this.prefetch == null) {
+                this.prefetch = new ArrayList<>();
+              }
+              this.prefetch.add(element);
+              return this;
+            }
+
+            /**
+             * Add all elements to `prefetch` list. A list is initialized for the first `add/addAll`
+             * call, and subsequent calls adds additional elements to the original list. See {@link
+             * SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.FinancialConnections#prefetch}
+             * for the field documentation.
+             */
+            public Builder addAllPrefetch(
+                List<
+                        SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                            .FinancialConnections.Prefetch>
+                    elements) {
+              if (this.prefetch == null) {
+                this.prefetch = new ArrayList<>();
+              }
+              this.prefetch.addAll(elements);
+              return this;
+            }
           }
 
           public enum Permission implements ApiRequestParams.EnumParam {
@@ -3838,6 +3895,18 @@ public class SubscriptionCreateParams extends ApiRequestParams {
             private final String value;
 
             Permission(String value) {
+              this.value = value;
+            }
+          }
+
+          public enum Prefetch implements ApiRequestParams.EnumParam {
+            @SerializedName("balances")
+            BALANCES("balances");
+
+            @Getter(onMethod_ = {@Override})
+            private final String value;
+
+            Prefetch(String value) {
               this.value = value;
             }
           }
@@ -3914,6 +3983,9 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
       @SerializedName("paynow")
       PAYNOW("paynow"),
+
+      @SerializedName("paypal")
+      PAYPAL("paypal"),
 
       @SerializedName("promptpay")
       PROMPTPAY("promptpay"),
@@ -4082,8 +4154,8 @@ public class SubscriptionCreateParams extends ApiRequestParams {
   public static class TransferData {
     /**
      * A non-negative decimal between 0 and 100, with at most two decimal places. This represents
-     * the percentage of the subscription invoice subtotal that will be transferred to the
-     * destination account. By default, the entire amount is transferred to the destination.
+     * the percentage of the subscription invoice total that will be transferred to the destination
+     * account. By default, the entire amount is transferred to the destination.
      */
     @SerializedName("amount_percent")
     BigDecimal amountPercent;
@@ -4127,7 +4199,7 @@ public class SubscriptionCreateParams extends ApiRequestParams {
 
       /**
        * A non-negative decimal between 0 and 100, with at most two decimal places. This represents
-       * the percentage of the subscription invoice subtotal that will be transferred to the
+       * the percentage of the subscription invoice total that will be transferred to the
        * destination account. By default, the entire amount is transferred to the destination.
        */
       public Builder setAmountPercent(BigDecimal amountPercent) {

@@ -3,6 +3,7 @@ package com.stripe.param.tax;
 
 import com.google.gson.annotations.SerializedName;
 import com.stripe.net.ApiRequestParams;
+import com.stripe.param.common.EmptyParam;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -400,7 +401,7 @@ public class CalculationCreateParams extends ApiRequestParams {
     public static class Address {
       /** City, district, suburb, town, or village. */
       @SerializedName("city")
-      String city;
+      Object city;
 
       /**
        * <strong>Required.</strong> Two-letter country code (<a
@@ -420,31 +421,32 @@ public class CalculationCreateParams extends ApiRequestParams {
 
       /** Address line 1 (e.g., street, PO Box, or company name). */
       @SerializedName("line1")
-      String line1;
+      Object line1;
 
       /** Address line 2 (e.g., apartment, suite, unit, or building). */
       @SerializedName("line2")
-      String line2;
+      Object line2;
 
       /** ZIP or postal code. */
       @SerializedName("postal_code")
-      String postalCode;
+      Object postalCode;
 
       /**
-       * State/province as an <a href="https://en.wikipedia.org/wiki/ISO_3166-2">ISO 3166-2</a>
-       * subdivision code, without country prefix. Example: &quot;NY&quot; or &quot;TX&quot;.
+       * State, county, province, or region. We recommend sending <a
+       * href="https://en.wikipedia.org/wiki/ISO_3166-2">ISO 3166-2</a> subdivision code value when
+       * possible.
        */
       @SerializedName("state")
-      String state;
+      Object state;
 
       private Address(
-          String city,
+          Object city,
           String country,
           Map<String, Object> extraParams,
-          String line1,
-          String line2,
-          String postalCode,
-          String state) {
+          Object line1,
+          Object line2,
+          Object postalCode,
+          Object state) {
         this.city = city;
         this.country = country;
         this.extraParams = extraParams;
@@ -459,19 +461,19 @@ public class CalculationCreateParams extends ApiRequestParams {
       }
 
       public static class Builder {
-        private String city;
+        private Object city;
 
         private String country;
 
         private Map<String, Object> extraParams;
 
-        private String line1;
+        private Object line1;
 
-        private String line2;
+        private Object line2;
 
-        private String postalCode;
+        private Object postalCode;
 
-        private String state;
+        private Object state;
 
         /** Finalize and obtain parameter instance from this builder. */
         public CalculationCreateParams.CustomerDetails.Address build() {
@@ -487,6 +489,12 @@ public class CalculationCreateParams extends ApiRequestParams {
 
         /** City, district, suburb, town, or village. */
         public Builder setCity(String city) {
+          this.city = city;
+          return this;
+        }
+
+        /** City, district, suburb, town, or village. */
+        public Builder setCity(EmptyParam city) {
           this.city = city;
           return this;
         }
@@ -534,8 +542,20 @@ public class CalculationCreateParams extends ApiRequestParams {
           return this;
         }
 
+        /** Address line 1 (e.g., street, PO Box, or company name). */
+        public Builder setLine1(EmptyParam line1) {
+          this.line1 = line1;
+          return this;
+        }
+
         /** Address line 2 (e.g., apartment, suite, unit, or building). */
         public Builder setLine2(String line2) {
+          this.line2 = line2;
+          return this;
+        }
+
+        /** Address line 2 (e.g., apartment, suite, unit, or building). */
+        public Builder setLine2(EmptyParam line2) {
           this.line2 = line2;
           return this;
         }
@@ -546,11 +566,28 @@ public class CalculationCreateParams extends ApiRequestParams {
           return this;
         }
 
+        /** ZIP or postal code. */
+        public Builder setPostalCode(EmptyParam postalCode) {
+          this.postalCode = postalCode;
+          return this;
+        }
+
         /**
-         * State/province as an <a href="https://en.wikipedia.org/wiki/ISO_3166-2">ISO 3166-2</a>
-         * subdivision code, without country prefix. Example: &quot;NY&quot; or &quot;TX&quot;.
+         * State, county, province, or region. We recommend sending <a
+         * href="https://en.wikipedia.org/wiki/ISO_3166-2">ISO 3166-2</a> subdivision code value
+         * when possible.
          */
         public Builder setState(String state) {
+          this.state = state;
+          return this;
+        }
+
+        /**
+         * State, county, province, or region. We recommend sending <a
+         * href="https://en.wikipedia.org/wiki/ISO_3166-2">ISO 3166-2</a> subdivision code value
+         * when possible.
+         */
+        public Builder setState(EmptyParam state) {
           this.state = state;
           return this;
         }
@@ -569,17 +606,19 @@ public class CalculationCreateParams extends ApiRequestParams {
       Map<String, Object> extraParams;
 
       /**
-       * <strong>Required.</strong> Type of the tax ID, one of {@code ae_trn}, {@code au_abn},
-       * {@code au_arn}, {@code bg_uic}, {@code br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code
-       * ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst},
-       * {@code ch_vat}, {@code cl_tin}, {@code eg_tin}, {@code es_cif}, {@code eu_oss_vat}, {@code
-       * eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code hk_br}, {@code hu_tin}, {@code id_npwp},
-       * {@code il_vat}, {@code in_gst}, {@code is_vat}, {@code jp_cn}, {@code jp_rn}, {@code
-       * jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code li_uid}, {@code mx_rfc}, {@code my_frp},
-       * {@code my_itn}, {@code my_sst}, {@code no_vat}, {@code nz_gst}, {@code ph_tin}, {@code
+       * <strong>Required.</strong> Type of the tax ID, one of {@code ad_nrt}, {@code ae_trn},
+       * {@code ar_cuit}, {@code au_abn}, {@code au_arn}, {@code bg_uic}, {@code bo_tin}, {@code
+       * br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code
+       * ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst}, {@code ch_vat}, {@code cl_tin}, {@code
+       * cn_tin}, {@code co_nit}, {@code cr_tin}, {@code do_rcn}, {@code ec_ruc}, {@code eg_tin},
+       * {@code es_cif}, {@code eu_oss_vat}, {@code eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code
+       * hk_br}, {@code hu_tin}, {@code id_npwp}, {@code il_vat}, {@code in_gst}, {@code is_vat},
+       * {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code
+       * li_uid}, {@code mx_rfc}, {@code my_frp}, {@code my_itn}, {@code my_sst}, {@code no_vat},
+       * {@code nz_gst}, {@code pe_ruc}, {@code ph_tin}, {@code ro_tin}, {@code rs_pib}, {@code
        * ru_inn}, {@code ru_kpp}, {@code sa_vat}, {@code sg_gst}, {@code sg_uen}, {@code si_tin},
-       * {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code us_ein}, or {@code
-       * za_vat}
+       * {@code sv_nit}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code
+       * us_ein}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, or {@code za_vat}
        */
       @SerializedName("type")
       Type type;
@@ -640,17 +679,19 @@ public class CalculationCreateParams extends ApiRequestParams {
         }
 
         /**
-         * <strong>Required.</strong> Type of the tax ID, one of {@code ae_trn}, {@code au_abn},
-         * {@code au_arn}, {@code bg_uic}, {@code br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code
-         * ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst},
-         * {@code ch_vat}, {@code cl_tin}, {@code eg_tin}, {@code es_cif}, {@code eu_oss_vat},
-         * {@code eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code hk_br}, {@code hu_tin}, {@code
-         * id_npwp}, {@code il_vat}, {@code in_gst}, {@code is_vat}, {@code jp_cn}, {@code jp_rn},
-         * {@code jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code li_uid}, {@code mx_rfc}, {@code
-         * my_frp}, {@code my_itn}, {@code my_sst}, {@code no_vat}, {@code nz_gst}, {@code ph_tin},
+         * <strong>Required.</strong> Type of the tax ID, one of {@code ad_nrt}, {@code ae_trn},
+         * {@code ar_cuit}, {@code au_abn}, {@code au_arn}, {@code bg_uic}, {@code bo_tin}, {@code
+         * br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code
+         * ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst}, {@code ch_vat}, {@code cl_tin}, {@code
+         * cn_tin}, {@code co_nit}, {@code cr_tin}, {@code do_rcn}, {@code ec_ruc}, {@code eg_tin},
+         * {@code es_cif}, {@code eu_oss_vat}, {@code eu_vat}, {@code gb_vat}, {@code ge_vat},
+         * {@code hk_br}, {@code hu_tin}, {@code id_npwp}, {@code il_vat}, {@code in_gst}, {@code
+         * is_vat}, {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code ke_pin}, {@code kr_brn},
+         * {@code li_uid}, {@code mx_rfc}, {@code my_frp}, {@code my_itn}, {@code my_sst}, {@code
+         * no_vat}, {@code nz_gst}, {@code pe_ruc}, {@code ph_tin}, {@code ro_tin}, {@code rs_pib},
          * {@code ru_inn}, {@code ru_kpp}, {@code sa_vat}, {@code sg_gst}, {@code sg_uen}, {@code
-         * si_tin}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code us_ein},
-         * or {@code za_vat}
+         * si_tin}, {@code sv_nit}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat},
+         * {@code us_ein}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, or {@code za_vat}
          */
         public Builder setType(CalculationCreateParams.CustomerDetails.TaxId.Type type) {
           this.type = type;
@@ -665,8 +706,14 @@ public class CalculationCreateParams extends ApiRequestParams {
       }
 
       public enum Type implements ApiRequestParams.EnumParam {
+        @SerializedName("ad_nrt")
+        AD_NRT("ad_nrt"),
+
         @SerializedName("ae_trn")
         AE_TRN("ae_trn"),
+
+        @SerializedName("ar_cuit")
+        AR_CUIT("ar_cuit"),
 
         @SerializedName("au_abn")
         AU_ABN("au_abn"),
@@ -676,6 +723,9 @@ public class CalculationCreateParams extends ApiRequestParams {
 
         @SerializedName("bg_uic")
         BG_UIC("bg_uic"),
+
+        @SerializedName("bo_tin")
+        BO_TIN("bo_tin"),
 
         @SerializedName("br_cnpj")
         BR_CNPJ("br_cnpj"),
@@ -706,6 +756,21 @@ public class CalculationCreateParams extends ApiRequestParams {
 
         @SerializedName("cl_tin")
         CL_TIN("cl_tin"),
+
+        @SerializedName("cn_tin")
+        CN_TIN("cn_tin"),
+
+        @SerializedName("co_nit")
+        CO_NIT("co_nit"),
+
+        @SerializedName("cr_tin")
+        CR_TIN("cr_tin"),
+
+        @SerializedName("do_rcn")
+        DO_RCN("do_rcn"),
+
+        @SerializedName("ec_ruc")
+        EC_RUC("ec_ruc"),
 
         @SerializedName("eg_tin")
         EG_TIN("eg_tin"),
@@ -779,8 +844,17 @@ public class CalculationCreateParams extends ApiRequestParams {
         @SerializedName("nz_gst")
         NZ_GST("nz_gst"),
 
+        @SerializedName("pe_ruc")
+        PE_RUC("pe_ruc"),
+
         @SerializedName("ph_tin")
         PH_TIN("ph_tin"),
+
+        @SerializedName("ro_tin")
+        RO_TIN("ro_tin"),
+
+        @SerializedName("rs_pib")
+        RS_PIB("rs_pib"),
 
         @SerializedName("ru_inn")
         RU_INN("ru_inn"),
@@ -800,6 +874,9 @@ public class CalculationCreateParams extends ApiRequestParams {
         @SerializedName("si_tin")
         SI_TIN("si_tin"),
 
+        @SerializedName("sv_nit")
+        SV_NIT("sv_nit"),
+
         @SerializedName("th_vat")
         TH_VAT("th_vat"),
 
@@ -814,6 +891,15 @@ public class CalculationCreateParams extends ApiRequestParams {
 
         @SerializedName("us_ein")
         US_EIN("us_ein"),
+
+        @SerializedName("uy_ruc")
+        UY_RUC("uy_ruc"),
+
+        @SerializedName("ve_rif")
+        VE_RIF("ve_rif"),
+
+        @SerializedName("vn_tin")
+        VN_TIN("vn_tin"),
 
         @SerializedName("za_vat")
         ZA_VAT("za_vat");

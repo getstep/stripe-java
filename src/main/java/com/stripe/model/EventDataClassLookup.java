@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Event data class look up used in {@link EventDataDeserializer}. The key to look up is `object`
- * string of the model.
+ * Event data class look up used in event deserialization. The key to look up is `object` string of
+ * the model.
  */
 final class EventDataClassLookup {
   public static final Map<String, Class<? extends StripeObject>> classLookup = new HashMap<>();
@@ -14,6 +14,7 @@ final class EventDataClassLookup {
   static {
     classLookup.put("account", Account.class);
     classLookup.put("account_link", AccountLink.class);
+    classLookup.put("account_session", AccountSession.class);
     classLookup.put("apple_pay_domain", ApplePayDomain.class);
     classLookup.put("application", Application.class);
     classLookup.put("application_fee", ApplicationFee.class);
@@ -50,6 +51,8 @@ final class EventDataClassLookup {
     classLookup.put("payment_intent", PaymentIntent.class);
     classLookup.put("payment_link", PaymentLink.class);
     classLookup.put("payment_method", PaymentMethod.class);
+    classLookup.put("payment_method_configuration", PaymentMethodConfiguration.class);
+    classLookup.put("payment_method_domain", PaymentMethodDomain.class);
     classLookup.put("payout", Payout.class);
     classLookup.put("person", Person.class);
     classLookup.put("plan", Plan.class);
@@ -110,6 +113,7 @@ final class EventDataClassLookup {
     classLookup.put("issuing.card", com.stripe.model.issuing.Card.class);
     classLookup.put("issuing.cardholder", com.stripe.model.issuing.Cardholder.class);
     classLookup.put("issuing.dispute", com.stripe.model.issuing.Dispute.class);
+    classLookup.put("issuing.token", com.stripe.model.issuing.Token.class);
     classLookup.put("issuing.transaction", com.stripe.model.issuing.Transaction.class);
 
     classLookup.put("radar.early_fraud_warning", com.stripe.model.radar.EarlyFraudWarning.class);
@@ -123,6 +127,8 @@ final class EventDataClassLookup {
 
     classLookup.put("tax.calculation", com.stripe.model.tax.Calculation.class);
     classLookup.put("tax.calculation_line_item", com.stripe.model.tax.CalculationLineItem.class);
+    classLookup.put("tax.registration", com.stripe.model.tax.Registration.class);
+    classLookup.put("tax.settings", com.stripe.model.tax.Settings.class);
     classLookup.put("tax.transaction", com.stripe.model.tax.Transaction.class);
     classLookup.put("tax.transaction_line_item", com.stripe.model.tax.TransactionLineItem.class);
 

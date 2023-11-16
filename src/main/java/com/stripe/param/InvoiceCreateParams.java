@@ -27,10 +27,10 @@ public class InvoiceCreateParams extends ApiRequestParams {
   Long applicationFeeAmount;
 
   /**
-   * Controls whether Stripe will perform <a
-   * href="https://stripe.com/docs/billing/invoices/workflow/#auto_advance">automatic collection</a>
-   * of the invoice. When {@code false}, the invoice's state will not automatically advance without
-   * an explicit action.
+   * Controls whether Stripe performs <a
+   * href="https://stripe.com/docs/invoicing/integration/automatic-advancement-collection">automatic
+   * collection</a> of the invoice. If {@code false}, the invoice's state doesn't automatically
+   * advance without an explicit action.
    */
   @SerializedName("auto_advance")
   Boolean autoAdvance;
@@ -110,6 +110,14 @@ public class InvoiceCreateParams extends ApiRequestParams {
   @SerializedName("due_date")
   Long dueDate;
 
+  /**
+   * The date when this invoice is in effect. Same as {@code finalized_at} unless overwritten. When
+   * defined, this value replaces the system-generated 'Date of issue' printed on the invoice PDF
+   * and receipt.
+   */
+  @SerializedName("effective_at")
+  Long effectiveAt;
+
   /** Specifies which fields in the response should be expanded. */
   @SerializedName("expand")
   List<String> expand;
@@ -169,7 +177,17 @@ public class InvoiceCreateParams extends ApiRequestParams {
   @SerializedName("pending_invoice_items_behavior")
   PendingInvoiceItemsBehavior pendingInvoiceItemsBehavior;
 
-  /** Options for invoice PDF rendering. */
+  /**
+   * The rendering-related settings that control how the invoice is displayed on customer-facing
+   * surfaces such as PDF and Hosted Invoice Page.
+   */
+  @SerializedName("rendering")
+  Rendering rendering;
+
+  /**
+   * This is a legacy field that will be removed soon. For details about {@code rendering_options},
+   * refer to {@code rendering} instead. Options for invoice PDF rendering.
+   */
   @SerializedName("rendering_options")
   Object renderingOptions;
 
@@ -224,6 +242,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
       String description,
       Object discounts,
       Long dueDate,
+      Long effectiveAt,
       List<String> expand,
       Map<String, Object> extraParams,
       String footer,
@@ -232,6 +251,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
       String onBehalfOf,
       PaymentSettings paymentSettings,
       PendingInvoiceItemsBehavior pendingInvoiceItemsBehavior,
+      Rendering rendering,
       Object renderingOptions,
       ShippingCost shippingCost,
       ShippingDetails shippingDetails,
@@ -253,6 +273,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
     this.description = description;
     this.discounts = discounts;
     this.dueDate = dueDate;
+    this.effectiveAt = effectiveAt;
     this.expand = expand;
     this.extraParams = extraParams;
     this.footer = footer;
@@ -261,6 +282,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
     this.onBehalfOf = onBehalfOf;
     this.paymentSettings = paymentSettings;
     this.pendingInvoiceItemsBehavior = pendingInvoiceItemsBehavior;
+    this.rendering = rendering;
     this.renderingOptions = renderingOptions;
     this.shippingCost = shippingCost;
     this.shippingDetails = shippingDetails;
@@ -304,6 +326,8 @@ public class InvoiceCreateParams extends ApiRequestParams {
 
     private Long dueDate;
 
+    private Long effectiveAt;
+
     private List<String> expand;
 
     private Map<String, Object> extraParams;
@@ -319,6 +343,8 @@ public class InvoiceCreateParams extends ApiRequestParams {
     private PaymentSettings paymentSettings;
 
     private PendingInvoiceItemsBehavior pendingInvoiceItemsBehavior;
+
+    private Rendering rendering;
 
     private Object renderingOptions;
 
@@ -350,6 +376,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
           this.description,
           this.discounts,
           this.dueDate,
+          this.effectiveAt,
           this.expand,
           this.extraParams,
           this.footer,
@@ -358,6 +385,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
           this.onBehalfOf,
           this.paymentSettings,
           this.pendingInvoiceItemsBehavior,
+          this.rendering,
           this.renderingOptions,
           this.shippingCost,
           this.shippingDetails,
@@ -423,9 +451,9 @@ public class InvoiceCreateParams extends ApiRequestParams {
     }
 
     /**
-     * Controls whether Stripe will perform <a
-     * href="https://stripe.com/docs/billing/invoices/workflow/#auto_advance">automatic
-     * collection</a> of the invoice. When {@code false}, the invoice's state will not automatically
+     * Controls whether Stripe performs <a
+     * href="https://stripe.com/docs/invoicing/integration/automatic-advancement-collection">automatic
+     * collection</a> of the invoice. If {@code false}, the invoice's state doesn't automatically
      * advance without an explicit action.
      */
     public Builder setAutoAdvance(Boolean autoAdvance) {
@@ -625,6 +653,16 @@ public class InvoiceCreateParams extends ApiRequestParams {
     }
 
     /**
+     * The date when this invoice is in effect. Same as {@code finalized_at} unless overwritten.
+     * When defined, this value replaces the system-generated 'Date of issue' printed on the invoice
+     * PDF and receipt.
+     */
+    public Builder setEffectiveAt(Long effectiveAt) {
+      this.effectiveAt = effectiveAt;
+      return this;
+    }
+
+    /**
      * Add an element to `expand` list. A list is initialized for the first `add/addAll` call, and
      * subsequent calls adds additional elements to the original list. See {@link
      * InvoiceCreateParams#expand} for the field documentation.
@@ -774,13 +812,28 @@ public class InvoiceCreateParams extends ApiRequestParams {
       return this;
     }
 
-    /** Options for invoice PDF rendering. */
+    /**
+     * The rendering-related settings that control how the invoice is displayed on customer-facing
+     * surfaces such as PDF and Hosted Invoice Page.
+     */
+    public Builder setRendering(InvoiceCreateParams.Rendering rendering) {
+      this.rendering = rendering;
+      return this;
+    }
+
+    /**
+     * This is a legacy field that will be removed soon. For details about {@code
+     * rendering_options}, refer to {@code rendering} instead. Options for invoice PDF rendering.
+     */
     public Builder setRenderingOptions(InvoiceCreateParams.RenderingOptions renderingOptions) {
       this.renderingOptions = renderingOptions;
       return this;
     }
 
-    /** Options for invoice PDF rendering. */
+    /**
+     * This is a legacy field that will be removed soon. For details about {@code
+     * rendering_options}, refer to {@code rendering} instead. Options for invoice PDF rendering.
+     */
     public Builder setRenderingOptions(EmptyParam renderingOptions) {
       this.renderingOptions = renderingOptions;
       return this;
@@ -1184,7 +1237,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
      * to pay the invoice, including the invoice's default_payment_method or default_source, if set.
      */
     @SerializedName("default_mandate")
-    String defaultMandate;
+    Object defaultMandate;
 
     /**
      * Map of extra parameters for custom features not available in this client library. The content
@@ -1210,7 +1263,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
     Object paymentMethodTypes;
 
     private PaymentSettings(
-        String defaultMandate,
+        Object defaultMandate,
         Map<String, Object> extraParams,
         PaymentMethodOptions paymentMethodOptions,
         Object paymentMethodTypes) {
@@ -1225,7 +1278,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
     }
 
     public static class Builder {
-      private String defaultMandate;
+      private Object defaultMandate;
 
       private Map<String, Object> extraParams;
 
@@ -1248,6 +1301,16 @@ public class InvoiceCreateParams extends ApiRequestParams {
        * if set.
        */
       public Builder setDefaultMandate(String defaultMandate) {
+        this.defaultMandate = defaultMandate;
+        return this;
+      }
+
+      /**
+       * ID of the mandate to be used for this invoice. It must correspond to the payment method
+       * used to pay the invoice, including the invoice's default_payment_method or default_source,
+       * if set.
+       */
+      public Builder setDefaultMandate(EmptyParam defaultMandate) {
         this.defaultMandate = defaultMandate;
         return this;
       }
@@ -2404,8 +2467,8 @@ public class InvoiceCreateParams extends ApiRequestParams {
 
           /**
            * The bank transfer type that can be used for funding. Permitted values include: {@code
-           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-           * mx_bank_transfer}.
+           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+           * mx_bank_transfer}, or {@code us_bank_transfer}.
            */
           @SerializedName("type")
           String type;
@@ -2477,8 +2540,8 @@ public class InvoiceCreateParams extends ApiRequestParams {
 
             /**
              * The bank transfer type that can be used for funding. Permitted values include: {@code
-             * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-             * mx_bank_transfer}.
+             * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+             * mx_bank_transfer}, or {@code us_bank_transfer}.
              */
             public Builder setType(String type) {
               this.type = type;
@@ -2751,14 +2814,26 @@ public class InvoiceCreateParams extends ApiRequestParams {
                       .FinancialConnections.Permission>
               permissions;
 
+          /** List of data features that you would like to retrieve upon account creation. */
+          @SerializedName("prefetch")
+          List<
+                  InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                      .FinancialConnections.Prefetch>
+              prefetch;
+
           private FinancialConnections(
               Map<String, Object> extraParams,
               List<
                       InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
                           .FinancialConnections.Permission>
-                  permissions) {
+                  permissions,
+              List<
+                      InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                          .FinancialConnections.Prefetch>
+                  prefetch) {
             this.extraParams = extraParams;
             this.permissions = permissions;
+            this.prefetch = prefetch;
           }
 
           public static Builder builder() {
@@ -2773,12 +2848,17 @@ public class InvoiceCreateParams extends ApiRequestParams {
                         .FinancialConnections.Permission>
                 permissions;
 
+            private List<
+                    InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                        .FinancialConnections.Prefetch>
+                prefetch;
+
             /** Finalize and obtain parameter instance from this builder. */
             public InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
                     .FinancialConnections
                 build() {
               return new InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
-                  .FinancialConnections(this.extraParams, this.permissions);
+                  .FinancialConnections(this.extraParams, this.permissions, this.prefetch);
             }
 
             /**
@@ -2847,6 +2927,41 @@ public class InvoiceCreateParams extends ApiRequestParams {
               this.permissions.addAll(elements);
               return this;
             }
+
+            /**
+             * Add an element to `prefetch` list. A list is initialized for the first `add/addAll`
+             * call, and subsequent calls adds additional elements to the original list. See {@link
+             * InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.FinancialConnections#prefetch}
+             * for the field documentation.
+             */
+            public Builder addPrefetch(
+                InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                        .FinancialConnections.Prefetch
+                    element) {
+              if (this.prefetch == null) {
+                this.prefetch = new ArrayList<>();
+              }
+              this.prefetch.add(element);
+              return this;
+            }
+
+            /**
+             * Add all elements to `prefetch` list. A list is initialized for the first `add/addAll`
+             * call, and subsequent calls adds additional elements to the original list. See {@link
+             * InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.FinancialConnections#prefetch}
+             * for the field documentation.
+             */
+            public Builder addAllPrefetch(
+                List<
+                        InvoiceCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount
+                            .FinancialConnections.Prefetch>
+                    elements) {
+              if (this.prefetch == null) {
+                this.prefetch = new ArrayList<>();
+              }
+              this.prefetch.addAll(elements);
+              return this;
+            }
           }
 
           public enum Permission implements ApiRequestParams.EnumParam {
@@ -2866,6 +2981,18 @@ public class InvoiceCreateParams extends ApiRequestParams {
             private final String value;
 
             Permission(String value) {
+              this.value = value;
+            }
+          }
+
+          public enum Prefetch implements ApiRequestParams.EnumParam {
+            @SerializedName("balances")
+            BALANCES("balances");
+
+            @Getter(onMethod_ = {@Override})
+            private final String value;
+
+            Prefetch(String value) {
               this.value = value;
             }
           }
@@ -2943,6 +3070,9 @@ public class InvoiceCreateParams extends ApiRequestParams {
       @SerializedName("paynow")
       PAYNOW("paynow"),
 
+      @SerializedName("paypal")
+      PAYPAL("paypal"),
+
       @SerializedName("promptpay")
       PROMPTPAY("promptpay"),
 
@@ -2965,6 +3095,221 @@ public class InvoiceCreateParams extends ApiRequestParams {
       private final String value;
 
       PaymentMethodType(String value) {
+        this.value = value;
+      }
+    }
+  }
+
+  @Getter
+  public static class Rendering {
+    /**
+     * How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. One
+     * of {@code exclude_tax} or {@code include_inclusive_tax}. {@code include_inclusive_tax} will
+     * include inclusive tax (and exclude exclusive tax) in invoice PDF amounts. {@code exclude_tax}
+     * will exclude all tax (inclusive and exclusive alike) from invoice PDF amounts.
+     */
+    @SerializedName("amount_tax_display")
+    ApiRequestParams.EnumParam amountTaxDisplay;
+
+    /**
+     * Map of extra parameters for custom features not available in this client library. The content
+     * in this map is not serialized under this field's {@code @SerializedName} value. Instead, each
+     * key/value pair is serialized as if the key is a root-level field (serialized) name in this
+     * param object. Effectively, this map is flattened to its parent instance.
+     */
+    @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+    Map<String, Object> extraParams;
+
+    /** Invoice pdf rendering options. */
+    @SerializedName("pdf")
+    Pdf pdf;
+
+    private Rendering(
+        ApiRequestParams.EnumParam amountTaxDisplay, Map<String, Object> extraParams, Pdf pdf) {
+      this.amountTaxDisplay = amountTaxDisplay;
+      this.extraParams = extraParams;
+      this.pdf = pdf;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public static class Builder {
+      private ApiRequestParams.EnumParam amountTaxDisplay;
+
+      private Map<String, Object> extraParams;
+
+      private Pdf pdf;
+
+      /** Finalize and obtain parameter instance from this builder. */
+      public InvoiceCreateParams.Rendering build() {
+        return new InvoiceCreateParams.Rendering(this.amountTaxDisplay, this.extraParams, this.pdf);
+      }
+
+      /**
+       * How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. One
+       * of {@code exclude_tax} or {@code include_inclusive_tax}. {@code include_inclusive_tax} will
+       * include inclusive tax (and exclude exclusive tax) in invoice PDF amounts. {@code
+       * exclude_tax} will exclude all tax (inclusive and exclusive alike) from invoice PDF amounts.
+       */
+      public Builder setAmountTaxDisplay(
+          InvoiceCreateParams.Rendering.AmountTaxDisplay amountTaxDisplay) {
+        this.amountTaxDisplay = amountTaxDisplay;
+        return this;
+      }
+
+      /**
+       * How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. One
+       * of {@code exclude_tax} or {@code include_inclusive_tax}. {@code include_inclusive_tax} will
+       * include inclusive tax (and exclude exclusive tax) in invoice PDF amounts. {@code
+       * exclude_tax} will exclude all tax (inclusive and exclusive alike) from invoice PDF amounts.
+       */
+      public Builder setAmountTaxDisplay(EmptyParam amountTaxDisplay) {
+        this.amountTaxDisplay = amountTaxDisplay;
+        return this;
+      }
+
+      /**
+       * Add a key/value pair to `extraParams` map. A map is initialized for the first `put/putAll`
+       * call, and subsequent calls add additional key/value pairs to the original map. See {@link
+       * InvoiceCreateParams.Rendering#extraParams} for the field documentation.
+       */
+      public Builder putExtraParam(String key, Object value) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.put(key, value);
+        return this;
+      }
+
+      /**
+       * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+       * `put/putAll` call, and subsequent calls add additional key/value pairs to the original map.
+       * See {@link InvoiceCreateParams.Rendering#extraParams} for the field documentation.
+       */
+      public Builder putAllExtraParam(Map<String, Object> map) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.putAll(map);
+        return this;
+      }
+
+      /** Invoice pdf rendering options. */
+      public Builder setPdf(InvoiceCreateParams.Rendering.Pdf pdf) {
+        this.pdf = pdf;
+        return this;
+      }
+    }
+
+    @Getter
+    public static class Pdf {
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      /**
+       * Page size for invoice PDF. Can be set to {@code a4}, {@code letter}, or {@code auto}. If
+       * set to {@code auto}, invoice PDF page size defaults to {@code a4} for customers with
+       * Japanese locale and {@code letter} for customers with other locales.
+       */
+      @SerializedName("page_size")
+      PageSize pageSize;
+
+      private Pdf(Map<String, Object> extraParams, PageSize pageSize) {
+        this.extraParams = extraParams;
+        this.pageSize = pageSize;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Map<String, Object> extraParams;
+
+        private PageSize pageSize;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public InvoiceCreateParams.Rendering.Pdf build() {
+          return new InvoiceCreateParams.Rendering.Pdf(this.extraParams, this.pageSize);
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link InvoiceCreateParams.Rendering.Pdf#extraParams} for the field
+         * documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link InvoiceCreateParams.Rendering.Pdf#extraParams} for the field
+         * documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+
+        /**
+         * Page size for invoice PDF. Can be set to {@code a4}, {@code letter}, or {@code auto}. If
+         * set to {@code auto}, invoice PDF page size defaults to {@code a4} for customers with
+         * Japanese locale and {@code letter} for customers with other locales.
+         */
+        public Builder setPageSize(InvoiceCreateParams.Rendering.Pdf.PageSize pageSize) {
+          this.pageSize = pageSize;
+          return this;
+        }
+      }
+
+      public enum PageSize implements ApiRequestParams.EnumParam {
+        @SerializedName("a4")
+        A4("a4"),
+
+        @SerializedName("auto")
+        AUTO("auto"),
+
+        @SerializedName("letter")
+        LETTER("letter");
+
+        @Getter(onMethod_ = {@Override})
+        private final String value;
+
+        PageSize(String value) {
+          this.value = value;
+        }
+      }
+    }
+
+    public enum AmountTaxDisplay implements ApiRequestParams.EnumParam {
+      @SerializedName("exclude_tax")
+      EXCLUDE_TAX("exclude_tax"),
+
+      @SerializedName("include_inclusive_tax")
+      INCLUDE_INCLUSIVE_TAX("include_inclusive_tax");
+
+      @Getter(onMethod_ = {@Override})
+      private final String value;
+
+      AmountTaxDisplay(String value) {
         this.value = value;
       }
     }
@@ -4046,10 +4391,10 @@ public class InvoiceCreateParams extends ApiRequestParams {
 
     /** Recipient phone (including extension). */
     @SerializedName("phone")
-    String phone;
+    Object phone;
 
     private ShippingDetails(
-        Address address, Map<String, Object> extraParams, String name, String phone) {
+        Address address, Map<String, Object> extraParams, String name, Object phone) {
       this.address = address;
       this.extraParams = extraParams;
       this.name = name;
@@ -4067,7 +4412,7 @@ public class InvoiceCreateParams extends ApiRequestParams {
 
       private String name;
 
-      private String phone;
+      private Object phone;
 
       /** Finalize and obtain parameter instance from this builder. */
       public InvoiceCreateParams.ShippingDetails build() {
@@ -4115,6 +4460,12 @@ public class InvoiceCreateParams extends ApiRequestParams {
 
       /** Recipient phone (including extension). */
       public Builder setPhone(String phone) {
+        this.phone = phone;
+        return this;
+      }
+
+      /** Recipient phone (including extension). */
+      public Builder setPhone(EmptyParam phone) {
         this.phone = phone;
         return this;
       }

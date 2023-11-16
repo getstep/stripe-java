@@ -3,6 +3,7 @@ package com.stripe.param;
 
 import com.google.gson.annotations.SerializedName;
 import com.stripe.net.ApiRequestParams;
+import com.stripe.param.common.EmptyParam;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +14,8 @@ import lombok.Getter;
 public class PaymentIntentCaptureParams extends ApiRequestParams {
   /**
    * The amount to capture from the PaymentIntent, which must be less than or equal to the original
-   * amount. Any additional amount will be automatically refunded. Defaults to the full {@code
-   * amount_capturable} if not provided.
+   * amount. Any additional amount is automatically refunded. Defaults to the full {@code
+   * amount_capturable} if it's not provided.
    */
   @SerializedName("amount_to_capture")
   Long amountToCapture;
@@ -43,6 +44,25 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
   Map<String, Object> extraParams;
 
   /**
+   * Defaults to {@code true}. When capturing a PaymentIntent, setting {@code final_capture} to
+   * {@code false} notifies Stripe to not release the remaining uncaptured funds to make sure that
+   * they're captured in future requests. You can only use this setting when <a
+   * href="https://stripe.com/docs/payments/multicapture">multicapture</a> is available for
+   * PaymentIntents.
+   */
+  @SerializedName("final_capture")
+  Boolean finalCapture;
+
+  /**
+   * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that you can attach
+   * to an object. This can be useful for storing additional information about the object in a
+   * structured format. Individual keys can be unset by posting an empty value to them. All keys can
+   * be unset by posting an empty value to {@code metadata}.
+   */
+  @SerializedName("metadata")
+  Object metadata;
+
+  /**
    * For non-card charges, you can use this value as the complete description that appears on your
    * customers’ statements. Must contain at least one letter, maximum 22 characters.
    */
@@ -52,14 +72,15 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
   /**
    * Provides information about a card payment that customers see on their statements. Concatenated
    * with the prefix (shortened descriptor) or statement descriptor that’s set on the account to
-   * form the complete statement descriptor. Maximum 22 characters for the concatenated descriptor.
+   * form the complete statement descriptor. The concatenated descriptor must be 1-22 characters
+   * long.
    */
   @SerializedName("statement_descriptor_suffix")
   String statementDescriptorSuffix;
 
   /**
-   * The parameters used to automatically create a Transfer when the payment is captured. For more
-   * information, see the PaymentIntents <a
+   * The parameters that you can use to automatically create a transfer after the payment is
+   * captured. Learn more about the <a
    * href="https://stripe.com/docs/payments/connected-accounts">use case for connected accounts</a>.
    */
   @SerializedName("transfer_data")
@@ -70,6 +91,8 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
       Long applicationFeeAmount,
       List<String> expand,
       Map<String, Object> extraParams,
+      Boolean finalCapture,
+      Object metadata,
       String statementDescriptor,
       String statementDescriptorSuffix,
       TransferData transferData) {
@@ -77,6 +100,8 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
     this.applicationFeeAmount = applicationFeeAmount;
     this.expand = expand;
     this.extraParams = extraParams;
+    this.finalCapture = finalCapture;
+    this.metadata = metadata;
     this.statementDescriptor = statementDescriptor;
     this.statementDescriptorSuffix = statementDescriptorSuffix;
     this.transferData = transferData;
@@ -95,6 +120,10 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
 
     private Map<String, Object> extraParams;
 
+    private Boolean finalCapture;
+
+    private Object metadata;
+
     private String statementDescriptor;
 
     private String statementDescriptorSuffix;
@@ -108,6 +137,8 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
           this.applicationFeeAmount,
           this.expand,
           this.extraParams,
+          this.finalCapture,
+          this.metadata,
           this.statementDescriptor,
           this.statementDescriptorSuffix,
           this.transferData);
@@ -115,8 +146,8 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
 
     /**
      * The amount to capture from the PaymentIntent, which must be less than or equal to the
-     * original amount. Any additional amount will be automatically refunded. Defaults to the full
-     * {@code amount_capturable} if not provided.
+     * original amount. Any additional amount is automatically refunded. Defaults to the full {@code
+     * amount_capturable} if it's not provided.
      */
     public Builder setAmountToCapture(Long amountToCapture) {
       this.amountToCapture = amountToCapture;
@@ -188,6 +219,68 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
     }
 
     /**
+     * Defaults to {@code true}. When capturing a PaymentIntent, setting {@code final_capture} to
+     * {@code false} notifies Stripe to not release the remaining uncaptured funds to make sure that
+     * they're captured in future requests. You can only use this setting when <a
+     * href="https://stripe.com/docs/payments/multicapture">multicapture</a> is available for
+     * PaymentIntents.
+     */
+    public Builder setFinalCapture(Boolean finalCapture) {
+      this.finalCapture = finalCapture;
+      return this;
+    }
+
+    /**
+     * Add a key/value pair to `metadata` map. A map is initialized for the first `put/putAll` call,
+     * and subsequent calls add additional key/value pairs to the original map. See {@link
+     * PaymentIntentCaptureParams#metadata} for the field documentation.
+     */
+    @SuppressWarnings("unchecked")
+    public Builder putMetadata(String key, String value) {
+      if (this.metadata == null || this.metadata instanceof EmptyParam) {
+        this.metadata = new HashMap<String, String>();
+      }
+      ((Map<String, String>) this.metadata).put(key, value);
+      return this;
+    }
+
+    /**
+     * Add all map key/value pairs to `metadata` map. A map is initialized for the first
+     * `put/putAll` call, and subsequent calls add additional key/value pairs to the original map.
+     * See {@link PaymentIntentCaptureParams#metadata} for the field documentation.
+     */
+    @SuppressWarnings("unchecked")
+    public Builder putAllMetadata(Map<String, String> map) {
+      if (this.metadata == null || this.metadata instanceof EmptyParam) {
+        this.metadata = new HashMap<String, String>();
+      }
+      ((Map<String, String>) this.metadata).putAll(map);
+      return this;
+    }
+
+    /**
+     * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that you can attach
+     * to an object. This can be useful for storing additional information about the object in a
+     * structured format. Individual keys can be unset by posting an empty value to them. All keys
+     * can be unset by posting an empty value to {@code metadata}.
+     */
+    public Builder setMetadata(EmptyParam metadata) {
+      this.metadata = metadata;
+      return this;
+    }
+
+    /**
+     * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that you can attach
+     * to an object. This can be useful for storing additional information about the object in a
+     * structured format. Individual keys can be unset by posting an empty value to them. All keys
+     * can be unset by posting an empty value to {@code metadata}.
+     */
+    public Builder setMetadata(Map<String, String> metadata) {
+      this.metadata = metadata;
+      return this;
+    }
+
+    /**
      * For non-card charges, you can use this value as the complete description that appears on your
      * customers’ statements. Must contain at least one letter, maximum 22 characters.
      */
@@ -199,8 +292,8 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
     /**
      * Provides information about a card payment that customers see on their statements.
      * Concatenated with the prefix (shortened descriptor) or statement descriptor that’s set on the
-     * account to form the complete statement descriptor. Maximum 22 characters for the concatenated
-     * descriptor.
+     * account to form the complete statement descriptor. The concatenated descriptor must be 1-22
+     * characters long.
      */
     public Builder setStatementDescriptorSuffix(String statementDescriptorSuffix) {
       this.statementDescriptorSuffix = statementDescriptorSuffix;
@@ -208,8 +301,8 @@ public class PaymentIntentCaptureParams extends ApiRequestParams {
     }
 
     /**
-     * The parameters used to automatically create a Transfer when the payment is captured. For more
-     * information, see the PaymentIntents <a
+     * The parameters that you can use to automatically create a transfer after the payment is
+     * captured. Learn more about the <a
      * href="https://stripe.com/docs/payments/connected-accounts">use case for connected
      * accounts</a>.
      */

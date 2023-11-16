@@ -13,7 +13,7 @@ import lombok.Getter;
 
 @Getter
 public class TokenCreateParams extends ApiRequestParams {
-  /** Information for the account this token will represent. */
+  /** Information for the account this token represents. */
   @SerializedName("account")
   Account account;
 
@@ -21,20 +21,25 @@ public class TokenCreateParams extends ApiRequestParams {
   @SerializedName("bank_account")
   BankAccount bankAccount;
 
+  /**
+   * The card this token will represent. If you also pass in a customer, the card must be the ID of
+   * a card belonging to the customer. Otherwise, if you do not pass in a customer, this is a
+   * dictionary containing a user's credit card details, with the options described below.
+   */
   @SerializedName("card")
   Object card;
 
   /**
-   * The customer (owned by the application's account) for which to create a token. This can be used
-   * only with an <a href="https://stripe.com/docs/connect/standard-accounts">OAuth access token</a>
-   * or <a href="https://stripe.com/docs/connect/authentication">Stripe-Account header</a>. For more
-   * details, see <a href="https://stripe.com/docs/connect/cloning-saved-payment-methods">Cloning
-   * Saved Payment Methods</a>.
+   * Create a token for the customer, which is owned by the application's account. You can only use
+   * this with an <a href="https://stripe.com/docs/connect/standard-accounts">OAuth access token</a>
+   * or <a href="https://stripe.com/docs/connect/authentication">Stripe-Account header</a>. Learn
+   * more about <a href="https://stripe.com/docs/connect/cloning-saved-payment-methods">cloning
+   * saved payment methods</a>.
    */
   @SerializedName("customer")
   String customer;
 
-  /** The updated CVC value this token will represent. */
+  /** The updated CVC value this token represents. */
   @SerializedName("cvc_update")
   CvcUpdate cvcUpdate;
 
@@ -51,11 +56,11 @@ public class TokenCreateParams extends ApiRequestParams {
   @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
   Map<String, Object> extraParams;
 
-  /** Information for the person this token will represent. */
+  /** Information for the person this token represents. */
   @SerializedName("person")
   Person person;
 
-  /** The PII this token will represent. */
+  /** The PII this token represents. */
   @SerializedName("pii")
   Pii pii;
 
@@ -117,7 +122,7 @@ public class TokenCreateParams extends ApiRequestParams {
           this.pii);
     }
 
-    /** Information for the account this token will represent. */
+    /** Information for the account this token represents. */
     public Builder setAccount(TokenCreateParams.Account account) {
       this.account = account;
       return this;
@@ -129,30 +134,40 @@ public class TokenCreateParams extends ApiRequestParams {
       return this;
     }
 
+    /**
+     * The card this token will represent. If you also pass in a customer, the card must be the ID
+     * of a card belonging to the customer. Otherwise, if you do not pass in a customer, this is a
+     * dictionary containing a user's credit card details, with the options described below.
+     */
     public Builder setCard(TokenCreateParams.Card card) {
       this.card = card;
       return this;
     }
 
+    /**
+     * The card this token will represent. If you also pass in a customer, the card must be the ID
+     * of a card belonging to the customer. Otherwise, if you do not pass in a customer, this is a
+     * dictionary containing a user's credit card details, with the options described below.
+     */
     public Builder setCard(String card) {
       this.card = card;
       return this;
     }
 
     /**
-     * The customer (owned by the application's account) for which to create a token. This can be
-     * used only with an <a href="https://stripe.com/docs/connect/standard-accounts">OAuth access
+     * Create a token for the customer, which is owned by the application's account. You can only
+     * use this with an <a href="https://stripe.com/docs/connect/standard-accounts">OAuth access
      * token</a> or <a href="https://stripe.com/docs/connect/authentication">Stripe-Account
-     * header</a>. For more details, see <a
-     * href="https://stripe.com/docs/connect/cloning-saved-payment-methods">Cloning Saved Payment
-     * Methods</a>.
+     * header</a>. Learn more about <a
+     * href="https://stripe.com/docs/connect/cloning-saved-payment-methods">cloning saved payment
+     * methods</a>.
      */
     public Builder setCustomer(String customer) {
       this.customer = customer;
       return this;
     }
 
-    /** The updated CVC value this token will represent. */
+    /** The updated CVC value this token represents. */
     public Builder setCvcUpdate(TokenCreateParams.CvcUpdate cvcUpdate) {
       this.cvcUpdate = cvcUpdate;
       return this;
@@ -210,13 +225,13 @@ public class TokenCreateParams extends ApiRequestParams {
       return this;
     }
 
-    /** Information for the person this token will represent. */
+    /** Information for the person this token represents. */
     public Builder setPerson(TokenCreateParams.Person person) {
       this.person = person;
       return this;
     }
 
-    /** The PII this token will represent. */
+    /** The PII this token represents. */
     public Builder setPii(TokenCreateParams.Pii pii) {
       this.pii = pii;
       return this;
@@ -1598,6 +1613,9 @@ public class TokenCreateParams extends ApiRequestParams {
         @SerializedName("incorporated_non_profit")
         INCORPORATED_NON_PROFIT("incorporated_non_profit"),
 
+        @SerializedName("incorporated_partnership")
+        INCORPORATED_PARTNERSHIP("incorporated_partnership"),
+
         @SerializedName("limited_liability_partnership")
         LIMITED_LIABILITY_PARTNERSHIP("limited_liability_partnership"),
 
@@ -1641,7 +1659,10 @@ public class TokenCreateParams extends ApiRequestParams {
         UNINCORPORATED_ASSOCIATION("unincorporated_association"),
 
         @SerializedName("unincorporated_non_profit")
-        UNINCORPORATED_NON_PROFIT("unincorporated_non_profit");
+        UNINCORPORATED_NON_PROFIT("unincorporated_non_profit"),
+
+        @SerializedName("unincorporated_partnership")
+        UNINCORPORATED_PARTNERSHIP("unincorporated_partnership");
 
         @Getter(onMethod_ = {@Override})
         private final String value;
@@ -1707,11 +1728,11 @@ public class TokenCreateParams extends ApiRequestParams {
       String gender;
 
       /**
-       * The government-issued ID number of the individual, as appropriate for the representative’s
+       * The government-issued ID number of the individual, as appropriate for the representative's
        * country. (Examples are a Social Security Number in the U.S., or a Social Insurance Number
        * in Canada). Instead of the number itself, you can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-       * with Stripe.js</a>.
+       * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token created with
+       * Stripe.js</a>.
        */
       @SerializedName("id_number")
       String idNumber;
@@ -1720,9 +1741,8 @@ public class TokenCreateParams extends ApiRequestParams {
        * The government-issued secondary ID number of the individual, as appropriate for the
        * representative's country, will be used for enhanced verification checks. In Thailand, this
        * would be the laser code found on the back of an ID card. Instead of the number itself, you
-       * can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-       * with Stripe.js</a>.
+       * can also provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII
+       * token created with Stripe.js</a>.
        */
       @SerializedName("id_number_secondary")
       String idNumberSecondary;
@@ -1995,7 +2015,7 @@ public class TokenCreateParams extends ApiRequestParams {
          * documentation.
          */
         @SuppressWarnings("unchecked")
-        public Builder addFullNameAliase(String element) {
+        public Builder addFullNameAlias(String element) {
           if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
             this.fullNameAliases = new ArrayList<String>();
           }
@@ -2010,7 +2030,7 @@ public class TokenCreateParams extends ApiRequestParams {
          * documentation.
          */
         @SuppressWarnings("unchecked")
-        public Builder addAllFullNameAliase(List<String> elements) {
+        public Builder addAllFullNameAlias(List<String> elements) {
           if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
             this.fullNameAliases = new ArrayList<String>();
           }
@@ -2041,10 +2061,10 @@ public class TokenCreateParams extends ApiRequestParams {
 
         /**
          * The government-issued ID number of the individual, as appropriate for the
-         * representative’s country. (Examples are a Social Security Number in the U.S., or a Social
+         * representative's country. (Examples are a Social Security Number in the U.S., or a Social
          * Insurance Number in Canada). Instead of the number itself, you can also provide a <a
-         * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-         * with Stripe.js</a>.
+         * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token created with
+         * Stripe.js</a>.
          */
         public Builder setIdNumber(String idNumber) {
           this.idNumber = idNumber;
@@ -2056,8 +2076,8 @@ public class TokenCreateParams extends ApiRequestParams {
          * representative's country, will be used for enhanced verification checks. In Thailand,
          * this would be the laser code found on the back of an ID card. Instead of the number
          * itself, you can also provide a <a
-         * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-         * with Stripe.js</a>.
+         * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token created with
+         * Stripe.js</a>.
          */
         public Builder setIdNumberSecondary(String idNumberSecondary) {
           this.idNumberSecondary = idNumberSecondary;
@@ -3523,35 +3543,49 @@ public class TokenCreateParams extends ApiRequestParams {
 
   @Getter
   public static class Card {
+    /** City / District / Suburb / Town / Village. */
     @SerializedName("address_city")
     String addressCity;
 
+    /** Billing address country, if provided. */
     @SerializedName("address_country")
     String addressCountry;
 
+    /** Address line 1 (Street address / PO Box / Company name). */
     @SerializedName("address_line1")
     String addressLine1;
 
+    /** Address line 2 (Apartment / Suite / Unit / Building). */
     @SerializedName("address_line2")
     String addressLine2;
 
+    /** State / County / Province / Region. */
     @SerializedName("address_state")
     String addressState;
 
+    /** ZIP or postal code. */
     @SerializedName("address_zip")
     String addressZip;
 
+    /**
+     * Required in order to add the card to an account; in all other cases, this parameter is not
+     * used. When added to an account, the card (which must be a debit card) can be used as a
+     * transfer destination for funds in this currency.
+     */
     @SerializedName("currency")
     String currency;
 
+    /** Card security code. Highly recommended to always include this value. */
     @SerializedName("cvc")
     String cvc;
 
-    /** <strong>Required.</strong> */
+    /** <strong>Required.</strong> Two-digit number representing the card's expiration month. */
     @SerializedName("exp_month")
     String expMonth;
 
-    /** <strong>Required.</strong> */
+    /**
+     * <strong>Required.</strong> Two- or four-digit number representing the card's expiration year.
+     */
     @SerializedName("exp_year")
     String expYear;
 
@@ -3564,10 +3598,11 @@ public class TokenCreateParams extends ApiRequestParams {
     @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
     Map<String, Object> extraParams;
 
+    /** Cardholder's full name. */
     @SerializedName("name")
     String name;
 
-    /** <strong>Required.</strong> */
+    /** <strong>Required.</strong> The card number, as a string without any separators. */
     @SerializedName("number")
     String number;
 
@@ -3649,53 +3684,68 @@ public class TokenCreateParams extends ApiRequestParams {
             this.number);
       }
 
+      /** City / District / Suburb / Town / Village. */
       public Builder setAddressCity(String addressCity) {
         this.addressCity = addressCity;
         return this;
       }
 
+      /** Billing address country, if provided. */
       public Builder setAddressCountry(String addressCountry) {
         this.addressCountry = addressCountry;
         return this;
       }
 
+      /** Address line 1 (Street address / PO Box / Company name). */
       public Builder setAddressLine1(String addressLine1) {
         this.addressLine1 = addressLine1;
         return this;
       }
 
+      /** Address line 2 (Apartment / Suite / Unit / Building). */
       public Builder setAddressLine2(String addressLine2) {
         this.addressLine2 = addressLine2;
         return this;
       }
 
+      /** State / County / Province / Region. */
       public Builder setAddressState(String addressState) {
         this.addressState = addressState;
         return this;
       }
 
+      /** ZIP or postal code. */
       public Builder setAddressZip(String addressZip) {
         this.addressZip = addressZip;
         return this;
       }
 
+      /**
+       * Required in order to add the card to an account; in all other cases, this parameter is not
+       * used. When added to an account, the card (which must be a debit card) can be used as a
+       * transfer destination for funds in this currency.
+       */
       public Builder setCurrency(String currency) {
         this.currency = currency;
         return this;
       }
 
+      /** Card security code. Highly recommended to always include this value. */
       public Builder setCvc(String cvc) {
         this.cvc = cvc;
         return this;
       }
 
-      /** <strong>Required.</strong> */
+      /** <strong>Required.</strong> Two-digit number representing the card's expiration month. */
       public Builder setExpMonth(String expMonth) {
         this.expMonth = expMonth;
         return this;
       }
 
-      /** <strong>Required.</strong> */
+      /**
+       * <strong>Required.</strong> Two- or four-digit number representing the card's expiration
+       * year.
+       */
       public Builder setExpYear(String expYear) {
         this.expYear = expYear;
         return this;
@@ -3727,12 +3777,13 @@ public class TokenCreateParams extends ApiRequestParams {
         return this;
       }
 
+      /** Cardholder's full name. */
       public Builder setName(String name) {
         this.name = name;
         return this;
       }
 
-      /** <strong>Required.</strong> */
+      /** <strong>Required.</strong> The card number, as a string without any separators. */
       public Builder setNumber(String number) {
         this.number = number;
         return this;
@@ -3810,6 +3861,10 @@ public class TokenCreateParams extends ApiRequestParams {
 
   @Getter
   public static class Person {
+    /** Details on the legal guardian's acceptance of the required Stripe agreements. */
+    @SerializedName("additional_tos_acceptances")
+    AdditionalTosAcceptances additionalTosAcceptances;
+
     /** The person's address. */
     @SerializedName("address")
     Address address;
@@ -3869,9 +3924,8 @@ public class TokenCreateParams extends ApiRequestParams {
     /**
      * The person's ID number, as appropriate for their country. For example, a social security
      * number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you
-     * can also provide a <a
-     * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided by
-     * Stripe.js</a>.
+     * can also provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII
+     * token provided by Stripe.js</a>.
      */
     @SerializedName("id_number")
     String idNumber;
@@ -3880,7 +3934,7 @@ public class TokenCreateParams extends ApiRequestParams {
      * The person's secondary ID number, as appropriate for their country, will be used for enhanced
      * verification checks. In Thailand, this would be the laser code found on the back of an ID
      * card. Instead of the number itself, you can also provide a <a
-     * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided by
+     * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token provided by
      * Stripe.js</a>.
      */
     @SerializedName("id_number_secondary")
@@ -3948,6 +4002,7 @@ public class TokenCreateParams extends ApiRequestParams {
     Verification verification;
 
     private Person(
+        AdditionalTosAcceptances additionalTosAcceptances,
         Address address,
         AddressKana addressKana,
         AddressKanji addressKanji,
@@ -3974,6 +4029,7 @@ public class TokenCreateParams extends ApiRequestParams {
         Relationship relationship,
         String ssnLast4,
         Verification verification) {
+      this.additionalTosAcceptances = additionalTosAcceptances;
       this.address = address;
       this.addressKana = addressKana;
       this.addressKanji = addressKanji;
@@ -4007,6 +4063,8 @@ public class TokenCreateParams extends ApiRequestParams {
     }
 
     public static class Builder {
+      private AdditionalTosAcceptances additionalTosAcceptances;
+
       private Address address;
 
       private AddressKana addressKana;
@@ -4062,6 +4120,7 @@ public class TokenCreateParams extends ApiRequestParams {
       /** Finalize and obtain parameter instance from this builder. */
       public TokenCreateParams.Person build() {
         return new TokenCreateParams.Person(
+            this.additionalTosAcceptances,
             this.address,
             this.addressKana,
             this.addressKanji,
@@ -4088,6 +4147,13 @@ public class TokenCreateParams extends ApiRequestParams {
             this.relationship,
             this.ssnLast4,
             this.verification);
+      }
+
+      /** Details on the legal guardian's acceptance of the required Stripe agreements. */
+      public Builder setAdditionalTosAcceptances(
+          TokenCreateParams.Person.AdditionalTosAcceptances additionalTosAcceptances) {
+        this.additionalTosAcceptances = additionalTosAcceptances;
+        return this;
       }
 
       /** The person's address. */
@@ -4182,7 +4248,7 @@ public class TokenCreateParams extends ApiRequestParams {
        * TokenCreateParams.Person#fullNameAliases} for the field documentation.
        */
       @SuppressWarnings("unchecked")
-      public Builder addFullNameAliase(String element) {
+      public Builder addFullNameAlias(String element) {
         if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
           this.fullNameAliases = new ArrayList<String>();
         }
@@ -4196,7 +4262,7 @@ public class TokenCreateParams extends ApiRequestParams {
        * {@link TokenCreateParams.Person#fullNameAliases} for the field documentation.
        */
       @SuppressWarnings("unchecked")
-      public Builder addAllFullNameAliase(List<String> elements) {
+      public Builder addAllFullNameAlias(List<String> elements) {
         if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
           this.fullNameAliases = new ArrayList<String>();
         }
@@ -4229,8 +4295,8 @@ public class TokenCreateParams extends ApiRequestParams {
        * The person's ID number, as appropriate for their country. For example, a social security
        * number in the U.S., social insurance number in Canada, etc. Instead of the number itself,
        * you can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided
-       * by Stripe.js</a>.
+       * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token provided by
+       * Stripe.js</a>.
        */
       public Builder setIdNumber(String idNumber) {
         this.idNumber = idNumber;
@@ -4241,8 +4307,8 @@ public class TokenCreateParams extends ApiRequestParams {
        * The person's secondary ID number, as appropriate for their country, will be used for
        * enhanced verification checks. In Thailand, this would be the laser code found on the back
        * of an ID card. Instead of the number itself, you can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided
-       * by Stripe.js</a>.
+       * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token provided by
+       * Stripe.js</a>.
        */
       public Builder setIdNumberSecondary(String idNumberSecondary) {
         this.idNumberSecondary = idNumberSecondary;
@@ -4372,6 +4438,199 @@ public class TokenCreateParams extends ApiRequestParams {
       public Builder setVerification(TokenCreateParams.Person.Verification verification) {
         this.verification = verification;
         return this;
+      }
+    }
+
+    @Getter
+    public static class AdditionalTosAcceptances {
+      /** Details on the legal guardian's acceptance of the main Stripe service agreement. */
+      @SerializedName("account")
+      Account account;
+
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private AdditionalTosAcceptances(Account account, Map<String, Object> extraParams) {
+        this.account = account;
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Account account;
+
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public TokenCreateParams.Person.AdditionalTosAcceptances build() {
+          return new TokenCreateParams.Person.AdditionalTosAcceptances(
+              this.account, this.extraParams);
+        }
+
+        /** Details on the legal guardian's acceptance of the main Stripe service agreement. */
+        public Builder setAccount(
+            TokenCreateParams.Person.AdditionalTosAcceptances.Account account) {
+          this.account = account;
+          return this;
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link TokenCreateParams.Person.AdditionalTosAcceptances#extraParams} for the
+         * field documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link TokenCreateParams.Person.AdditionalTosAcceptances#extraParams} for the
+         * field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+      }
+
+      @Getter
+      public static class Account {
+        /**
+         * The Unix timestamp marking when the account representative accepted the service
+         * agreement.
+         */
+        @SerializedName("date")
+        Long date;
+
+        /**
+         * Map of extra parameters for custom features not available in this client library. The
+         * content in this map is not serialized under this field's {@code @SerializedName} value.
+         * Instead, each key/value pair is serialized as if the key is a root-level field
+         * (serialized) name in this param object. Effectively, this map is flattened to its parent
+         * instance.
+         */
+        @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+        Map<String, Object> extraParams;
+
+        /** The IP address from which the account representative accepted the service agreement. */
+        @SerializedName("ip")
+        String ip;
+
+        /**
+         * The user agent of the browser from which the account representative accepted the service
+         * agreement.
+         */
+        @SerializedName("user_agent")
+        Object userAgent;
+
+        private Account(Long date, Map<String, Object> extraParams, String ip, Object userAgent) {
+          this.date = date;
+          this.extraParams = extraParams;
+          this.ip = ip;
+          this.userAgent = userAgent;
+        }
+
+        public static Builder builder() {
+          return new Builder();
+        }
+
+        public static class Builder {
+          private Long date;
+
+          private Map<String, Object> extraParams;
+
+          private String ip;
+
+          private Object userAgent;
+
+          /** Finalize and obtain parameter instance from this builder. */
+          public TokenCreateParams.Person.AdditionalTosAcceptances.Account build() {
+            return new TokenCreateParams.Person.AdditionalTosAcceptances.Account(
+                this.date, this.extraParams, this.ip, this.userAgent);
+          }
+
+          /**
+           * The Unix timestamp marking when the account representative accepted the service
+           * agreement.
+           */
+          public Builder setDate(Long date) {
+            this.date = date;
+            return this;
+          }
+
+          /**
+           * Add a key/value pair to `extraParams` map. A map is initialized for the first
+           * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+           * map. See {@link TokenCreateParams.Person.AdditionalTosAcceptances.Account#extraParams}
+           * for the field documentation.
+           */
+          public Builder putExtraParam(String key, Object value) {
+            if (this.extraParams == null) {
+              this.extraParams = new HashMap<>();
+            }
+            this.extraParams.put(key, value);
+            return this;
+          }
+
+          /**
+           * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+           * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+           * map. See {@link TokenCreateParams.Person.AdditionalTosAcceptances.Account#extraParams}
+           * for the field documentation.
+           */
+          public Builder putAllExtraParam(Map<String, Object> map) {
+            if (this.extraParams == null) {
+              this.extraParams = new HashMap<>();
+            }
+            this.extraParams.putAll(map);
+            return this;
+          }
+
+          /**
+           * The IP address from which the account representative accepted the service agreement.
+           */
+          public Builder setIp(String ip) {
+            this.ip = ip;
+            return this;
+          }
+
+          /**
+           * The user agent of the browser from which the account representative accepted the
+           * service agreement.
+           */
+          public Builder setUserAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+          }
+
+          /**
+           * The user agent of the browser from which the account representative accepted the
+           * service agreement.
+           */
+          public Builder setUserAgent(EmptyParam userAgent) {
+            this.userAgent = userAgent;
+            return this;
+          }
+        }
       }
     }
 
@@ -5550,6 +5809,10 @@ public class TokenCreateParams extends ApiRequestParams {
       @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
       Map<String, Object> extraParams;
 
+      /** Whether the person is the legal guardian of the account's representative. */
+      @SerializedName("legal_guardian")
+      Boolean legalGuardian;
+
       /** Whether the person is an owner of the account’s legal entity. */
       @SerializedName("owner")
       Boolean owner;
@@ -5576,6 +5839,7 @@ public class TokenCreateParams extends ApiRequestParams {
           Boolean director,
           Boolean executive,
           Map<String, Object> extraParams,
+          Boolean legalGuardian,
           Boolean owner,
           Object percentOwnership,
           Boolean representative,
@@ -5583,6 +5847,7 @@ public class TokenCreateParams extends ApiRequestParams {
         this.director = director;
         this.executive = executive;
         this.extraParams = extraParams;
+        this.legalGuardian = legalGuardian;
         this.owner = owner;
         this.percentOwnership = percentOwnership;
         this.representative = representative;
@@ -5600,6 +5865,8 @@ public class TokenCreateParams extends ApiRequestParams {
 
         private Map<String, Object> extraParams;
 
+        private Boolean legalGuardian;
+
         private Boolean owner;
 
         private Object percentOwnership;
@@ -5614,6 +5881,7 @@ public class TokenCreateParams extends ApiRequestParams {
               this.director,
               this.executive,
               this.extraParams,
+              this.legalGuardian,
               this.owner,
               this.percentOwnership,
               this.representative,
@@ -5664,6 +5932,12 @@ public class TokenCreateParams extends ApiRequestParams {
             this.extraParams = new HashMap<>();
           }
           this.extraParams.putAll(map);
+          return this;
+        }
+
+        /** Whether the person is the legal guardian of the account's representative. */
+        public Builder setLegalGuardian(Boolean legalGuardian) {
+          this.legalGuardian = legalGuardian;
           return this;
         }
 

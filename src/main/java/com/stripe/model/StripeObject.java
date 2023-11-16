@@ -6,7 +6,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.stripe.net.ApiResource;
 import com.stripe.net.StripeResponse;
+import com.stripe.net.StripeResponseGetter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 public abstract class StripeObject implements StripeObjectInterface {
   public static final Gson PRETTY_PRINT_GSON =
@@ -56,7 +58,7 @@ public abstract class StripeObject implements StripeObjectInterface {
     // Lazily initialize this the first time the getter is called.
     if ((this.rawJsonObject == null) && (this.getLastResponse() != null)) {
       this.rawJsonObject =
-          ApiResource.GSON.fromJson(this.getLastResponse().body(), JsonObject.class);
+          ApiResource.INTERNAL_GSON.fromJson(this.getLastResponse().body(), JsonObject.class);
     }
 
     return this.rawJsonObject;
@@ -83,5 +85,52 @@ public abstract class StripeObject implements StripeObjectInterface {
 
   protected static boolean equals(Object a, Object b) {
     return a == null ? b == null : a.equals(b);
+  }
+
+  /**
+   * Deserialize JSON into super class {@code StripeObject} where the underlying concrete class
+   * corresponds to type specified in root-level {@code object} field of the JSON input.
+   *
+   * <p>Note that the expected JSON input is data at the {@code object} value, as a sibling to
+   * {@code previousAttributes}, and not the discriminator field containing a string.
+   *
+   * @return JSON data to be deserialized to super class {@code StripeObject}
+   */
+  static StripeObject deserializeStripeObject(
+      JsonObject eventDataObjectJson, StripeResponseGetter responseGetter) {
+    String type = eventDataObjectJson.getAsJsonObject().get("object").getAsString();
+    Class<? extends StripeObject> cl = EventDataClassLookup.classLookup.get(type);
+    StripeObject object =
+        ApiResource.deserializeStripeObject(
+            eventDataObjectJson, cl != null ? cl : StripeRawJsonObject.class, responseGetter);
+    return object;
+  }
+
+  public static StripeObject deserializeStripeObject(
+      JsonObject payload, Type type, StripeResponseGetter responseGetter) {
+    StripeObject object = ApiResource.INTERNAL_GSON.fromJson(payload, type);
+
+    if (object instanceof StripeActiveObject) {
+      ((StripeActiveObject) object).setResponseGetter(responseGetter);
+    }
+
+    return object;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T deserializeStripeObject(
+      String payload, Class<T> type, StripeResponseGetter responseGetter) {
+    return (T) deserializeStripeObject(payload, (Type) type, responseGetter);
+  }
+
+  public static StripeObject deserializeStripeObject(
+      String payload, Type type, StripeResponseGetter responseGetter) {
+    StripeObject object = ApiResource.INTERNAL_GSON.fromJson(payload, type);
+
+    if (object instanceof StripeActiveObject) {
+      ((StripeActiveObject) object).setResponseGetter(responseGetter);
+    }
+
+    return object;
   }
 }

@@ -2,19 +2,27 @@
 package com.stripe.model.issuing;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.BalanceTransactionSource;
 import com.stripe.model.ExpandableField;
 import com.stripe.model.MetadataStore;
 import com.stripe.model.StripeObject;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.issuing.AuthorizationApproveParams;
+import com.stripe.param.issuing.AuthorizationCaptureParams;
+import com.stripe.param.issuing.AuthorizationCreateParams;
 import com.stripe.param.issuing.AuthorizationDeclineParams;
+import com.stripe.param.issuing.AuthorizationExpireParams;
+import com.stripe.param.issuing.AuthorizationIncrementParams;
 import com.stripe.param.issuing.AuthorizationListParams;
 import com.stripe.param.issuing.AuthorizationRetrieveParams;
+import com.stripe.param.issuing.AuthorizationReverseParams;
 import com.stripe.param.issuing.AuthorizationUpdateParams;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +36,8 @@ import lombok.Setter;
  * href="https://stripe.com/docs/issuing/purchases/authorizations">Authorizations</a> must be
  * approved for the purchase to be completed successfully.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/issuing/purchases/authorizations">Issued Card
- * Authorizations</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/issuing/purchases/authorizations">Issued card
+ * authorizations</a>
  */
 @Getter
 @Setter
@@ -169,6 +177,15 @@ public class Authorization extends ApiResource
   String status;
 
   /**
+   * <a href="https://stripe.com/docs/api/issuing/tokens/object">Token</a> object used for this
+   * authorization. If a network token was not used for this authorization, this field will be null.
+   */
+  @SerializedName("token")
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  ExpandableField<Token> token;
+
+  /**
    * List of <a href="https://stripe.com/docs/api/issuing/transactions">transactions</a> associated
    * with this authorization.
    */
@@ -211,180 +228,216 @@ public class Authorization extends ApiResource
     this.cardholder = new ExpandableField<Cardholder>(expandableObject.getId(), expandableObject);
   }
 
+  /** Get ID of expandable {@code token} object. */
+  public String getToken() {
+    return (this.token != null) ? this.token.getId() : null;
+  }
+
+  public void setToken(String id) {
+    this.token = ApiResource.setExpandableFieldId(id, this.token);
+  }
+
+  /** Get expanded {@code token}. */
+  public Token getTokenObject() {
+    return (this.token != null) ? this.token.getExpanded() : null;
+  }
+
+  public void setTokenObject(Token expandableObject) {
+    this.token = new ExpandableField<Token>(expandableObject.getId(), expandableObject);
+  }
+
   /**
-   * Approves a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Approves a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real-time
-   * authorization</a> flow. You can also respond directly to the webhook request to approve an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to approve an authorization</a>.
    */
   public Authorization approve() throws StripeException {
     return approve((Map<String, Object>) null, (RequestOptions) null);
   }
 
   /**
-   * Approves a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Approves a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real-time
-   * authorization</a> flow. You can also respond directly to the webhook request to approve an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to approve an authorization</a>.
    */
   public Authorization approve(RequestOptions options) throws StripeException {
     return approve((Map<String, Object>) null, options);
   }
 
   /**
-   * Approves a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Approves a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real-time
-   * authorization</a> flow. You can also respond directly to the webhook request to approve an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to approve an authorization</a>.
    */
   public Authorization approve(Map<String, Object> params) throws StripeException {
     return approve(params, (RequestOptions) null);
   }
 
   /**
-   * Approves a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Approves a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real-time
-   * authorization</a> flow. You can also respond directly to the webhook request to approve an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to approve an authorization</a>.
    */
   public Authorization approve(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/issuing/authorizations/%s/approve", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Authorization.class,
             options,
-            String.format(
-                "/v1/issuing/authorizations/%s/approve", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * Approves a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Approves a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real-time
-   * authorization</a> flow. You can also respond directly to the webhook request to approve an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to approve an authorization</a>.
    */
   public Authorization approve(AuthorizationApproveParams params) throws StripeException {
     return approve(params, (RequestOptions) null);
   }
 
   /**
-   * Approves a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Approves a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real-time
-   * authorization</a> flow. You can also respond directly to the webhook request to approve an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to approve an authorization</a>.
    */
   public Authorization approve(AuthorizationApproveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/issuing/authorizations/%s/approve", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Authorization.class,
             options,
-            String.format(
-                "/v1/issuing/authorizations/%s/approve", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * Declines a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Declines a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real time
-   * authorization</a> flow. You can also respond directly to the webhook request to decline an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to decline an authorization</a>.
    */
   public Authorization decline() throws StripeException {
     return decline((Map<String, Object>) null, (RequestOptions) null);
   }
 
   /**
-   * Declines a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Declines a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real time
-   * authorization</a> flow. You can also respond directly to the webhook request to decline an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to decline an authorization</a>.
    */
   public Authorization decline(RequestOptions options) throws StripeException {
     return decline((Map<String, Object>) null, options);
   }
 
   /**
-   * Declines a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Declines a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real time
-   * authorization</a> flow. You can also respond directly to the webhook request to decline an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to decline an authorization</a>.
    */
   public Authorization decline(Map<String, Object> params) throws StripeException {
     return decline(params, (RequestOptions) null);
   }
 
   /**
-   * Declines a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Declines a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real time
-   * authorization</a> flow. You can also respond directly to the webhook request to decline an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to decline an authorization</a>.
    */
   public Authorization decline(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/issuing/authorizations/%s/decline", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Authorization.class,
             options,
-            String.format(
-                "/v1/issuing/authorizations/%s/decline", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * Declines a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Declines a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real time
-   * authorization</a> flow. You can also respond directly to the webhook request to decline an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to decline an authorization</a>.
    */
   public Authorization decline(AuthorizationDeclineParams params) throws StripeException {
     return decline(params, (RequestOptions) null);
   }
 
   /**
-   * Declines a pending Issuing {@code Authorization} object. This request should be made within the
-   * timeout window of the <a
+   * [Deprecated] Declines a pending Issuing {@code Authorization} object. This request should be
+   * made within the timeout window of the <a
    * href="https://stripe.com/docs/issuing/controls/real-time-authorizations">real time
-   * authorization</a> flow. You can also respond directly to the webhook request to decline an
-   * authorization (preferred). More details can be found <a
-   * href="https://site-admin.stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">here</a>.
+   * authorization</a> flow. This method is deprecated. Instead, <a
+   * href="https://stripe.com/docs/issuing/controls/real-time-authorizations#authorization-handling">respond
+   * directly to the webhook request to decline an authorization</a>.
    */
   public Authorization decline(AuthorizationDeclineParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/issuing/authorizations/%s/decline", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Authorization.class,
             options,
-            String.format(
-                "/v1/issuing/authorizations/%s/decline", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -401,8 +454,16 @@ public class Authorization extends ApiResource
    */
   public static AuthorizationCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/issuing/authorizations");
-    return ApiResource.requestCollection(url, params, AuthorizationCollection.class, options);
+    String path = "/v1/issuing/authorizations";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            AuthorizationCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -420,8 +481,17 @@ public class Authorization extends ApiResource
    */
   public static AuthorizationCollection list(AuthorizationListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/issuing/authorizations");
-    return ApiResource.requestCollection(url, params, AuthorizationCollection.class, options);
+    String path = "/v1/issuing/authorizations";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            AuthorizationCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves an Issuing {@code Authorization} object. */
@@ -439,26 +509,35 @@ public class Authorization extends ApiResource
   public static Authorization retrieve(
       String authorization, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(authorization));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Authorization.class,
             options,
-            String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(authorization)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves an Issuing {@code Authorization} object. */
   public static Authorization retrieve(
       String authorization, AuthorizationRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(authorization));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Authorization.class,
             options,
-            String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(authorization)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -477,13 +556,17 @@ public class Authorization extends ApiResource
   @Override
   public Authorization update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Authorization.class,
             options,
-            String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -500,13 +583,18 @@ public class Authorization extends ApiResource
    */
   public Authorization update(AuthorizationUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Authorization.class,
             options,
-            String.format("/v1/issuing/authorizations/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Authorization.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -516,6 +604,10 @@ public class Authorization extends ApiResource
     /** The fee charged by the ATM for the cash withdrawal. */
     @SerializedName("atm_fee")
     Long atmFee;
+
+    /** The amount of cash requested by the cardholder. */
+    @SerializedName("cashback_amount")
+    Long cashbackAmount;
   }
 
   @Getter
@@ -560,6 +652,14 @@ public class Authorization extends ApiResource
     /** State where the seller is located. */
     @SerializedName("state")
     String state;
+
+    /** An ID assigned by the seller to the location of the sale. */
+    @SerializedName("terminal_id")
+    String terminalId;
+
+    /** URL provided by the merchant on a 3DS request. */
+    @SerializedName("url")
+    String url;
   }
 
   @Getter
@@ -630,6 +730,10 @@ public class Authorization extends ApiResource
       /** The fee charged by the ATM for the cash withdrawal. */
       @SerializedName("atm_fee")
       Long atmFee;
+
+      /** The amount of cash requested by the cardholder. */
+      @SerializedName("cashback_amount")
+      Long cashbackAmount;
     }
   }
 
@@ -657,6 +761,16 @@ public class Authorization extends ApiResource
     /** Whether this request was approved. */
     @SerializedName("approved")
     Boolean approved;
+
+    /**
+     * A code created by Stripe which is shared with the merchant to validate the authorization.
+     * This field will be populated if the authorization message was approved. The code typically
+     * starts with the letter &quot;S&quot;, followed by a six-digit number. For example,
+     * &quot;S498162&quot;. Please note that the code is not guaranteed to be unique across
+     * authorizations.
+     */
+    @SerializedName("authorization_code")
+    String authorizationCode;
 
     /** Time at which the object was created. Measured in seconds since the Unix epoch. */
     @SerializedName("created")
@@ -714,6 +828,10 @@ public class Authorization extends ApiResource
       /** The fee charged by the ATM for the cash withdrawal. */
       @SerializedName("atm_fee")
       Long atmFee;
+
+      /** The amount of cash requested by the cardholder. */
+      @SerializedName("cashback_amount")
+      Long cashbackAmount;
     }
   }
 
@@ -767,6 +885,10 @@ public class Authorization extends ApiResource
     @SerializedName("address_postal_code_check")
     String addressPostalCodeCheck;
 
+    /** The exemption applied to this authorization. */
+    @SerializedName("authentication_exemption")
+    AuthenticationExemption authenticationExemption;
+
     /**
      * Whether the cardholder provided a CVC and if it matched Stripe’s record.
      *
@@ -782,5 +904,341 @@ public class Authorization extends ApiResource
      */
     @SerializedName("expiry_check")
     String expiryCheck;
+
+    /** The postal code submitted as part of the authorization used for postal code verification. */
+    @SerializedName("postal_code")
+    String postalCode;
+
+    /** 3D Secure details. */
+    @SerializedName("three_d_secure")
+    ThreeDSecure threeDSecure;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class AuthenticationExemption extends StripeObject {
+      /**
+       * The entity that requested the exemption, either the acquiring merchant or the Issuing user.
+       *
+       * <p>One of {@code acquirer}, or {@code issuer}.
+       */
+      @SerializedName("claimed_by")
+      String claimedBy;
+
+      /**
+       * The specific exemption claimed for this authorization.
+       *
+       * <p>One of {@code low_value_transaction}, or {@code transaction_risk_analysis}.
+       */
+      @SerializedName("type")
+      String type;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class ThreeDSecure extends StripeObject {
+      /**
+       * The outcome of the 3D Secure authentication request.
+       *
+       * <p>One of {@code attempt_acknowledged}, {@code authenticated}, {@code failed}, or {@code
+       * required}.
+       */
+      @SerializedName("result")
+      String result;
+    }
+  }
+
+  public TestHelpers getTestHelpers() {
+    return new TestHelpers(this);
+  }
+
+  public static class TestHelpers {
+    private final Authorization resource;
+
+    private TestHelpers(Authorization resource) {
+      this.resource = resource;
+    }
+
+    /** Create a test-mode authorization. */
+    public static Authorization create(Map<String, Object> params) throws StripeException {
+      return create(params, (RequestOptions) null);
+    }
+
+    /** Create a test-mode authorization. */
+    public static Authorization create(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path = "/v1/test_helpers/issuing/authorizations";
+      return getGlobalResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Create a test-mode authorization. */
+    public static Authorization create(AuthorizationCreateParams params) throws StripeException {
+      return create(params, (RequestOptions) null);
+    }
+
+    /** Create a test-mode authorization. */
+    public static Authorization create(AuthorizationCreateParams params, RequestOptions options)
+        throws StripeException {
+      String path = "/v1/test_helpers/issuing/authorizations";
+      ApiResource.checkNullTypedParams(path, params);
+      return getGlobalResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Increment a test-mode Authorization. */
+    public Authorization increment(Map<String, Object> params) throws StripeException {
+      return increment(params, (RequestOptions) null);
+    }
+
+    /** Increment a test-mode Authorization. */
+    public Authorization increment(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/increment",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Increment a test-mode Authorization. */
+    public Authorization increment(AuthorizationIncrementParams params) throws StripeException {
+      return increment(params, (RequestOptions) null);
+    }
+
+    /** Increment a test-mode Authorization. */
+    public Authorization increment(AuthorizationIncrementParams params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/increment",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      ApiResource.checkNullTypedParams(path, params);
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Reverse a test-mode Authorization. */
+    public Authorization reverse() throws StripeException {
+      return reverse((Map<String, Object>) null, (RequestOptions) null);
+    }
+
+    /** Reverse a test-mode Authorization. */
+    public Authorization reverse(RequestOptions options) throws StripeException {
+      return reverse((Map<String, Object>) null, options);
+    }
+
+    /** Reverse a test-mode Authorization. */
+    public Authorization reverse(Map<String, Object> params) throws StripeException {
+      return reverse(params, (RequestOptions) null);
+    }
+
+    /** Reverse a test-mode Authorization. */
+    public Authorization reverse(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/reverse",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Reverse a test-mode Authorization. */
+    public Authorization reverse(AuthorizationReverseParams params) throws StripeException {
+      return reverse(params, (RequestOptions) null);
+    }
+
+    /** Reverse a test-mode Authorization. */
+    public Authorization reverse(AuthorizationReverseParams params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/reverse",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      ApiResource.checkNullTypedParams(path, params);
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Expire a test-mode Authorization. */
+    public Authorization expire() throws StripeException {
+      return expire((Map<String, Object>) null, (RequestOptions) null);
+    }
+
+    /** Expire a test-mode Authorization. */
+    public Authorization expire(RequestOptions options) throws StripeException {
+      return expire((Map<String, Object>) null, options);
+    }
+
+    /** Expire a test-mode Authorization. */
+    public Authorization expire(Map<String, Object> params) throws StripeException {
+      return expire(params, (RequestOptions) null);
+    }
+
+    /** Expire a test-mode Authorization. */
+    public Authorization expire(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/expire",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Expire a test-mode Authorization. */
+    public Authorization expire(AuthorizationExpireParams params) throws StripeException {
+      return expire(params, (RequestOptions) null);
+    }
+
+    /** Expire a test-mode Authorization. */
+    public Authorization expire(AuthorizationExpireParams params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/expire",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      ApiResource.checkNullTypedParams(path, params);
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Capture a test-mode authorization. */
+    public Authorization capture() throws StripeException {
+      return capture((Map<String, Object>) null, (RequestOptions) null);
+    }
+
+    /** Capture a test-mode authorization. */
+    public Authorization capture(RequestOptions options) throws StripeException {
+      return capture((Map<String, Object>) null, options);
+    }
+
+    /** Capture a test-mode authorization. */
+    public Authorization capture(Map<String, Object> params) throws StripeException {
+      return capture(params, (RequestOptions) null);
+    }
+
+    /** Capture a test-mode authorization. */
+    public Authorization capture(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/capture",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Capture a test-mode authorization. */
+    public Authorization capture(AuthorizationCaptureParams params) throws StripeException {
+      return capture(params, (RequestOptions) null);
+    }
+
+    /** Capture a test-mode authorization. */
+    public Authorization capture(AuthorizationCaptureParams params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/authorizations/%s/capture",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      ApiResource.checkNullTypedParams(path, params);
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Authorization.class,
+              options,
+              ApiMode.V1);
+    }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(amountDetails, responseGetter);
+    trySetResponseGetter(card, responseGetter);
+    trySetResponseGetter(cardholder, responseGetter);
+    trySetResponseGetter(merchantData, responseGetter);
+    trySetResponseGetter(networkData, responseGetter);
+    trySetResponseGetter(pendingRequest, responseGetter);
+    trySetResponseGetter(token, responseGetter);
+    trySetResponseGetter(treasury, responseGetter);
+    trySetResponseGetter(verificationData, responseGetter);
   }
 }

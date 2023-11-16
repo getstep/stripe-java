@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.PersonUpdateParams;
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,11 +24,11 @@ import lombok.Setter;
  * onboarding, such as after generating an account link for the account. See the <a
  * href="https://stripe.com/docs/connect/standard-accounts">Standard onboarding</a> or <a
  * href="https://stripe.com/docs/connect/express-accounts">Express onboarding documentation</a> for
- * information about platform pre-filling and account onboarding steps.
+ * information about platform prefilling and account onboarding steps.
  *
  * <p>Related guide: <a
- * href="https://stripe.com/docs/connect/identity-verification-api#person-information">Handling
- * Identity Verification with the API</a>.
+ * href="https://stripe.com/docs/connect/handling-api-verification#person-information">Handling
+ * identity verification with the API</a>
  */
 @Getter
 @Setter
@@ -34,6 +37,9 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
   /** The account the person is associated with. */
   @SerializedName("account")
   String account;
+
+  @SerializedName("additional_tos_acceptances")
+  AdditionalTosAcceptances additionalTosAcceptances;
 
   @SerializedName("address")
   Address address;
@@ -78,8 +84,10 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
   List<String> fullNameAliases;
 
   /**
-   * Information about the upcoming new requirements for this person, including what information
-   * needs to be collected, and by when.
+   * Information about the <a
+   * href="https://stripe.com/docs/connect/custom-accounts/future-requirements">upcoming new
+   * requirements for this person</a>, including what information needs to be collected, and by
+   * when.
    */
   @SerializedName("future_requirements")
   FutureRequirements futureRequirements;
@@ -96,7 +104,11 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
   @SerializedName("id")
   String id;
 
-  /** Whether the person's {@code id_number} was provided. */
+  /**
+   * Whether the person's {@code id_number} was provided. True if either the full ID number was
+   * provided or if only the required part of the ID number was provided (ex. last four of an
+   * individual's SSN for the US indicated by {@code ssn_last_4_provided}).
+   */
   @SerializedName("id_number_provided")
   Boolean idNumberProvided;
 
@@ -215,15 +227,19 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
    * delete the only verified {@code executive} on file.
    */
   public Person delete(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/accounts/%s/persons/%s",
+            ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            Person.class,
             options,
-            String.format(
-                "/v1/accounts/%s/persons/%s",
-                ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Person.class, options);
+            ApiMode.V1);
   }
 
   /** Updates an existing person. */
@@ -235,14 +251,19 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
   /** Updates an existing person. */
   @Override
   public Person update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/accounts/%s/persons/%s",
+            ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Person.class,
             options,
-            String.format(
-                "/v1/accounts/%s/persons/%s",
-                ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Person.class, options);
+            ApiMode.V1);
   }
 
   /** Updates an existing person. */
@@ -252,14 +273,47 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
 
   /** Updates an existing person. */
   public Person update(PersonUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/accounts/%s/persons/%s",
+            ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Person.class,
             options,
-            String.format(
-                "/v1/accounts/%s/persons/%s",
-                ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Person.class, options);
+            ApiMode.V1);
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class AdditionalTosAcceptances extends StripeObject {
+    @SerializedName("account")
+    Account account;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Account extends StripeObject {
+      /** The Unix timestamp marking when the legal guardian accepted the service agreement. */
+      @SerializedName("date")
+      Long date;
+
+      /** The IP address from which the legal guardian accepted the service agreement. */
+      @SerializedName("ip")
+      String ip;
+
+      /**
+       * The user agent of the browser from which the legal guardian accepted the service agreement.
+       */
+      @SerializedName("user_agent")
+      String userAgent;
+    }
   }
 
   @Getter
@@ -427,13 +481,38 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -445,13 +524,14 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -491,6 +571,10 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
      */
     @SerializedName("executive")
     Boolean executive;
+
+    /** Whether the person is the legal guardian of the account's representative. */
+    @SerializedName("legal_guardian")
+    Boolean legalGuardian;
 
     /** Whether the person is an owner of the account’s legal entity. */
     @SerializedName("owner")
@@ -587,13 +671,38 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -605,13 +714,14 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -830,5 +940,20 @@ public class Person extends ApiResource implements HasId, MetadataStore<Person> 
         this.front = new ExpandableField<File>(expandableObject.getId(), expandableObject);
       }
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(additionalTosAcceptances, responseGetter);
+    trySetResponseGetter(address, responseGetter);
+    trySetResponseGetter(addressKana, responseGetter);
+    trySetResponseGetter(addressKanji, responseGetter);
+    trySetResponseGetter(dob, responseGetter);
+    trySetResponseGetter(futureRequirements, responseGetter);
+    trySetResponseGetter(registeredAddress, responseGetter);
+    trySetResponseGetter(relationship, responseGetter);
+    trySetResponseGetter(requirements, responseGetter);
+    trySetResponseGetter(verification, responseGetter);
   }
 }

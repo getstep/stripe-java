@@ -2,11 +2,14 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.InvalidRequestException;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.BankAccountUpdateOnAccountParams;
 import com.stripe.param.BankAccountUpdateOnCustomerParams;
 import com.stripe.param.BankAccountVerifyParams;
@@ -24,8 +27,8 @@ import lombok.Setter;
  * href="https://stripe.com/docs/connect/custom-accounts">Custom accounts</a>. They can be bank
  * accounts or debit cards as well, and are documented in the links above.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/payments/bank-debits-transfers">Bank Debits
- * and Transfers</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/payments/bank-debits-transfers">Bank debits
+ * and transfers</a>
  */
 @Getter
 @Setter
@@ -100,8 +103,10 @@ public class BankAccount extends ApiResource
   String fingerprint;
 
   /**
-   * Information about upcoming new requirements for the bank account, including what information
-   * needs to be collected.
+   * Information about the <a
+   * href="https://stripe.com/docs/connect/custom-accounts/future-requirements">upcoming new
+   * requirements for the bank account</a>, including what information needs to be collected, and by
+   * when.
    */
   @SerializedName("future_requirements")
   FutureRequirements futureRequirements;
@@ -151,12 +156,14 @@ public class BankAccount extends ApiResource
    * for smaller credit unions), and the validation is not always run. If customer bank account
    * verification has succeeded, the bank account status will be {@code verified}. If the
    * verification failed for any reason, such as microdeposit failure, the status will be {@code
-   * verification_failed}. If a transfer sent to this bank account fails, we'll set the status to
-   * {@code errored} and will not continue to send transfers until the bank details are updated.
+   * verification_failed}. If a payout sent to this bank account fails, we'll set the status to
+   * {@code errored} and will not continue to send <a
+   * href="https://stripe.com/docs/payouts#payout-schedule">scheduled payouts</a> until the bank
+   * details are updated.
    *
    * <p>For external accounts, possible values are {@code new}, {@code errored} and {@code
-   * verification_failed}. If a transfer fails, the status is set to {@code errored} and transfers
-   * are stopped until account details are updated. In India, if we can't <a
+   * verification_failed}. If a payouts fails, the status is set to {@code errored} and scheduled
+   * payouts are stopped until account details are updated. In India, if we can't <a
    * href="https://support.stripe.com/questions/bank-account-ownership-verification">verify the
    * owner of the bank account</a>, we'll set the status to {@code verification_failed}. Other
    * validations aren't run against external accounts because they're only used for payouts. This
@@ -219,16 +226,19 @@ public class BankAccount extends ApiResource
   /** Verify a specified bank account for a given customer. */
   public BankAccount verify(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/customers/%s/sources/%s/verify",
+            ApiResource.urlEncodeId(this.getCustomer()), ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            BankAccount.class,
             options,
-            String.format(
-                "/v1/customers/%s/sources/%s/verify",
-                ApiResource.urlEncodeId(this.getCustomer()),
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, BankAccount.class, options);
+            ApiMode.V1);
   }
 
   /** Verify a specified bank account for a given customer. */
@@ -239,16 +249,20 @@ public class BankAccount extends ApiResource
   /** Verify a specified bank account for a given customer. */
   public BankAccount verify(BankAccountVerifyParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/customers/%s/sources/%s/verify",
+            ApiResource.urlEncodeId(this.getCustomer()), ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            BankAccount.class,
             options,
-            String.format(
-                "/v1/customers/%s/sources/%s/verify",
-                ApiResource.urlEncodeId(this.getCustomer()),
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, BankAccount.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -288,22 +302,14 @@ public class BankAccount extends ApiResource
     String url;
     if (this.getAccount() != null) {
       url =
-          ApiResource.fullUrl(
-              Stripe.getApiBase(),
-              options,
-              String.format(
-                  "/v1/accounts/%s/external_accounts/%s",
-                  ApiResource.urlEncodeId(this.getAccount()),
-                  ApiResource.urlEncodeId(this.getId())));
+          String.format(
+              "/v1/accounts/%s/external_accounts/%s",
+              ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
     } else if (this.getCustomer() != null) {
       url =
-          ApiResource.fullUrl(
-              Stripe.getApiBase(),
-              options,
-              String.format(
-                  "/v1/customers/%s/sources/%s",
-                  ApiResource.urlEncodeId(this.getCustomer()),
-                  ApiResource.urlEncodeId(this.getId())));
+          String.format(
+              "/v1/customers/%s/sources/%s",
+              ApiResource.urlEncodeId(this.getCustomer()), ApiResource.urlEncodeId(this.getId()));
     } else {
       throw new InvalidRequestException(
           "Unable to construct url because [account, customer] field(s) are all null",
@@ -313,7 +319,15 @@ public class BankAccount extends ApiResource
           0,
           null);
     }
-    return request(ApiResource.RequestMethod.POST, url, params, BankAccount.class, options);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            url,
+            params,
+            BankAccount.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -351,13 +365,9 @@ public class BankAccount extends ApiResource
     String url;
     if (this.getAccount() != null) {
       url =
-          ApiResource.fullUrl(
-              Stripe.getApiBase(),
-              options,
-              String.format(
-                  "/v1/accounts/%s/external_accounts/%s",
-                  ApiResource.urlEncodeId(this.getAccount()),
-                  ApiResource.urlEncodeId(this.getId())));
+          String.format(
+              "/v1/accounts/%s/external_accounts/%s",
+              ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
     } else {
       throw new InvalidRequestException(
           "Unable to construct url because [account] field(s) are all null",
@@ -367,7 +377,15 @@ public class BankAccount extends ApiResource
           0,
           null);
     }
-    return request(ApiResource.RequestMethod.POST, url, params, BankAccount.class, options);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            url,
+            ApiRequestParams.paramsToMap(params),
+            BankAccount.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -405,13 +423,9 @@ public class BankAccount extends ApiResource
     String url;
     if (this.getCustomer() != null) {
       url =
-          ApiResource.fullUrl(
-              Stripe.getApiBase(),
-              options,
-              String.format(
-                  "/v1/customers/%s/sources/%s",
-                  ApiResource.urlEncodeId(this.getCustomer()),
-                  ApiResource.urlEncodeId(this.getId())));
+          String.format(
+              "/v1/customers/%s/sources/%s",
+              ApiResource.urlEncodeId(this.getCustomer()), ApiResource.urlEncodeId(this.getId()));
     } else {
       throw new InvalidRequestException(
           "Unable to construct url because [customer] field(s) are all null",
@@ -421,7 +435,15 @@ public class BankAccount extends ApiResource
           0,
           null);
     }
-    return request(ApiResource.RequestMethod.POST, url, params, BankAccount.class, options);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            url,
+            ApiRequestParams.paramsToMap(params),
+            BankAccount.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -465,22 +487,14 @@ public class BankAccount extends ApiResource
     String url;
     if (this.getAccount() != null) {
       url =
-          ApiResource.fullUrl(
-              Stripe.getApiBase(),
-              options,
-              String.format(
-                  "/v1/accounts/%s/external_accounts/%s",
-                  ApiResource.urlEncodeId(this.getAccount()),
-                  ApiResource.urlEncodeId(this.getId())));
+          String.format(
+              "/v1/accounts/%s/external_accounts/%s",
+              ApiResource.urlEncodeId(this.getAccount()), ApiResource.urlEncodeId(this.getId()));
     } else if (this.getCustomer() != null) {
       url =
-          ApiResource.fullUrl(
-              Stripe.getApiBase(),
-              options,
-              String.format(
-                  "/v1/customers/%s/sources/%s",
-                  ApiResource.urlEncodeId(this.getCustomer()),
-                  ApiResource.urlEncodeId(this.getId())));
+          String.format(
+              "/v1/customers/%s/sources/%s",
+              ApiResource.urlEncodeId(this.getCustomer()), ApiResource.urlEncodeId(this.getId()));
     } else {
       throw new InvalidRequestException(
           "Unable to construct url because [account, customer] field(s) are all null",
@@ -490,7 +504,15 @@ public class BankAccount extends ApiResource
           0,
           null);
     }
-    return request(ApiResource.RequestMethod.DELETE, url, params, BankAccount.class, options);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            url,
+            params,
+            BankAccount.class,
+            options,
+            ApiMode.V1);
   }
 
   @Getter
@@ -534,13 +556,38 @@ public class BankAccount extends ApiResource
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -552,13 +599,14 @@ public class BankAccount extends ApiResource
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -621,13 +669,38 @@ public class BankAccount extends ApiResource
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -639,13 +712,14 @@ public class BankAccount extends ApiResource
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -665,5 +739,14 @@ public class BankAccount extends ApiResource
       @SerializedName("requirement")
       String requirement;
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(account, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(futureRequirements, responseGetter);
+    trySetResponseGetter(requirements, responseGetter);
   }
 }

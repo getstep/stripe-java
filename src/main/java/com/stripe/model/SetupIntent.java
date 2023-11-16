@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.SetupIntentCancelParams;
 import com.stripe.param.SetupIntentConfirmParams;
 import com.stripe.param.SetupIntentCreateParams;
@@ -21,34 +24,34 @@ import lombok.Setter;
 
 /**
  * A SetupIntent guides you through the process of setting up and saving a customer's payment
- * credentials for future payments. For example, you could use a SetupIntent to set up and save your
+ * credentials for future payments. For example, you can use a SetupIntent to set up and save your
  * customer's card without immediately collecting a payment. Later, you can use <a
  * href="https://stripe.com/docs/api#payment_intents">PaymentIntents</a> to drive the payment flow.
  *
- * <p>Create a SetupIntent as soon as you're ready to collect your customer's payment credentials.
- * Do not maintain long-lived, unconfirmed SetupIntents as they may no longer be valid. The
- * SetupIntent then transitions through multiple <a
+ * <p>Create a SetupIntent when you're ready to collect your customer's payment credentials. Don't
+ * maintain long-lived, unconfirmed SetupIntents because they might not be valid. The SetupIntent
+ * transitions through multiple <a
  * href="https://stripe.com/docs/payments/intents#intent-statuses">statuses</a> as it guides you
  * through the setup process.
  *
  * <p>Successful SetupIntents result in payment credentials that are optimized for future payments.
  * For example, cardholders in <a
- * href="https://stripe.com/guides/strong-customer-authentication">certain regions</a> may need to
+ * href="https://stripe.com/guides/strong-customer-authentication">certain regions</a> might need to
  * be run through <a href="https://stripe.com/docs/strong-customer-authentication">Strong Customer
- * Authentication</a> at the time of payment method collection in order to streamline later <a
- * href="https://stripe.com/docs/payments/setup-intents">off-session payments</a>. If the
- * SetupIntent is used with a <a
- * href="https://stripe.com/docs/api#setup_intent_object-customer">Customer</a>, upon success, it
- * will automatically attach the resulting payment method to that Customer. We recommend using
+ * Authentication</a> during payment method collection to streamline later <a
+ * href="https://stripe.com/docs/payments/setup-intents">off-session payments</a>. If you use the
+ * SetupIntent with a <a
+ * href="https://stripe.com/docs/api#setup_intent_object-customer">Customer</a>, it automatically
+ * attaches the resulting payment method to that Customer after successful setup. We recommend using
  * SetupIntents or <a
  * href="https://stripe.com/docs/api#payment_intent_object-setup_future_usage">setup_future_usage</a>
- * on PaymentIntents to save payment methods in order to prevent saving invalid or unoptimized
- * payment methods.
+ * on PaymentIntents to save payment methods to prevent saving invalid or unoptimized payment
+ * methods.
  *
- * <p>By using SetupIntents, you ensure that your customers experience the minimum set of required
- * friction, even as regulations change over time.
+ * <p>By using SetupIntents, you can reduce friction for your customers, even as regulations change
+ * over time.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/payments/setup-intents">Setup Intents API</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/payments/setup-intents">Setup Intents API</a>
  */
 @Getter
 @Setter
@@ -70,7 +73,7 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   @SerializedName("attach_to_self")
   Boolean attachToSelf;
 
-  /** Settings for automatic payment methods compatible with this Setup Intent. */
+  /** Settings for dynamic payment methods compatible with this Setup Intent. */
   @SerializedName("automatic_payment_methods")
   AutomaticPaymentMethods automaticPaymentMethods;
 
@@ -185,7 +188,11 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   @Setter(lombok.AccessLevel.NONE)
   ExpandableField<PaymentMethod> paymentMethod;
 
-  /** Payment-method-specific configuration for this SetupIntent. */
+  /** Information about the payment method configuration used for this Setup Intent. */
+  @SerializedName("payment_method_configuration_details")
+  PaymentMethodConfigurationDetails paymentMethodConfigurationDetails;
+
+  /** Payment method-specific configuration for this SetupIntent. */
   @SerializedName("payment_method_options")
   PaymentMethodOptions paymentMethodOptions;
 
@@ -347,10 +354,10 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   }
 
   /**
-   * A SetupIntent object can be canceled when it is in one of these statuses: {@code
+   * You can cancel a SetupIntent object when it’s in one of these statuses: {@code
    * requires_payment_method}, {@code requires_confirmation}, or {@code requires_action}.
    *
-   * <p>Once canceled, setup is abandoned and any operations on the SetupIntent will fail with an
+   * <p>After you cancel it, setup is abandoned and any operations on the SetupIntent fail with an
    * error.
    */
   public SetupIntent cancel() throws StripeException {
@@ -358,10 +365,10 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   }
 
   /**
-   * A SetupIntent object can be canceled when it is in one of these statuses: {@code
+   * You can cancel a SetupIntent object when it’s in one of these statuses: {@code
    * requires_payment_method}, {@code requires_confirmation}, or {@code requires_action}.
    *
-   * <p>Once canceled, setup is abandoned and any operations on the SetupIntent will fail with an
+   * <p>After you cancel it, setup is abandoned and any operations on the SetupIntent fail with an
    * error.
    */
   public SetupIntent cancel(RequestOptions options) throws StripeException {
@@ -369,10 +376,10 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   }
 
   /**
-   * A SetupIntent object can be canceled when it is in one of these statuses: {@code
+   * You can cancel a SetupIntent object when it’s in one of these statuses: {@code
    * requires_payment_method}, {@code requires_confirmation}, or {@code requires_action}.
    *
-   * <p>Once canceled, setup is abandoned and any operations on the SetupIntent will fail with an
+   * <p>After you cancel it, setup is abandoned and any operations on the SetupIntent fail with an
    * error.
    */
   public SetupIntent cancel(Map<String, Object> params) throws StripeException {
@@ -380,28 +387,32 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   }
 
   /**
-   * A SetupIntent object can be canceled when it is in one of these statuses: {@code
+   * You can cancel a SetupIntent object when it’s in one of these statuses: {@code
    * requires_payment_method}, {@code requires_confirmation}, or {@code requires_action}.
    *
-   * <p>Once canceled, setup is abandoned and any operations on the SetupIntent will fail with an
+   * <p>After you cancel it, setup is abandoned and any operations on the SetupIntent fail with an
    * error.
    */
   public SetupIntent cancel(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/setup_intents/%s/cancel", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s/cancel", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * A SetupIntent object can be canceled when it is in one of these statuses: {@code
+   * You can cancel a SetupIntent object when it’s in one of these statuses: {@code
    * requires_payment_method}, {@code requires_confirmation}, or {@code requires_action}.
    *
-   * <p>Once canceled, setup is abandoned and any operations on the SetupIntent will fail with an
+   * <p>After you cancel it, setup is abandoned and any operations on the SetupIntent fail with an
    * error.
    */
   public SetupIntent cancel(SetupIntentCancelParams params) throws StripeException {
@@ -409,21 +420,26 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   }
 
   /**
-   * A SetupIntent object can be canceled when it is in one of these statuses: {@code
+   * You can cancel a SetupIntent object when it’s in one of these statuses: {@code
    * requires_payment_method}, {@code requires_confirmation}, or {@code requires_action}.
    *
-   * <p>Once canceled, setup is abandoned and any operations on the SetupIntent will fail with an
+   * <p>After you cancel it, setup is abandoned and any operations on the SetupIntent fail with an
    * error.
    */
   public SetupIntent cancel(SetupIntentCancelParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/setup_intents/%s/cancel", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s/cancel", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -436,7 +452,8 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    *
    * <p>Otherwise, it will transition to the {@code requires_action} status and suggest additional
    * actions via {@code next_action}. If setup fails, the SetupIntent will transition to the {@code
-   * requires_payment_method} status.
+   * requires_payment_method} status or the {@code canceled} status if the confirmation limit is
+   * reached.
    */
   public SetupIntent confirm() throws StripeException {
     return confirm((Map<String, Object>) null, (RequestOptions) null);
@@ -452,7 +469,8 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    *
    * <p>Otherwise, it will transition to the {@code requires_action} status and suggest additional
    * actions via {@code next_action}. If setup fails, the SetupIntent will transition to the {@code
-   * requires_payment_method} status.
+   * requires_payment_method} status or the {@code canceled} status if the confirmation limit is
+   * reached.
    */
   public SetupIntent confirm(RequestOptions options) throws StripeException {
     return confirm((Map<String, Object>) null, options);
@@ -468,7 +486,8 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    *
    * <p>Otherwise, it will transition to the {@code requires_action} status and suggest additional
    * actions via {@code next_action}. If setup fails, the SetupIntent will transition to the {@code
-   * requires_payment_method} status.
+   * requires_payment_method} status or the {@code canceled} status if the confirmation limit is
+   * reached.
    */
   public SetupIntent confirm(Map<String, Object> params) throws StripeException {
     return confirm(params, (RequestOptions) null);
@@ -484,17 +503,22 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    *
    * <p>Otherwise, it will transition to the {@code requires_action} status and suggest additional
    * actions via {@code next_action}. If setup fails, the SetupIntent will transition to the {@code
-   * requires_payment_method} status.
+   * requires_payment_method} status or the {@code canceled} status if the confirmation limit is
+   * reached.
    */
   public SetupIntent confirm(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/setup_intents/%s/confirm", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s/confirm", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -507,7 +531,8 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    *
    * <p>Otherwise, it will transition to the {@code requires_action} status and suggest additional
    * actions via {@code next_action}. If setup fails, the SetupIntent will transition to the {@code
-   * requires_payment_method} status.
+   * requires_payment_method} status or the {@code canceled} status if the confirmation limit is
+   * reached.
    */
   public SetupIntent confirm(SetupIntentConfirmParams params) throws StripeException {
     return confirm(params, (RequestOptions) null);
@@ -523,24 +548,30 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    *
    * <p>Otherwise, it will transition to the {@code requires_action} status and suggest additional
    * actions via {@code next_action}. If setup fails, the SetupIntent will transition to the {@code
-   * requires_payment_method} status.
+   * requires_payment_method} status or the {@code canceled} status if the confirmation limit is
+   * reached.
    */
   public SetupIntent confirm(SetupIntentConfirmParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/setup_intents/%s/confirm", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s/confirm", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /**
    * Creates a SetupIntent object.
    *
-   * <p>After the SetupIntent is created, attach a payment method and <a
-   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> to collect any required
+   * <p>After you create the SetupIntent, attach a payment method and <a
+   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> it to collect any required
    * permissions to charge the payment method later.
    */
   public static SetupIntent create(Map<String, Object> params) throws StripeException {
@@ -550,22 +581,29 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /**
    * Creates a SetupIntent object.
    *
-   * <p>After the SetupIntent is created, attach a payment method and <a
-   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> to collect any required
+   * <p>After you create the SetupIntent, attach a payment method and <a
+   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> it to collect any required
    * permissions to charge the payment method later.
    */
   public static SetupIntent create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/setup_intents");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+    String path = "/v1/setup_intents";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            SetupIntent.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
    * Creates a SetupIntent object.
    *
-   * <p>After the SetupIntent is created, attach a payment method and <a
-   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> to collect any required
+   * <p>After you create the SetupIntent, attach a payment method and <a
+   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> it to collect any required
    * permissions to charge the payment method later.
    */
   public static SetupIntent create(SetupIntentCreateParams params) throws StripeException {
@@ -575,15 +613,23 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /**
    * Creates a SetupIntent object.
    *
-   * <p>After the SetupIntent is created, attach a payment method and <a
-   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> to collect any required
+   * <p>After you create the SetupIntent, attach a payment method and <a
+   * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> it to collect any required
    * permissions to charge the payment method later.
    */
   public static SetupIntent create(SetupIntentCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/setup_intents");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+    String path = "/v1/setup_intents";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntent.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of SetupIntents. */
@@ -594,8 +640,16 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /** Returns a list of SetupIntents. */
   public static SetupIntentCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/setup_intents");
-    return ApiResource.requestCollection(url, params, SetupIntentCollection.class, options);
+    String path = "/v1/setup_intents";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            SetupIntentCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of SetupIntents. */
@@ -606,8 +660,17 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /** Returns a list of SetupIntents. */
   public static SetupIntentCollection list(SetupIntentListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/setup_intents");
-    return ApiResource.requestCollection(url, params, SetupIntentCollection.class, options);
+    String path = "/v1/setup_intents";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntentCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -650,13 +713,16 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
    */
   public static SetupIntent retrieve(
       String intent, Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(intent));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(intent)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -672,13 +738,17 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   public static SetupIntent retrieve(
       String intent, SetupIntentRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(intent));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(intent)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /** Updates a SetupIntent object. */
@@ -691,13 +761,16 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   @Override
   public SetupIntent update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /** Updates a SetupIntent object. */
@@ -708,13 +781,17 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /** Updates a SetupIntent object. */
   public SetupIntent update(SetupIntentUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntent.class,
             options,
-            String.format("/v1/setup_intents/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /** Verifies microdeposits on a SetupIntent object. */
@@ -735,15 +812,18 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /** Verifies microdeposits on a SetupIntent object. */
   public SetupIntent verifyMicrodeposits(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/setup_intents/%s/verify_microdeposits", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            SetupIntent.class,
             options,
-            String.format(
-                "/v1/setup_intents/%s/verify_microdeposits",
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   /** Verifies microdeposits on a SetupIntent object. */
@@ -755,21 +835,39 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   /** Verifies microdeposits on a SetupIntent object. */
   public SetupIntent verifyMicrodeposits(
       SetupIntentVerifyMicrodepositsParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/setup_intents/%s/verify_microdeposits", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupIntent.class,
             options,
-            String.format(
-                "/v1/setup_intents/%s/verify_microdeposits",
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, SetupIntent.class, options);
+            ApiMode.V1);
   }
 
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class AutomaticPaymentMethods extends StripeObject {
+    /**
+     * Controls whether this SetupIntent will accept redirect-based payment methods.
+     *
+     * <p>Redirect-based payment methods may require your customer to be redirected to a payment
+     * method's app or site for authentication or additional steps. To <a
+     * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> this SetupIntent, you
+     * may be required to provide a {@code return_url} to redirect customers back to your site after
+     * they authenticate or complete the setup.
+     *
+     * <p>One of {@code always}, or {@code never}.
+     */
+    @SerializedName("allow_redirects")
+    String allowRedirects;
+
     /** Automatically calculates compatible payment methods. */
     @SerializedName("enabled")
     Boolean enabled;
@@ -885,18 +983,32 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
+  public static class PaymentMethodConfigurationDetails extends StripeObject implements HasId {
+    /** ID of the payment method configuration used. */
+    @Getter(onMethod_ = {@Override})
+    @SerializedName("id")
+    String id;
+
+    /** ID of the parent payment method configuration used. */
+    @SerializedName("parent")
+    String parent;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
   public static class PaymentMethodOptions extends StripeObject {
     @SerializedName("acss_debit")
     AcssDebit acssDebit;
-
-    @SerializedName("blik")
-    Blik blik;
 
     @SerializedName("card")
     Card card;
 
     @SerializedName("link")
     Link link;
+
+    @SerializedName("paypal")
+    Paypal paypal;
 
     @SerializedName("sepa_debit")
     SepaDebit sepaDebit;
@@ -961,59 +1073,6 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
          */
         @SerializedName("transaction_type")
         String transactionType;
-      }
-    }
-
-    @Getter
-    @Setter
-    @EqualsAndHashCode(callSuper = false)
-    public static class Blik extends StripeObject {
-      @SerializedName("mandate_options")
-      MandateOptions mandateOptions;
-
-      @Getter
-      @Setter
-      @EqualsAndHashCode(callSuper = false)
-      public static class MandateOptions extends StripeObject {
-        /** Date at which the mandate expires. */
-        @SerializedName("expires_after")
-        Long expiresAfter;
-
-        @SerializedName("off_session")
-        OffSession offSession;
-
-        /**
-         * Type of the mandate.
-         *
-         * <p>One of {@code off_session}, or {@code on_session}.
-         */
-        @SerializedName("type")
-        String type;
-
-        @Getter
-        @Setter
-        @EqualsAndHashCode(callSuper = false)
-        public static class OffSession extends StripeObject {
-          /** Amount of each recurring payment. */
-          @SerializedName("amount")
-          Long amount;
-
-          /** Currency of each recurring payment. */
-          @SerializedName("currency")
-          String currency;
-
-          /**
-           * Frequency interval of each recurring payment.
-           *
-           * <p>One of {@code day}, {@code month}, {@code week}, or {@code year}.
-           */
-          @SerializedName("interval")
-          String interval;
-
-          /** Frequency indicator of each recurring payment. */
-          @SerializedName("interval_count")
-          Long intervalCount;
-        }
       }
     }
 
@@ -1123,9 +1182,21 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Link extends StripeObject {
-      /** Token used for persistent Link logins. */
+      /** [Deprecated] This is a legacy parameter that no longer has any function. */
       @SerializedName("persistent_token")
       String persistentToken;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Paypal extends StripeObject {
+      /**
+       * The PayPal Billing Agreement ID (BAID). This is an ID generated by PayPal which represents
+       * the mandate between the merchant and the customer.
+       */
+      @SerializedName("billing_agreement_id")
+      String billingAgreementId;
     }
 
     @Getter
@@ -1167,6 +1238,10 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
         @SerializedName("permissions")
         List<String> permissions;
 
+        /** Data features requested to be retrieved upon account creation. */
+        @SerializedName("prefetch")
+        List<String> prefetch;
+
         /**
          * For webview integrations only. Upon completing OAuth login in the native browser, the
          * user will be redirected to this URL to return to your app.
@@ -1175,5 +1250,22 @@ public class SetupIntent extends ApiResource implements HasId, MetadataStore<Set
         String returnUrl;
       }
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(automaticPaymentMethods, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(lastSetupError, responseGetter);
+    trySetResponseGetter(latestAttempt, responseGetter);
+    trySetResponseGetter(mandate, responseGetter);
+    trySetResponseGetter(nextAction, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(paymentMethod, responseGetter);
+    trySetResponseGetter(paymentMethodConfigurationDetails, responseGetter);
+    trySetResponseGetter(paymentMethodOptions, responseGetter);
+    trySetResponseGetter(singleUseMandate, responseGetter);
   }
 }

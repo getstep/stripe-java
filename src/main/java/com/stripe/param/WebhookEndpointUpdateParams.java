@@ -526,9 +526,6 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
     @SerializedName("invoiceitem.deleted")
     INVOICEITEM__DELETED("invoiceitem.deleted"),
 
-    @SerializedName("invoiceitem.updated")
-    INVOICEITEM__UPDATED("invoiceitem.updated"),
-
     @SerializedName("issuing_authorization.created")
     ISSUING_AUTHORIZATION__CREATED("issuing_authorization.created"),
 
@@ -565,6 +562,12 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
     @SerializedName("issuing_dispute.updated")
     ISSUING_DISPUTE__UPDATED("issuing_dispute.updated"),
 
+    @SerializedName("issuing_token.created")
+    ISSUING_TOKEN__CREATED("issuing_token.created"),
+
+    @SerializedName("issuing_token.updated")
+    ISSUING_TOKEN__UPDATED("issuing_token.updated"),
+
     @SerializedName("issuing_transaction.created")
     ISSUING_TRANSACTION__CREATED("issuing_transaction.created"),
 
@@ -573,9 +576,6 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
 
     @SerializedName("mandate.updated")
     MANDATE__UPDATED("mandate.updated"),
-
-    @SerializedName("order.created")
-    ORDER__CREATED("order.created"),
 
     @SerializedName("payment_intent.amount_capturable_updated")
     PAYMENT_INTENT__AMOUNT_CAPTURABLE_UPDATED("payment_intent.amount_capturable_updated"),
@@ -697,15 +697,6 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
     @SerializedName("radar.early_fraud_warning.updated")
     RADAR__EARLY_FRAUD_WARNING__UPDATED("radar.early_fraud_warning.updated"),
 
-    @SerializedName("recipient.created")
-    RECIPIENT__CREATED("recipient.created"),
-
-    @SerializedName("recipient.deleted")
-    RECIPIENT__DELETED("recipient.deleted"),
-
-    @SerializedName("recipient.updated")
-    RECIPIENT__UPDATED("recipient.updated"),
-
     @SerializedName("refund.created")
     REFUND__CREATED("refund.created"),
 
@@ -744,15 +735,6 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
 
     @SerializedName("sigma.scheduled_query_run.created")
     SIGMA__SCHEDULED_QUERY_RUN__CREATED("sigma.scheduled_query_run.created"),
-
-    @SerializedName("sku.created")
-    SKU__CREATED("sku.created"),
-
-    @SerializedName("sku.deleted")
-    SKU__DELETED("sku.deleted"),
-
-    @SerializedName("sku.updated")
-    SKU__UPDATED("sku.updated"),
 
     @SerializedName("source.canceled")
     SOURCE__CANCELED("source.canceled"),
@@ -795,6 +777,9 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
 
     @SerializedName("subscription_schedule.updated")
     SUBSCRIPTION_SCHEDULE__UPDATED("subscription_schedule.updated"),
+
+    @SerializedName("tax.settings.updated")
+    TAX__SETTINGS__UPDATED("tax.settings.updated"),
 
     @SerializedName("tax_rate.created")
     TAX_RATE__CREATED("tax_rate.created"),
@@ -933,7 +918,31 @@ public class WebhookEndpointUpdateParams extends ApiRequestParams {
     TREASURY__RECEIVED_CREDIT__SUCCEEDED("treasury.received_credit.succeeded"),
 
     @SerializedName("treasury.received_debit.created")
-    TREASURY__RECEIVED_DEBIT__CREATED("treasury.received_debit.created");
+    TREASURY__RECEIVED_DEBIT__CREATED("treasury.received_debit.created"),
+
+    @SerializedName("invoiceitem.updated")
+    INVOICEITEM__UPDATED("invoiceitem.updated"),
+
+    @SerializedName("order.created")
+    ORDER__CREATED("order.created"),
+
+    @SerializedName("recipient.created")
+    RECIPIENT__CREATED("recipient.created"),
+
+    @SerializedName("recipient.deleted")
+    RECIPIENT__DELETED("recipient.deleted"),
+
+    @SerializedName("recipient.updated")
+    RECIPIENT__UPDATED("recipient.updated"),
+
+    @SerializedName("sku.created")
+    SKU__CREATED("sku.created"),
+
+    @SerializedName("sku.deleted")
+    SKU__DELETED("sku.deleted"),
+
+    @SerializedName("sku.updated")
+    SKU__UPDATED("sku.updated");
 
     @Getter(onMethod_ = {@Override})
     private final String value;

@@ -2,12 +2,15 @@
 package com.stripe.model.radar;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.HasId;
 import com.stripe.model.MetadataStore;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.radar.ValueListCreateParams;
 import com.stripe.param.radar.ValueListListParams;
 import com.stripe.param.radar.ValueListRetrieveParams;
@@ -21,7 +24,7 @@ import lombok.Setter;
  * Value lists allow you to group values together which can then be referenced in rules.
  *
  * <p>Related guide: <a href="https://stripe.com/docs/radar/lists#managing-list-items">Default
- * Stripe Lists</a>.
+ * Stripe lists</a>
  */
 @Getter
 @Setter
@@ -49,9 +52,10 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
   String id;
 
   /**
-   * The type of items in the value list. One of {@code card_fingerprint}, {@code card_bin}, {@code
-   * email}, {@code ip_address}, {@code country}, {@code string}, {@code case_sensitive_string}, or
-   * {@code customer_id}.
+   * The type of items in the value list. One of {@code card_fingerprint}, {@code
+   * us_bank_account_fingerprint}, {@code sepa_debit_fingerprint}, {@code card_bin}, {@code email},
+   * {@code ip_address}, {@code country}, {@code string}, {@code case_sensitive_string}, or {@code
+   * customer_id}.
    */
   @SerializedName("item_type")
   String itemType;
@@ -96,9 +100,16 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
   /** Creates a new {@code ValueList} object, which can then be referenced in rules. */
   public static ValueList create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/radar/value_lists");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, ValueList.class, options);
+    String path = "/v1/radar/value_lists";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            ValueList.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Creates a new {@code ValueList} object, which can then be referenced in rules. */
@@ -109,9 +120,17 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
   /** Creates a new {@code ValueList} object, which can then be referenced in rules. */
   public static ValueList create(ValueListCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/radar/value_lists");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, ValueList.class, options);
+    String path = "/v1/radar/value_lists";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ValueList.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -144,13 +163,16 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
    */
   public ValueList delete(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            ValueList.class,
             options,
-            String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, ValueList.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -167,8 +189,16 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
    */
   public static ValueListCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/radar/value_lists");
-    return ApiResource.requestCollection(url, params, ValueListCollection.class, options);
+    String path = "/v1/radar/value_lists";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            ValueListCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -185,8 +215,17 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
    */
   public static ValueListCollection list(ValueListListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/radar/value_lists");
-    return ApiResource.requestCollection(url, params, ValueListCollection.class, options);
+    String path = "/v1/radar/value_lists";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ValueListCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves a {@code ValueList} object. */
@@ -203,26 +242,33 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
   /** Retrieves a {@code ValueList} object. */
   public static ValueList retrieve(
       String valueList, Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(valueList));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            ValueList.class,
             options,
-            String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(valueList)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, ValueList.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves a {@code ValueList} object. */
   public static ValueList retrieve(
       String valueList, ValueListRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(valueList));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ValueList.class,
             options,
-            String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(valueList)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, ValueList.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -241,13 +287,16 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
   @Override
   public ValueList update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            ValueList.class,
             options,
-            String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, ValueList.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -264,12 +313,22 @@ public class ValueList extends ApiResource implements HasId, MetadataStore<Value
    */
   public ValueList update(ValueListUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ValueList.class,
             options,
-            String.format("/v1/radar/value_lists/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, ValueList.class, options);
+            ApiMode.V1);
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(listItems, responseGetter);
   }
 }

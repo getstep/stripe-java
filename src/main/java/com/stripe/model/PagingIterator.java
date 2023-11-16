@@ -1,8 +1,7 @@
 package com.stripe.model;
 
-import com.stripe.Stripe;
-import com.stripe.net.ApiResource;
-import com.stripe.net.RequestOptions;
+import com.stripe.net.*;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -11,21 +10,24 @@ import java.util.NoSuchElementException;
 public class PagingIterator<T extends HasId> extends ApiResource implements Iterator<T> {
   private final String url;
 
-  @SuppressWarnings("rawtypes")
-  private final Class<? extends StripeCollectionInterface> collectionType;
+  private final Type pageType;
 
   private StripeCollectionInterface<T> currentCollection;
   private Iterator<T> currentDataIterator;
 
   private String lastId;
 
-  PagingIterator(final StripeCollectionInterface<T> stripeCollection) {
-    this.url = Stripe.getApiBase() + stripeCollection.getUrl();
+  PagingIterator(
+      final StripeCollectionInterface<T> stripeCollection,
+      StripeResponseGetter responseGetter,
+      Type pageType) {
+    this.url = stripeCollection.getUrl();
 
-    this.collectionType = stripeCollection.getClass();
+    this.pageType = pageType;
 
     this.currentCollection = stripeCollection;
     this.currentDataIterator = stripeCollection.getData().iterator();
+    setResponseGetter(responseGetter);
   }
 
   @Override
@@ -75,6 +77,7 @@ public class PagingIterator<T extends HasId> extends ApiResource implements Iter
   @SuppressWarnings("unchecked")
   private StripeCollectionInterface<T> list(
       final Map<String, Object> params, final RequestOptions options) throws Exception {
-    return ApiResource.requestCollection(url, params, collectionType, options);
+    return getResponseGetter()
+        .request(BaseAddress.API, RequestMethod.GET, url, params, pageType, options, ApiMode.V1);
   }
 }

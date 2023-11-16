@@ -244,7 +244,7 @@ public class ConfigurationCreateParams extends ApiRequestParams {
 
     /** The messaging shown to customers in the portal. */
     @SerializedName("headline")
-    String headline;
+    Object headline;
 
     /** A link to the business’s publicly available privacy policy. */
     @SerializedName("privacy_policy_url")
@@ -256,7 +256,7 @@ public class ConfigurationCreateParams extends ApiRequestParams {
 
     private BusinessProfile(
         Map<String, Object> extraParams,
-        String headline,
+        Object headline,
         String privacyPolicyUrl,
         String termsOfServiceUrl) {
       this.extraParams = extraParams;
@@ -272,7 +272,7 @@ public class ConfigurationCreateParams extends ApiRequestParams {
     public static class Builder {
       private Map<String, Object> extraParams;
 
-      private String headline;
+      private Object headline;
 
       private String privacyPolicyUrl;
 
@@ -313,6 +313,12 @@ public class ConfigurationCreateParams extends ApiRequestParams {
 
       /** The messaging shown to customers in the portal. */
       public Builder setHeadline(String headline) {
+        this.headline = headline;
+        return this;
+      }
+
+      /** The messaging shown to customers in the portal. */
+      public Builder setHeadline(EmptyParam headline) {
         this.headline = headline;
         return this;
       }
@@ -1237,7 +1243,9 @@ public class ConfigurationCreateParams extends ApiRequestParams {
       @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
       Map<String, Object> extraParams;
 
-      /** <strong>Required.</strong> The list of products that support subscription updates. */
+      /**
+       * <strong>Required.</strong> The list of up to 10 products that support subscription updates.
+       */
       @SerializedName("products")
       Object products;
 
@@ -1419,13 +1427,19 @@ public class ConfigurationCreateParams extends ApiRequestParams {
           return this;
         }
 
-        /** <strong>Required.</strong> The list of products that support subscription updates. */
+        /**
+         * <strong>Required.</strong> The list of up to 10 products that support subscription
+         * updates.
+         */
         public Builder setProducts(EmptyParam products) {
           this.products = products;
           return this;
         }
 
-        /** <strong>Required.</strong> The list of products that support subscription updates. */
+        /**
+         * <strong>Required.</strong> The list of up to 10 products that support subscription
+         * updates.
+         */
         public Builder setProducts(
             List<ConfigurationCreateParams.Features.SubscriptionUpdate.Product> products) {
           this.products = products;

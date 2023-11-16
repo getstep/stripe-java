@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.ChargeCaptureParams;
 import com.stripe.param.ChargeCreateParams;
 import com.stripe.param.ChargeListParams;
@@ -19,20 +22,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * To charge a credit or a debit card, you create a {@code Charge} object. You can retrieve and
- * refund individual charges as well as list all charges. Charges are identified by a unique, random
- * ID.
- *
- * <p>Related guide: <a href="https://stripe.com/docs/payments/accept-a-payment-charges">Accept a
- * payment with the Charges API</a>.
+ * The {@code Charge} object represents a single attempt to move money into your Stripe account.
+ * PaymentIntent confirmation is the most common way to create Charges, but transferring money to a
+ * different Stripe account through Connect also creates Charges. Some legacy payment flows create
+ * Charges directly, which is not recommended for new integrations.
  */
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class Charge extends ApiResource implements MetadataStore<Charge>, BalanceTransactionSource {
-  @SerializedName("alternate_statement_descriptors")
-  AlternateStatementDescriptors alternateStatementDescriptors;
-
   /**
    * Amount intended to be collected by this payment. A positive integer representing how much to
    * charge in the <a href="https://stripe.com/docs/currencies#zero-decimal">smallest currency
@@ -46,15 +44,15 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
   Long amount;
 
   /**
-   * Amount in %s captured (can be less than the amount attribute on the charge if a partial capture
-   * was made).
+   * Amount in cents (or local equivalent) captured (can be less than the amount attribute on the
+   * charge if a partial capture was made).
    */
   @SerializedName("amount_captured")
   Long amountCaptured;
 
   /**
-   * Amount in %s refunded (can be less than the amount attribute on the charge if a partial refund
-   * was issued).
+   * Amount in cents (or local equivalent) refunded (can be less than the amount attribute on the
+   * charge if a partial refund was issued).
    */
   @SerializedName("amount_refunded")
   Long amountRefunded;
@@ -135,21 +133,6 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
   @SerializedName("description")
   String description;
 
-  /**
-   * ID of an existing, connected Stripe account to transfer funds to if {@code transfer_data} was
-   * specified in the charge request.
-   */
-  @SerializedName("destination")
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  ExpandableField<Account> destination;
-
-  /** Details about the dispute if the charge has been disputed. */
-  @SerializedName("dispute")
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  ExpandableField<Dispute> dispute;
-
   /** Whether the charge has been disputed. */
   @SerializedName("disputed")
   Boolean disputed;
@@ -218,8 +201,8 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
 
   /**
    * The account (if any) the charge was made on behalf of without triggering an automatic transfer.
-   * See the <a href="https://stripe.com/docs/connect/charges-transfers">Connect documentation</a>
-   * for details.
+   * See the <a href="https://stripe.com/docs/connect/separate-charges-and-transfers">Connect
+   * documentation</a> for details.
    */
   @SerializedName("on_behalf_of")
   @Getter(lombok.AccessLevel.NONE)
@@ -359,7 +342,7 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
 
   /**
    * A string that identifies this transaction as part of a group. See the <a
-   * href="https://stripe.com/docs/connect/charges-transfers#transfer-options">Connect
+   * href="https://stripe.com/docs/connect/separate-charges-and-transfers#transfer-options">Connect
    * documentation</a> for details.
    */
   @SerializedName("transfer_group")
@@ -437,42 +420,6 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
 
   public void setCustomerObject(Customer expandableObject) {
     this.customer = new ExpandableField<Customer>(expandableObject.getId(), expandableObject);
-  }
-
-  /** Get ID of expandable {@code destination} object. */
-  public String getDestination() {
-    return (this.destination != null) ? this.destination.getId() : null;
-  }
-
-  public void setDestination(String id) {
-    this.destination = ApiResource.setExpandableFieldId(id, this.destination);
-  }
-
-  /** Get expanded {@code destination}. */
-  public Account getDestinationObject() {
-    return (this.destination != null) ? this.destination.getExpanded() : null;
-  }
-
-  public void setDestinationObject(Account expandableObject) {
-    this.destination = new ExpandableField<Account>(expandableObject.getId(), expandableObject);
-  }
-
-  /** Get ID of expandable {@code dispute} object. */
-  public String getDispute() {
-    return (this.dispute != null) ? this.dispute.getId() : null;
-  }
-
-  public void setDispute(String id) {
-    this.dispute = ApiResource.setExpandableFieldId(id, this.dispute);
-  }
-
-  /** Get expanded {@code dispute}. */
-  public Dispute getDisputeObject() {
-    return (this.dispute != null) ? this.dispute.getExpanded() : null;
-  }
-
-  public void setDisputeObject(Dispute expandableObject) {
-    this.dispute = new ExpandableField<Dispute>(expandableObject.getId(), expandableObject);
   }
 
   /** Get ID of expandable {@code failureBalanceTransaction} object. */
@@ -607,141 +554,173 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
   }
 
   /**
-   * Capture the payment of an existing, uncaptured, charge. This is the second half of the two-step
-   * payment flow, where first you <a href="https://stripe.com/docs/api#create_charge">created a
-   * charge</a> with the capture option set to false.
+   * Capture the payment of an existing, uncaptured charge that was created with the {@code capture}
+   * option set to false.
    *
    * <p>Uncaptured payments expire a set number of days after they are created (<a
-   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>). If they are not
-   * captured by that point in time, they will be marked as refunded and will no longer be
-   * capturable.
+   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>), after which they are
+   * marked as refunded and capture attempts will fail.
+   *
+   * <p>Don’t use this method to capture a PaymentIntent-initiated charge. Use <a
+   * href="https://stripe.com/docs/api/payment_intents/capture">Capture a PaymentIntent</a>.
    */
   public Charge capture() throws StripeException {
     return capture((Map<String, Object>) null, (RequestOptions) null);
   }
 
   /**
-   * Capture the payment of an existing, uncaptured, charge. This is the second half of the two-step
-   * payment flow, where first you <a href="https://stripe.com/docs/api#create_charge">created a
-   * charge</a> with the capture option set to false.
+   * Capture the payment of an existing, uncaptured charge that was created with the {@code capture}
+   * option set to false.
    *
    * <p>Uncaptured payments expire a set number of days after they are created (<a
-   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>). If they are not
-   * captured by that point in time, they will be marked as refunded and will no longer be
-   * capturable.
+   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>), after which they are
+   * marked as refunded and capture attempts will fail.
+   *
+   * <p>Don’t use this method to capture a PaymentIntent-initiated charge. Use <a
+   * href="https://stripe.com/docs/api/payment_intents/capture">Capture a PaymentIntent</a>.
    */
   public Charge capture(RequestOptions options) throws StripeException {
     return capture((Map<String, Object>) null, options);
   }
 
   /**
-   * Capture the payment of an existing, uncaptured, charge. This is the second half of the two-step
-   * payment flow, where first you <a href="https://stripe.com/docs/api#create_charge">created a
-   * charge</a> with the capture option set to false.
+   * Capture the payment of an existing, uncaptured charge that was created with the {@code capture}
+   * option set to false.
    *
    * <p>Uncaptured payments expire a set number of days after they are created (<a
-   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>). If they are not
-   * captured by that point in time, they will be marked as refunded and will no longer be
-   * capturable.
+   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>), after which they are
+   * marked as refunded and capture attempts will fail.
+   *
+   * <p>Don’t use this method to capture a PaymentIntent-initiated charge. Use <a
+   * href="https://stripe.com/docs/api/payment_intents/capture">Capture a PaymentIntent</a>.
    */
   public Charge capture(Map<String, Object> params) throws StripeException {
     return capture(params, (RequestOptions) null);
   }
 
   /**
-   * Capture the payment of an existing, uncaptured, charge. This is the second half of the two-step
-   * payment flow, where first you <a href="https://stripe.com/docs/api#create_charge">created a
-   * charge</a> with the capture option set to false.
+   * Capture the payment of an existing, uncaptured charge that was created with the {@code capture}
+   * option set to false.
    *
    * <p>Uncaptured payments expire a set number of days after they are created (<a
-   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>). If they are not
-   * captured by that point in time, they will be marked as refunded and will no longer be
-   * capturable.
+   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>), after which they are
+   * marked as refunded and capture attempts will fail.
+   *
+   * <p>Don’t use this method to capture a PaymentIntent-initiated charge. Use <a
+   * href="https://stripe.com/docs/api/payment_intents/capture">Capture a PaymentIntent</a>.
    */
   public Charge capture(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/charges/%s/capture", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Charge.class,
             options,
-            String.format("/v1/charges/%s/capture", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Charge.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * Capture the payment of an existing, uncaptured, charge. This is the second half of the two-step
-   * payment flow, where first you <a href="https://stripe.com/docs/api#create_charge">created a
-   * charge</a> with the capture option set to false.
+   * Capture the payment of an existing, uncaptured charge that was created with the {@code capture}
+   * option set to false.
    *
    * <p>Uncaptured payments expire a set number of days after they are created (<a
-   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>). If they are not
-   * captured by that point in time, they will be marked as refunded and will no longer be
-   * capturable.
+   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>), after which they are
+   * marked as refunded and capture attempts will fail.
+   *
+   * <p>Don’t use this method to capture a PaymentIntent-initiated charge. Use <a
+   * href="https://stripe.com/docs/api/payment_intents/capture">Capture a PaymentIntent</a>.
    */
   public Charge capture(ChargeCaptureParams params) throws StripeException {
     return capture(params, (RequestOptions) null);
   }
 
   /**
-   * Capture the payment of an existing, uncaptured, charge. This is the second half of the two-step
-   * payment flow, where first you <a href="https://stripe.com/docs/api#create_charge">created a
-   * charge</a> with the capture option set to false.
+   * Capture the payment of an existing, uncaptured charge that was created with the {@code capture}
+   * option set to false.
    *
    * <p>Uncaptured payments expire a set number of days after they are created (<a
-   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>). If they are not
-   * captured by that point in time, they will be marked as refunded and will no longer be
-   * capturable.
+   * href="https://stripe.com/docs/charges/placing-a-hold">7 by default</a>), after which they are
+   * marked as refunded and capture attempts will fail.
+   *
+   * <p>Don’t use this method to capture a PaymentIntent-initiated charge. Use <a
+   * href="https://stripe.com/docs/api/payment_intents/capture">Capture a PaymentIntent</a>.
    */
   public Charge capture(ChargeCaptureParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/charges/%s/capture", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Charge.class,
             options,
-            String.format("/v1/charges/%s/capture", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Charge.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * To charge a credit card or other payment source, you create a {@code Charge} object. If your
-   * API key is in test mode, the supplied payment source (e.g., card) won’t actually be charged,
-   * although everything else will occur as if in live mode. (Stripe assumes that the charge would
-   * have completed successfully).
+   * Use the <a href="https://stripe.com/docs/api/payment_intents">Payment Intents API</a> to
+   * initiate a new payment instead of using this method. Confirmation of the PaymentIntent creates
+   * the {@code Charge} object used to request payment, so this method is limited to legacy
+   * integrations.
    */
   public static Charge create(Map<String, Object> params) throws StripeException {
     return create(params, (RequestOptions) null);
   }
 
   /**
-   * To charge a credit card or other payment source, you create a {@code Charge} object. If your
-   * API key is in test mode, the supplied payment source (e.g., card) won’t actually be charged,
-   * although everything else will occur as if in live mode. (Stripe assumes that the charge would
-   * have completed successfully).
+   * Use the <a href="https://stripe.com/docs/api/payment_intents">Payment Intents API</a> to
+   * initiate a new payment instead of using this method. Confirmation of the PaymentIntent creates
+   * the {@code Charge} object used to request payment, so this method is limited to legacy
+   * integrations.
    */
   public static Charge create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/charges");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Charge.class, options);
+    String path = "/v1/charges";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Charge.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
-   * To charge a credit card or other payment source, you create a {@code Charge} object. If your
-   * API key is in test mode, the supplied payment source (e.g., card) won’t actually be charged,
-   * although everything else will occur as if in live mode. (Stripe assumes that the charge would
-   * have completed successfully).
+   * Use the <a href="https://stripe.com/docs/api/payment_intents">Payment Intents API</a> to
+   * initiate a new payment instead of using this method. Confirmation of the PaymentIntent creates
+   * the {@code Charge} object used to request payment, so this method is limited to legacy
+   * integrations.
    */
   public static Charge create(ChargeCreateParams params) throws StripeException {
     return create(params, (RequestOptions) null);
   }
 
   /**
-   * To charge a credit card or other payment source, you create a {@code Charge} object. If your
-   * API key is in test mode, the supplied payment source (e.g., card) won’t actually be charged,
-   * although everything else will occur as if in live mode. (Stripe assumes that the charge would
-   * have completed successfully).
+   * Use the <a href="https://stripe.com/docs/api/payment_intents">Payment Intents API</a> to
+   * initiate a new payment instead of using this method. Confirmation of the PaymentIntent creates
+   * the {@code Charge} object used to request payment, so this method is limited to legacy
+   * integrations.
    */
   public static Charge create(ChargeCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/charges");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Charge.class, options);
+    String path = "/v1/charges";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Charge.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -758,8 +737,16 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   public static ChargeCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/charges");
-    return ApiResource.requestCollection(url, params, ChargeCollection.class, options);
+    String path = "/v1/charges";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            ChargeCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -776,8 +763,17 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   public static ChargeCollection list(ChargeListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/charges");
-    return ApiResource.requestCollection(url, params, ChargeCollection.class, options);
+    String path = "/v1/charges";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ChargeCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -805,12 +801,16 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   public static Charge retrieve(String charge, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/charges/%s", ApiResource.urlEncodeId(charge));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Charge.class,
             options,
-            String.format("/v1/charges/%s", ApiResource.urlEncodeId(charge)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Charge.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -820,12 +820,17 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   public static Charge retrieve(String charge, ChargeRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/charges/%s", ApiResource.urlEncodeId(charge));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Charge.class,
             options,
-            String.format("/v1/charges/%s", ApiResource.urlEncodeId(charge)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Charge.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -850,8 +855,16 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   public static ChargeSearchResult search(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/charges/search");
-    return ApiResource.requestSearchResult(url, params, ChargeSearchResult.class, options);
+    String path = "/v1/charges/search";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            ChargeSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -876,8 +889,17 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   public static ChargeSearchResult search(ChargeSearchParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/charges/search");
-    return ApiResource.requestSearchResult(url, params, ChargeSearchResult.class, options);
+    String path = "/v1/charges/search";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            ChargeSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -895,12 +917,16 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    */
   @Override
   public Charge update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/charges/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Charge.class,
             options,
-            String.format("/v1/charges/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Charge.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -916,25 +942,17 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
    * provided will be left unchanged.
    */
   public Charge update(ChargeUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/charges/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Charge.class,
             options,
-            String.format("/v1/charges/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Charge.class, options);
-  }
-
-  @Getter
-  @Setter
-  @EqualsAndHashCode(callSuper = false)
-  public static class AlternateStatementDescriptors extends StripeObject {
-    /** The Kana variation of the descriptor. */
-    @SerializedName("kana")
-    String kana;
-
-    /** The Kanji variation of the descriptor. */
-    @SerializedName("kanji")
-    String kanji;
+            ApiMode.V1);
   }
 
   @Getter
@@ -1211,11 +1229,17 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     @SerializedName("paynow")
     Paynow paynow;
 
+    @SerializedName("paypal")
+    Paypal paypal;
+
     @SerializedName("pix")
     Pix pix;
 
     @SerializedName("promptpay")
     Promptpay promptpay;
+
+    @SerializedName("revolut_pay")
+    RevolutPay revolutPay;
 
     @SerializedName("sepa_credit_transfer")
     SepaCreditTransfer sepaCreditTransfer;
@@ -1249,6 +1273,9 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
 
     @SerializedName("wechat_pay")
     WechatPay wechatPay;
+
+    @SerializedName("zip")
+    Zip zip;
 
     @Getter
     @Setter
@@ -1349,6 +1376,10 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class AfterpayClearpay extends StripeObject {
+      /** The Afterpay order ID associated with this payment intent. */
+      @SerializedName("order_id")
+      String orderId;
+
       /** Order identifier shown to the merchant in Afterpay’s online portal. */
       @SerializedName("reference")
       String reference;
@@ -1536,12 +1567,23 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Card extends StripeObject {
+      /** The authorized amount. */
+      @SerializedName("amount_authorized")
+      Long amountAuthorized;
+
       /**
        * Card brand. Can be {@code amex}, {@code diners}, {@code discover}, {@code eftpos_au},
        * {@code jcb}, {@code mastercard}, {@code unionpay}, {@code visa}, or {@code unknown}.
        */
       @SerializedName("brand")
       String brand;
+
+      /**
+       * When using manual capture, a future timestamp at which the charge will be automatically
+       * refunded if uncaptured.
+       */
+      @SerializedName("capture_before")
+      Long captureBefore;
 
       /** Check results by Card networks on Card address and CVC at time of payment. */
       @SerializedName("checks")
@@ -1569,14 +1611,17 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @SerializedName("exp_year")
       Long expYear;
 
+      @SerializedName("extended_authorization")
+      ExtendedAuthorization extendedAuthorization;
+
       /**
        * Uniquely identifies this particular card number. You can use this attribute to check
        * whether two customers who’ve signed up with you are using the same card number, for
        * example. For payment methods that tokenize card information (Apple Pay, Google Pay), the
        * tokenized number might be provided instead of the underlying card number.
        *
-       * <p><em>Starting May 1, 2021, card fingerprint in India for Connect will change to allow two
-       * fingerprints for the same card --- one for India and one for the rest of the world.</em>
+       * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+       * fingerprints for the same card---one for India and one for the rest of the world.</em>
        */
       @SerializedName("fingerprint")
       String fingerprint;
@@ -1594,6 +1639,9 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
        */
       @SerializedName("iin")
       String iin;
+
+      @SerializedName("incremental_authorization")
+      IncrementalAuthorization incrementalAuthorization;
 
       /**
        * Installment details for this payment (Mexico only).
@@ -1623,6 +1671,9 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @SerializedName("moto")
       Boolean moto;
 
+      @SerializedName("multicapture")
+      Multicapture multicapture;
+
       /**
        * Identifies which network this charge was processed on. Can be {@code amex}, {@code
        * cartes_bancaires}, {@code diners}, {@code discover}, {@code eftpos_au}, {@code interac},
@@ -1630,6 +1681,16 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
        */
       @SerializedName("network")
       String network;
+
+      /**
+       * If this card has network token credentials, this contains the details of the network token
+       * credentials.
+       */
+      @SerializedName("network_token")
+      NetworkToken networkToken;
+
+      @SerializedName("overcapture")
+      Overcapture overcapture;
 
       /** Populated if this transaction used 3D Secure authentication. */
       @SerializedName("three_d_secure")
@@ -1668,6 +1729,33 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @Getter
       @Setter
       @EqualsAndHashCode(callSuper = false)
+      public static class ExtendedAuthorization extends StripeObject {
+        /**
+         * Indicates whether or not the capture window is extended beyond the standard
+         * authorization.
+         *
+         * <p>One of {@code disabled}, or {@code enabled}.
+         */
+        @SerializedName("status")
+        String status;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class IncrementalAuthorization extends StripeObject {
+        /**
+         * Indicates whether or not the incremental authorization feature is supported.
+         *
+         * <p>One of {@code available}, or {@code unavailable}.
+         */
+        @SerializedName("status")
+        String status;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
       public static class Installments extends StripeObject {
         /** Installment plan selected for the payment. */
         @SerializedName("plan")
@@ -1695,6 +1783,48 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
           @SerializedName("type")
           String type;
         }
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class Multicapture extends StripeObject {
+        /**
+         * Indicates whether or not multiple captures are supported.
+         *
+         * <p>One of {@code available}, or {@code unavailable}.
+         */
+        @SerializedName("status")
+        String status;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class NetworkToken extends StripeObject {
+        /**
+         * Indicates if Stripe used a network token, either user provided or Stripe managed when
+         * processing the transaction.
+         */
+        @SerializedName("used")
+        Boolean used;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class Overcapture extends StripeObject {
+        /** The maximum amount that can be captured. */
+        @SerializedName("maximum_amount_capturable")
+        Long maximumAmountCapturable;
+
+        /**
+         * Indicates whether or not the authorized amount can be over-captured.
+         *
+         * <p>One of {@code available}, or {@code unavailable}.
+         */
+        @SerializedName("status")
+        String status;
       }
 
       @Getter
@@ -1755,6 +1885,9 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
         @SerializedName("google_pay")
         GooglePay googlePay;
 
+        @SerializedName("link")
+        Link link;
+
         @SerializedName("masterpass")
         Masterpass masterpass;
 
@@ -1787,6 +1920,11 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
         @Setter
         @EqualsAndHashCode(callSuper = false)
         public static class GooglePay extends StripeObject {}
+
+        @Getter
+        @Setter
+        @EqualsAndHashCode(callSuper = false)
+        public static class Link extends StripeObject {}
 
         @Getter
         @Setter
@@ -1930,8 +2068,8 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
        * example. For payment methods that tokenize card information (Apple Pay, Google Pay), the
        * tokenized number might be provided instead of the underlying card number.
        *
-       * <p><em>Starting May 1, 2021, card fingerprint in India for Connect will change to allow two
-       * fingerprints for the same card --- one for India and one for the rest of the world.</em>
+       * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+       * fingerprints for the same card---one for India and one for the rest of the world.</em>
        */
       @SerializedName("fingerprint")
       String fingerprint;
@@ -2056,7 +2194,15 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
-    public static class Cashapp extends StripeObject {}
+    public static class Cashapp extends StripeObject {
+      /** A unique and immutable identifier assigned by Cash App to every buyer. */
+      @SerializedName("buyer_id")
+      String buyerId;
+
+      /** A public identifier for buyers using Cash App. */
+      @SerializedName("cashtag")
+      String cashtag;
+    }
 
     @Getter
     @Setter
@@ -2157,9 +2303,9 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     public static class Ideal extends StripeObject {
       /**
        * The customer's bank. Can be one of {@code abn_amro}, {@code asn_bank}, {@code bunq}, {@code
-       * handelsbanken}, {@code ing}, {@code knab}, {@code moneyou}, {@code rabobank}, {@code
-       * regiobank}, {@code revolut}, {@code sns_bank}, {@code triodos_bank}, {@code van_lanschot},
-       * or {@code yoursafe}.
+       * handelsbanken}, {@code ing}, {@code knab}, {@code moneyou}, {@code n26}, {@code rabobank},
+       * {@code regiobank}, {@code revolut}, {@code sns_bank}, {@code triodos_bank}, {@code
+       * van_lanschot}, or {@code yoursafe}.
        */
       @SerializedName("bank")
       String bank;
@@ -2169,7 +2315,8 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
        *
        * <p>One of {@code ABNANL2A}, {@code ASNBNL21}, {@code BITSNL2A}, {@code BUNQNL2A}, {@code
        * FVLBNL22}, {@code HANDNL2A}, {@code INGBNL2A}, {@code KNABNL2H}, {@code MOYONL21}, {@code
-       * RABONL2U}, {@code RBRBNL21}, {@code REVOLT21}, {@code SNSBNL2A}, or {@code TRIONL2U}.
+       * NTSBDEB1}, {@code RABONL2U}, {@code RBRBNL21}, {@code REVOIE23}, {@code REVOLT21}, {@code
+       * SNSBNL2A}, or {@code TRIONL2U}.
        */
       @SerializedName("bic")
       String bic;
@@ -2292,8 +2439,8 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
        * example. For payment methods that tokenize card information (Apple Pay, Google Pay), the
        * tokenized number might be provided instead of the underlying card number.
        *
-       * <p><em>Starting May 1, 2021, card fingerprint in India for Connect will change to allow two
-       * fingerprints for the same card --- one for India and one for the rest of the world.</em>
+       * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+       * fingerprints for the same card---one for India and one for the rest of the world.</em>
        */
       @SerializedName("fingerprint")
       String fingerprint;
@@ -2533,6 +2680,57 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
+    public static class Paypal extends StripeObject {
+      /**
+       * Owner's email. Values are provided by PayPal directly (if supported) at the time of
+       * authorization or settlement. They cannot be set or mutated.
+       */
+      @SerializedName("payer_email")
+      String payerEmail;
+
+      /** PayPal account PayerID. This identifier uniquely identifies the PayPal customer. */
+      @SerializedName("payer_id")
+      String payerId;
+
+      /**
+       * Owner's full name. Values provided by PayPal directly (if supported) at the time of
+       * authorization or settlement. They cannot be set or mutated.
+       */
+      @SerializedName("payer_name")
+      String payerName;
+
+      /**
+       * The level of protection offered as defined by PayPal Seller Protection for Merchants, for
+       * this transaction.
+       */
+      @SerializedName("seller_protection")
+      SellerProtection sellerProtection;
+
+      /** A unique ID generated by PayPal for this transaction. */
+      @SerializedName("transaction_id")
+      String transactionId;
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class SellerProtection extends StripeObject {
+        /** An array of conditions that are covered for the transaction, if applicable. */
+        @SerializedName("dispute_categories")
+        List<String> disputeCategories;
+
+        /**
+         * Indicates whether the transaction is eligible for PayPal's seller protection.
+         *
+         * <p>One of {@code eligible}, {@code not_eligible}, or {@code partially_eligible}.
+         */
+        @SerializedName("status")
+        String status;
+      }
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
     public static class Pix extends StripeObject {
       /** Unique transaction id generated by BCB. */
       @SerializedName("bank_transaction_id")
@@ -2547,6 +2745,11 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @SerializedName("reference")
       String reference;
     }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class RevolutPay extends StripeObject {}
 
     @Getter
     @Setter
@@ -2592,7 +2795,12 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @SerializedName("last4")
       String last4;
 
-      /** ID of the mandate used to make this payment. */
+      /**
+       * Find the ID of the mandate used for this payment under the <a
+       * href="https://stripe.com/docs/api/charges/object#charge_object-payment_method_details-sepa_debit-mandate">payment_method_details.sepa_debit.mandate</a>
+       * property on the Charge. Use this mandate ID to <a
+       * href="https://stripe.com/docs/api/mandates/retrieve">retrieve the Mandate</a>.
+       */
       @SerializedName("mandate")
       String mandate;
     }
@@ -2757,6 +2965,11 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @SerializedName("transaction_id")
       String transactionId;
     }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Zip extends StripeObject {}
   }
 
   /**
@@ -2813,5 +3026,31 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
     public void setDestinationObject(Account expandableObject) {
       this.destination = new ExpandableField<Account>(expandableObject.getId(), expandableObject);
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(applicationFee, responseGetter);
+    trySetResponseGetter(balanceTransaction, responseGetter);
+    trySetResponseGetter(billingDetails, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(failureBalanceTransaction, responseGetter);
+    trySetResponseGetter(fraudDetails, responseGetter);
+    trySetResponseGetter(invoice, responseGetter);
+    trySetResponseGetter(level3, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(outcome, responseGetter);
+    trySetResponseGetter(paymentIntent, responseGetter);
+    trySetResponseGetter(paymentMethodDetails, responseGetter);
+    trySetResponseGetter(radarOptions, responseGetter);
+    trySetResponseGetter(refunds, responseGetter);
+    trySetResponseGetter(review, responseGetter);
+    trySetResponseGetter(shipping, responseGetter);
+    trySetResponseGetter(source, responseGetter);
+    trySetResponseGetter(sourceTransfer, responseGetter);
+    trySetResponseGetter(transfer, responseGetter);
+    trySetResponseGetter(transferData, responseGetter);
   }
 }

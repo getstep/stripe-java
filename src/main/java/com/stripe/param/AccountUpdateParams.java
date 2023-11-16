@@ -489,6 +489,13 @@ public class AccountUpdateParams extends ApiRequestParams {
     @SerializedName("mcc")
     Object mcc;
 
+    /**
+     * An estimate of the monthly revenue of the business. Only accepted for accounts in Brazil and
+     * India.
+     */
+    @SerializedName("monthly_estimated_revenue")
+    MonthlyEstimatedRevenue monthlyEstimatedRevenue;
+
     /** The customer-facing business name. */
     @SerializedName("name")
     Object name;
@@ -523,6 +530,7 @@ public class AccountUpdateParams extends ApiRequestParams {
     private BusinessProfile(
         Map<String, Object> extraParams,
         Object mcc,
+        MonthlyEstimatedRevenue monthlyEstimatedRevenue,
         Object name,
         Object productDescription,
         SupportAddress supportAddress,
@@ -532,6 +540,7 @@ public class AccountUpdateParams extends ApiRequestParams {
         Object url) {
       this.extraParams = extraParams;
       this.mcc = mcc;
+      this.monthlyEstimatedRevenue = monthlyEstimatedRevenue;
       this.name = name;
       this.productDescription = productDescription;
       this.supportAddress = supportAddress;
@@ -549,6 +558,8 @@ public class AccountUpdateParams extends ApiRequestParams {
       private Map<String, Object> extraParams;
 
       private Object mcc;
+
+      private MonthlyEstimatedRevenue monthlyEstimatedRevenue;
 
       private Object name;
 
@@ -569,6 +580,7 @@ public class AccountUpdateParams extends ApiRequestParams {
         return new AccountUpdateParams.BusinessProfile(
             this.extraParams,
             this.mcc,
+            this.monthlyEstimatedRevenue,
             this.name,
             this.productDescription,
             this.supportAddress,
@@ -621,6 +633,16 @@ public class AccountUpdateParams extends ApiRequestParams {
        */
       public Builder setMcc(EmptyParam mcc) {
         this.mcc = mcc;
+        return this;
+      }
+
+      /**
+       * An estimate of the monthly revenue of the business. Only accepted for accounts in Brazil
+       * and India.
+       */
+      public Builder setMonthlyEstimatedRevenue(
+          AccountUpdateParams.BusinessProfile.MonthlyEstimatedRevenue monthlyEstimatedRevenue) {
+        this.monthlyEstimatedRevenue = monthlyEstimatedRevenue;
         return this;
       }
 
@@ -707,6 +729,115 @@ public class AccountUpdateParams extends ApiRequestParams {
       public Builder setUrl(EmptyParam url) {
         this.url = url;
         return this;
+      }
+    }
+
+    @Getter
+    public static class MonthlyEstimatedRevenue {
+      /**
+       * <strong>Required.</strong> A non-negative integer representing how much to charge in the <a
+       * href="https://stripe.com/docs/currencies#zero-decimal">smallest currency unit</a>.
+       */
+      @SerializedName("amount")
+      Long amount;
+
+      /**
+       * <strong>Required.</strong> Three-letter <a
+       * href="https://www.iso.org/iso-4217-currency-codes.html">ISO currency code</a>, in
+       * lowercase. Must be a <a href="https://stripe.com/docs/currencies">supported currency</a>.
+       */
+      @SerializedName("currency")
+      Object currency;
+
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private MonthlyEstimatedRevenue(
+          Long amount, Object currency, Map<String, Object> extraParams) {
+        this.amount = amount;
+        this.currency = currency;
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Long amount;
+
+        private Object currency;
+
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public AccountUpdateParams.BusinessProfile.MonthlyEstimatedRevenue build() {
+          return new AccountUpdateParams.BusinessProfile.MonthlyEstimatedRevenue(
+              this.amount, this.currency, this.extraParams);
+        }
+
+        /**
+         * <strong>Required.</strong> A non-negative integer representing how much to charge in the
+         * <a href="https://stripe.com/docs/currencies#zero-decimal">smallest currency unit</a>.
+         */
+        public Builder setAmount(Long amount) {
+          this.amount = amount;
+          return this;
+        }
+
+        /**
+         * <strong>Required.</strong> Three-letter <a
+         * href="https://www.iso.org/iso-4217-currency-codes.html">ISO currency code</a>, in
+         * lowercase. Must be a <a href="https://stripe.com/docs/currencies">supported currency</a>.
+         */
+        public Builder setCurrency(String currency) {
+          this.currency = currency;
+          return this;
+        }
+
+        /**
+         * <strong>Required.</strong> Three-letter <a
+         * href="https://www.iso.org/iso-4217-currency-codes.html">ISO currency code</a>, in
+         * lowercase. Must be a <a href="https://stripe.com/docs/currencies">supported currency</a>.
+         */
+        public Builder setCurrency(EmptyParam currency) {
+          this.currency = currency;
+          return this;
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.BusinessProfile.MonthlyEstimatedRevenue#extraParams}
+         * for the field documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.BusinessProfile.MonthlyEstimatedRevenue#extraParams}
+         * for the field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
       }
     }
 
@@ -1028,6 +1159,10 @@ public class AccountUpdateParams extends ApiRequestParams {
     @SerializedName("promptpay_payments")
     PromptpayPayments promptpayPayments;
 
+    /** The revolut_pay_payments capability. */
+    @SerializedName("revolut_pay_payments")
+    RevolutPayPayments revolutPayPayments;
+
     /** The sepa_debit_payments capability. */
     @SerializedName("sepa_debit_payments")
     SepaDebitPayments sepaDebitPayments;
@@ -1055,6 +1190,10 @@ public class AccountUpdateParams extends ApiRequestParams {
     /** The us_bank_account_ach_payments capability. */
     @SerializedName("us_bank_account_ach_payments")
     UsBankAccountAchPayments usBankAccountAchPayments;
+
+    /** The zip_payments capability. */
+    @SerializedName("zip_payments")
+    ZipPayments zipPayments;
 
     private Capabilities(
         AcssDebitPayments acssDebitPayments,
@@ -1086,13 +1225,15 @@ public class AccountUpdateParams extends ApiRequestParams {
         P24Payments p24Payments,
         PaynowPayments paynowPayments,
         PromptpayPayments promptpayPayments,
+        RevolutPayPayments revolutPayPayments,
         SepaDebitPayments sepaDebitPayments,
         SofortPayments sofortPayments,
         TaxReportingUs1099K taxReportingUs1099K,
         TaxReportingUs1099Misc taxReportingUs1099Misc,
         Transfers transfers,
         Treasury treasury,
-        UsBankAccountAchPayments usBankAccountAchPayments) {
+        UsBankAccountAchPayments usBankAccountAchPayments,
+        ZipPayments zipPayments) {
       this.acssDebitPayments = acssDebitPayments;
       this.affirmPayments = affirmPayments;
       this.afterpayClearpayPayments = afterpayClearpayPayments;
@@ -1122,6 +1263,7 @@ public class AccountUpdateParams extends ApiRequestParams {
       this.p24Payments = p24Payments;
       this.paynowPayments = paynowPayments;
       this.promptpayPayments = promptpayPayments;
+      this.revolutPayPayments = revolutPayPayments;
       this.sepaDebitPayments = sepaDebitPayments;
       this.sofortPayments = sofortPayments;
       this.taxReportingUs1099K = taxReportingUs1099K;
@@ -1129,6 +1271,7 @@ public class AccountUpdateParams extends ApiRequestParams {
       this.transfers = transfers;
       this.treasury = treasury;
       this.usBankAccountAchPayments = usBankAccountAchPayments;
+      this.zipPayments = zipPayments;
     }
 
     public static Builder builder() {
@@ -1194,6 +1337,8 @@ public class AccountUpdateParams extends ApiRequestParams {
 
       private PromptpayPayments promptpayPayments;
 
+      private RevolutPayPayments revolutPayPayments;
+
       private SepaDebitPayments sepaDebitPayments;
 
       private SofortPayments sofortPayments;
@@ -1207,6 +1352,8 @@ public class AccountUpdateParams extends ApiRequestParams {
       private Treasury treasury;
 
       private UsBankAccountAchPayments usBankAccountAchPayments;
+
+      private ZipPayments zipPayments;
 
       /** Finalize and obtain parameter instance from this builder. */
       public AccountUpdateParams.Capabilities build() {
@@ -1240,13 +1387,15 @@ public class AccountUpdateParams extends ApiRequestParams {
             this.p24Payments,
             this.paynowPayments,
             this.promptpayPayments,
+            this.revolutPayPayments,
             this.sepaDebitPayments,
             this.sofortPayments,
             this.taxReportingUs1099K,
             this.taxReportingUs1099Misc,
             this.transfers,
             this.treasury,
-            this.usBankAccountAchPayments);
+            this.usBankAccountAchPayments,
+            this.zipPayments);
       }
 
       /** The acss_debit_payments capability. */
@@ -1462,6 +1611,13 @@ public class AccountUpdateParams extends ApiRequestParams {
         return this;
       }
 
+      /** The revolut_pay_payments capability. */
+      public Builder setRevolutPayPayments(
+          AccountUpdateParams.Capabilities.RevolutPayPayments revolutPayPayments) {
+        this.revolutPayPayments = revolutPayPayments;
+        return this;
+      }
+
       /** The sepa_debit_payments capability. */
       public Builder setSepaDebitPayments(
           AccountUpdateParams.Capabilities.SepaDebitPayments sepaDebitPayments) {
@@ -1506,6 +1662,12 @@ public class AccountUpdateParams extends ApiRequestParams {
       public Builder setUsBankAccountAchPayments(
           AccountUpdateParams.Capabilities.UsBankAccountAchPayments usBankAccountAchPayments) {
         this.usBankAccountAchPayments = usBankAccountAchPayments;
+        return this;
+      }
+
+      /** The zip_payments capability. */
+      public Builder setZipPayments(AccountUpdateParams.Capabilities.ZipPayments zipPayments) {
+        this.zipPayments = zipPayments;
         return this;
       }
     }
@@ -3718,6 +3880,85 @@ public class AccountUpdateParams extends ApiRequestParams {
     }
 
     @Getter
+    public static class RevolutPayPayments {
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      /**
+       * Passing true requests the capability for the account, if it is not already requested. A
+       * requested capability may not immediately become active. Any requirements to activate the
+       * capability are returned in the {@code requirements} arrays.
+       */
+      @SerializedName("requested")
+      Boolean requested;
+
+      private RevolutPayPayments(Map<String, Object> extraParams, Boolean requested) {
+        this.extraParams = extraParams;
+        this.requested = requested;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Map<String, Object> extraParams;
+
+        private Boolean requested;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public AccountUpdateParams.Capabilities.RevolutPayPayments build() {
+          return new AccountUpdateParams.Capabilities.RevolutPayPayments(
+              this.extraParams, this.requested);
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.Capabilities.RevolutPayPayments#extraParams} for the
+         * field documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.Capabilities.RevolutPayPayments#extraParams} for the
+         * field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+
+        /**
+         * Passing true requests the capability for the account, if it is not already requested. A
+         * requested capability may not immediately become active. Any requirements to activate the
+         * capability are returned in the {@code requirements} arrays.
+         */
+        public Builder setRequested(Boolean requested) {
+          this.requested = requested;
+          return this;
+        }
+      }
+    }
+
+    @Getter
     public static class SepaDebitPayments {
       /**
        * Map of extra parameters for custom features not available in this client library. The
@@ -4247,6 +4488,84 @@ public class AccountUpdateParams extends ApiRequestParams {
          * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
          * map. See {@link AccountUpdateParams.Capabilities.UsBankAccountAchPayments#extraParams}
          * for the field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+
+        /**
+         * Passing true requests the capability for the account, if it is not already requested. A
+         * requested capability may not immediately become active. Any requirements to activate the
+         * capability are returned in the {@code requirements} arrays.
+         */
+        public Builder setRequested(Boolean requested) {
+          this.requested = requested;
+          return this;
+        }
+      }
+    }
+
+    @Getter
+    public static class ZipPayments {
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      /**
+       * Passing true requests the capability for the account, if it is not already requested. A
+       * requested capability may not immediately become active. Any requirements to activate the
+       * capability are returned in the {@code requirements} arrays.
+       */
+      @SerializedName("requested")
+      Boolean requested;
+
+      private ZipPayments(Map<String, Object> extraParams, Boolean requested) {
+        this.extraParams = extraParams;
+        this.requested = requested;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Map<String, Object> extraParams;
+
+        private Boolean requested;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public AccountUpdateParams.Capabilities.ZipPayments build() {
+          return new AccountUpdateParams.Capabilities.ZipPayments(this.extraParams, this.requested);
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.Capabilities.ZipPayments#extraParams} for the field
+         * documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.Capabilities.ZipPayments#extraParams} for the field
+         * documentation.
          */
         public Builder putAllExtraParam(Map<String, Object> map) {
           if (this.extraParams == null) {
@@ -5719,6 +6038,9 @@ public class AccountUpdateParams extends ApiRequestParams {
       @SerializedName("incorporated_non_profit")
       INCORPORATED_NON_PROFIT("incorporated_non_profit"),
 
+      @SerializedName("incorporated_partnership")
+      INCORPORATED_PARTNERSHIP("incorporated_partnership"),
+
       @SerializedName("limited_liability_partnership")
       LIMITED_LIABILITY_PARTNERSHIP("limited_liability_partnership"),
 
@@ -5762,7 +6084,10 @@ public class AccountUpdateParams extends ApiRequestParams {
       UNINCORPORATED_ASSOCIATION("unincorporated_association"),
 
       @SerializedName("unincorporated_non_profit")
-      UNINCORPORATED_NON_PROFIT("unincorporated_non_profit");
+      UNINCORPORATED_NON_PROFIT("unincorporated_non_profit"),
+
+      @SerializedName("unincorporated_partnership")
+      UNINCORPORATED_PARTNERSHIP("unincorporated_partnership");
 
       @Getter(onMethod_ = {@Override})
       private final String value;
@@ -6709,10 +7034,10 @@ public class AccountUpdateParams extends ApiRequestParams {
     Object gender;
 
     /**
-     * The government-issued ID number of the individual, as appropriate for the representative’s
+     * The government-issued ID number of the individual, as appropriate for the representative's
      * country. (Examples are a Social Security Number in the U.S., or a Social Insurance Number in
      * Canada). Instead of the number itself, you can also provide a <a
-     * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created with
+     * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token created with
      * Stripe.js</a>.
      */
     @SerializedName("id_number")
@@ -6722,9 +7047,8 @@ public class AccountUpdateParams extends ApiRequestParams {
      * The government-issued secondary ID number of the individual, as appropriate for the
      * representative's country, will be used for enhanced verification checks. In Thailand, this
      * would be the laser code found on the back of an ID card. Instead of the number itself, you
-     * can also provide a <a
-     * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created with
-     * Stripe.js</a>.
+     * can also provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII
+     * token created with Stripe.js</a>.
      */
     @SerializedName("id_number_secondary")
     Object idNumberSecondary;
@@ -7016,7 +7340,7 @@ public class AccountUpdateParams extends ApiRequestParams {
        * AccountUpdateParams.Individual#fullNameAliases} for the field documentation.
        */
       @SuppressWarnings("unchecked")
-      public Builder addFullNameAliase(String element) {
+      public Builder addFullNameAlias(String element) {
         if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
           this.fullNameAliases = new ArrayList<String>();
         }
@@ -7030,7 +7354,7 @@ public class AccountUpdateParams extends ApiRequestParams {
        * {@link AccountUpdateParams.Individual#fullNameAliases} for the field documentation.
        */
       @SuppressWarnings("unchecked")
-      public Builder addAllFullNameAliase(List<String> elements) {
+      public Builder addAllFullNameAlias(List<String> elements) {
         if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
           this.fullNameAliases = new ArrayList<String>();
         }
@@ -7069,11 +7393,11 @@ public class AccountUpdateParams extends ApiRequestParams {
       }
 
       /**
-       * The government-issued ID number of the individual, as appropriate for the representative’s
+       * The government-issued ID number of the individual, as appropriate for the representative's
        * country. (Examples are a Social Security Number in the U.S., or a Social Insurance Number
        * in Canada). Instead of the number itself, you can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-       * with Stripe.js</a>.
+       * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token created with
+       * Stripe.js</a>.
        */
       public Builder setIdNumber(String idNumber) {
         this.idNumber = idNumber;
@@ -7081,11 +7405,11 @@ public class AccountUpdateParams extends ApiRequestParams {
       }
 
       /**
-       * The government-issued ID number of the individual, as appropriate for the representative’s
+       * The government-issued ID number of the individual, as appropriate for the representative's
        * country. (Examples are a Social Security Number in the U.S., or a Social Insurance Number
        * in Canada). Instead of the number itself, you can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-       * with Stripe.js</a>.
+       * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token created with
+       * Stripe.js</a>.
        */
       public Builder setIdNumber(EmptyParam idNumber) {
         this.idNumber = idNumber;
@@ -7096,9 +7420,8 @@ public class AccountUpdateParams extends ApiRequestParams {
        * The government-issued secondary ID number of the individual, as appropriate for the
        * representative's country, will be used for enhanced verification checks. In Thailand, this
        * would be the laser code found on the back of an ID card. Instead of the number itself, you
-       * can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-       * with Stripe.js</a>.
+       * can also provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII
+       * token created with Stripe.js</a>.
        */
       public Builder setIdNumberSecondary(String idNumberSecondary) {
         this.idNumberSecondary = idNumberSecondary;
@@ -7109,9 +7432,8 @@ public class AccountUpdateParams extends ApiRequestParams {
        * The government-issued secondary ID number of the individual, as appropriate for the
        * representative's country, will be used for enhanced verification checks. In Thailand, this
        * would be the laser code found on the back of an ID card. Instead of the number itself, you
-       * can also provide a <a
-       * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token created
-       * with Stripe.js</a>.
+       * can also provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII
+       * token created with Stripe.js</a>.
        */
       public Builder setIdNumberSecondary(EmptyParam idNumberSecondary) {
         this.idNumberSecondary = idNumberSecondary;
@@ -8548,6 +8870,10 @@ public class AccountUpdateParams extends ApiRequestParams {
 
   @Getter
   public static class Settings {
+    /** Settings specific to Bacs Direct Debit payments. */
+    @SerializedName("bacs_debit_payments")
+    BacsDebitPayments bacsDebitPayments;
+
     /**
      * Settings used to apply the account's branding to email receipts, invoices, Checkout, and
      * other products.
@@ -8585,6 +8911,7 @@ public class AccountUpdateParams extends ApiRequestParams {
     Treasury treasury;
 
     private Settings(
+        BacsDebitPayments bacsDebitPayments,
         Branding branding,
         CardIssuing cardIssuing,
         CardPayments cardPayments,
@@ -8592,6 +8919,7 @@ public class AccountUpdateParams extends ApiRequestParams {
         Payments payments,
         Payouts payouts,
         Treasury treasury) {
+      this.bacsDebitPayments = bacsDebitPayments;
       this.branding = branding;
       this.cardIssuing = cardIssuing;
       this.cardPayments = cardPayments;
@@ -8606,6 +8934,8 @@ public class AccountUpdateParams extends ApiRequestParams {
     }
 
     public static class Builder {
+      private BacsDebitPayments bacsDebitPayments;
+
       private Branding branding;
 
       private CardIssuing cardIssuing;
@@ -8623,6 +8953,7 @@ public class AccountUpdateParams extends ApiRequestParams {
       /** Finalize and obtain parameter instance from this builder. */
       public AccountUpdateParams.Settings build() {
         return new AccountUpdateParams.Settings(
+            this.bacsDebitPayments,
             this.branding,
             this.cardIssuing,
             this.cardPayments,
@@ -8630,6 +8961,13 @@ public class AccountUpdateParams extends ApiRequestParams {
             this.payments,
             this.payouts,
             this.treasury);
+      }
+
+      /** Settings specific to Bacs Direct Debit payments. */
+      public Builder setBacsDebitPayments(
+          AccountUpdateParams.Settings.BacsDebitPayments bacsDebitPayments) {
+        this.bacsDebitPayments = bacsDebitPayments;
+        return this;
       }
 
       /**
@@ -8695,6 +9033,107 @@ public class AccountUpdateParams extends ApiRequestParams {
       public Builder setTreasury(AccountUpdateParams.Settings.Treasury treasury) {
         this.treasury = treasury;
         return this;
+      }
+    }
+
+    @Getter
+    public static class BacsDebitPayments {
+      /**
+       * The Bacs Direct Debit Display Name for this account. For payments made with Bacs Direct
+       * Debit, this name appears on the mandate as the statement descriptor. Mobile banking apps
+       * display it as the name of the business. To use custom branding, set the Bacs Direct Debit
+       * Display Name during or right after creation. Custom branding incurs an additional monthly
+       * fee for the platform. If you don't set the display name before requesting Bacs capability,
+       * it's automatically set as &quot;Stripe&quot; and the account is onboarded to Stripe
+       * branding, which is free.
+       */
+      @SerializedName("display_name")
+      Object displayName;
+
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private BacsDebitPayments(Object displayName, Map<String, Object> extraParams) {
+        this.displayName = displayName;
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Object displayName;
+
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public AccountUpdateParams.Settings.BacsDebitPayments build() {
+          return new AccountUpdateParams.Settings.BacsDebitPayments(
+              this.displayName, this.extraParams);
+        }
+
+        /**
+         * The Bacs Direct Debit Display Name for this account. For payments made with Bacs Direct
+         * Debit, this name appears on the mandate as the statement descriptor. Mobile banking apps
+         * display it as the name of the business. To use custom branding, set the Bacs Direct Debit
+         * Display Name during or right after creation. Custom branding incurs an additional monthly
+         * fee for the platform. If you don't set the display name before requesting Bacs
+         * capability, it's automatically set as &quot;Stripe&quot; and the account is onboarded to
+         * Stripe branding, which is free.
+         */
+        public Builder setDisplayName(String displayName) {
+          this.displayName = displayName;
+          return this;
+        }
+
+        /**
+         * The Bacs Direct Debit Display Name for this account. For payments made with Bacs Direct
+         * Debit, this name appears on the mandate as the statement descriptor. Mobile banking apps
+         * display it as the name of the business. To use custom branding, set the Bacs Direct Debit
+         * Display Name during or right after creation. Custom branding incurs an additional monthly
+         * fee for the platform. If you don't set the display name before requesting Bacs
+         * capability, it's automatically set as &quot;Stripe&quot; and the account is onboarded to
+         * Stripe branding, which is free.
+         */
+        public Builder setDisplayName(EmptyParam displayName) {
+          this.displayName = displayName;
+          return this;
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.Settings.BacsDebitPayments#extraParams} for the field
+         * documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link AccountUpdateParams.Settings.BacsDebitPayments#extraParams} for the field
+         * documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
       }
     }
 
@@ -9653,8 +10092,10 @@ public class AccountUpdateParams extends ApiRequestParams {
         /**
          * The number of days charge funds are held before being paid out. May also be set to {@code
          * minimum}, representing the lowest available value for the account country. Default is
-         * {@code minimum}. The {@code delay_days} parameter does not apply when the {@code
-         * interval} is {@code manual}.
+         * {@code minimum}. The {@code delay_days} parameter remains at the last configured value if
+         * {@code interval} is {@code manual}. <a
+         * href="https://stripe.com/docs/connect/manage-payout-schedule">Learn more about
+         * controlling payout delay days</a>.
          */
         @SerializedName("delay_days")
         Object delayDays;
@@ -9734,8 +10175,10 @@ public class AccountUpdateParams extends ApiRequestParams {
           /**
            * The number of days charge funds are held before being paid out. May also be set to
            * {@code minimum}, representing the lowest available value for the account country.
-           * Default is {@code minimum}. The {@code delay_days} parameter does not apply when the
-           * {@code interval} is {@code manual}.
+           * Default is {@code minimum}. The {@code delay_days} parameter remains at the last
+           * configured value if {@code interval} is {@code manual}. <a
+           * href="https://stripe.com/docs/connect/manage-payout-schedule">Learn more about
+           * controlling payout delay days</a>.
            */
           public Builder setDelayDays(
               AccountUpdateParams.Settings.Payouts.Schedule.DelayDays delayDays) {
@@ -9746,8 +10189,10 @@ public class AccountUpdateParams extends ApiRequestParams {
           /**
            * The number of days charge funds are held before being paid out. May also be set to
            * {@code minimum}, representing the lowest available value for the account country.
-           * Default is {@code minimum}. The {@code delay_days} parameter does not apply when the
-           * {@code interval} is {@code manual}.
+           * Default is {@code minimum}. The {@code delay_days} parameter remains at the last
+           * configured value if {@code interval} is {@code manual}. <a
+           * href="https://stripe.com/docs/connect/manage-payout-schedule">Learn more about
+           * controlling payout delay days</a>.
            */
           public Builder setDelayDays(Long delayDays) {
             this.delayDays = delayDays;

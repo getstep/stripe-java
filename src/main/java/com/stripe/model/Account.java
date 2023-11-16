@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.AccountCapabilitiesParams;
 import com.stripe.param.AccountCreateParams;
 import com.stripe.param.AccountListParams;
@@ -89,8 +92,8 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
   Boolean detailsSubmitted;
 
   /**
-   * An email address associated with the account. You can treat this as metadata: it is not used
-   * for authentication or messaging account holders.
+   * An email address associated with the account. It's not used for authentication and Stripe
+   * doesn't market to this field without explicit approval from the platform.
    */
   @SerializedName("email")
   String email;
@@ -114,11 +117,11 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * onboarding, such as after generating an account link for the account. See the <a
    * href="https://stripe.com/docs/connect/standard-accounts">Standard onboarding</a> or <a
    * href="https://stripe.com/docs/connect/express-accounts">Express onboarding documentation</a>
-   * for information about platform pre-filling and account onboarding steps.
+   * for information about platform prefilling and account onboarding steps.
    *
    * <p>Related guide: <a
-   * href="https://stripe.com/docs/connect/identity-verification-api#person-information">Handling
-   * Identity Verification with the API</a>.
+   * href="https://stripe.com/docs/connect/handling-api-verification#person-information">Handling
+   * identity verification with the API</a>
    */
   @SerializedName("individual")
   Person individual;
@@ -180,12 +183,17 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    */
   public CapabilityCollection capabilities(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/accounts/%s/capabilities", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            CapabilityCollection.class,
             options,
-            String.format("/v1/accounts/%s/capabilities", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, CapabilityCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -203,12 +211,18 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    */
   public CapabilityCollection capabilities(AccountCapabilitiesParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/accounts/%s/capabilities", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            CapabilityCollection.class,
             options,
-            String.format("/v1/accounts/%s/capabilities", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, CapabilityCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -217,9 +231,9 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * href="https://dashboard.stripe.com/account/applications/settings">register your platform</a>.
    *
    * <p>If you’ve already collected information for your connected accounts, you <a
-   * href="https://stripe.com/docs/connect/best-practices#onboarding">can pre-fill that
-   * information</a> when creating the account. Connect Onboarding won’t ask for the pre-filled
-   * information during account onboarding. You can pre-fill any information on the account.
+   * href="https://stripe.com/docs/connect/best-practices#onboarding">can prefill that
+   * information</a> when creating the account. Connect Onboarding won’t ask for the prefilled
+   * information during account onboarding. You can prefill any information on the account.
    */
   public static Account create(Map<String, Object> params) throws StripeException {
     return create(params, (RequestOptions) null);
@@ -231,14 +245,22 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * href="https://dashboard.stripe.com/account/applications/settings">register your platform</a>.
    *
    * <p>If you’ve already collected information for your connected accounts, you <a
-   * href="https://stripe.com/docs/connect/best-practices#onboarding">can pre-fill that
-   * information</a> when creating the account. Connect Onboarding won’t ask for the pre-filled
-   * information during account onboarding. You can pre-fill any information on the account.
+   * href="https://stripe.com/docs/connect/best-practices#onboarding">can prefill that
+   * information</a> when creating the account. Connect Onboarding won’t ask for the prefilled
+   * information during account onboarding. You can prefill any information on the account.
    */
   public static Account create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/accounts");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Account.class, options);
+    String path = "/v1/accounts";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Account.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -247,9 +269,9 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * href="https://dashboard.stripe.com/account/applications/settings">register your platform</a>.
    *
    * <p>If you’ve already collected information for your connected accounts, you <a
-   * href="https://stripe.com/docs/connect/best-practices#onboarding">can pre-fill that
-   * information</a> when creating the account. Connect Onboarding won’t ask for the pre-filled
-   * information during account onboarding. You can pre-fill any information on the account.
+   * href="https://stripe.com/docs/connect/best-practices#onboarding">can prefill that
+   * information</a> when creating the account. Connect Onboarding won’t ask for the prefilled
+   * information during account onboarding. You can prefill any information on the account.
    */
   public static Account create(AccountCreateParams params) throws StripeException {
     return create(params, (RequestOptions) null);
@@ -261,14 +283,23 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * href="https://dashboard.stripe.com/account/applications/settings">register your platform</a>.
    *
    * <p>If you’ve already collected information for your connected accounts, you <a
-   * href="https://stripe.com/docs/connect/best-practices#onboarding">can pre-fill that
-   * information</a> when creating the account. Connect Onboarding won’t ask for the pre-filled
-   * information during account onboarding. You can pre-fill any information on the account.
+   * href="https://stripe.com/docs/connect/best-practices#onboarding">can prefill that
+   * information</a> when creating the account. Connect Onboarding won’t ask for the prefilled
+   * information during account onboarding. You can prefill any information on the account.
    */
   public static Account create(AccountCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/accounts");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Account.class, options);
+    String path = "/v1/accounts";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Account.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -279,7 +310,7 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * can only be deleted once all balances are zero.
    *
    * <p>If you want to delete your own account, use the <a
-   * href="https://dashboard.stripe.com/account">account information tab in your account
+   * href="https://dashboard.stripe.com/settings/account">account information tab in your account
    * settings</a> instead.
    */
   public Account delete() throws StripeException {
@@ -294,7 +325,7 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * can only be deleted once all balances are zero.
    *
    * <p>If you want to delete your own account, use the <a
-   * href="https://dashboard.stripe.com/account">account information tab in your account
+   * href="https://dashboard.stripe.com/settings/account">account information tab in your account
    * settings</a> instead.
    */
   public Account delete(RequestOptions options) throws StripeException {
@@ -309,7 +340,7 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * can only be deleted once all balances are zero.
    *
    * <p>If you want to delete your own account, use the <a
-   * href="https://dashboard.stripe.com/account">account information tab in your account
+   * href="https://dashboard.stripe.com/settings/account">account information tab in your account
    * settings</a> instead.
    */
   public Account delete(Map<String, Object> params) throws StripeException {
@@ -324,17 +355,20 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * can only be deleted once all balances are zero.
    *
    * <p>If you want to delete your own account, use the <a
-   * href="https://dashboard.stripe.com/account">account information tab in your account
+   * href="https://dashboard.stripe.com/settings/account">account information tab in your account
    * settings</a> instead.
    */
   public Account delete(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            Account.class,
             options,
-            String.format("/v1/accounts/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -353,8 +387,16 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    */
   public static AccountCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/accounts");
-    return ApiResource.requestCollection(url, params, AccountCollection.class, options);
+    String path = "/v1/accounts";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            AccountCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -373,8 +415,17 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    */
   public static AccountCollection list(AccountListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/accounts");
-    return ApiResource.requestCollection(url, params, AccountCollection.class, options);
+    String path = "/v1/accounts";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            AccountCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -399,12 +450,16 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    */
   public PersonCollection persons(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s/persons", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            PersonCollection.class,
             options,
-            String.format("/v1/accounts/%s/persons", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, PersonCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -421,12 +476,17 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    */
   public PersonCollection persons(AccountPersonsParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s/persons", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PersonCollection.class,
             options,
-            String.format("/v1/accounts/%s/persons", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, PersonCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -448,12 +508,16 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * live-mode keys may only be rejected once all balances are zero.
    */
   public Account reject(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s/reject", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Account.class,
             options,
-            String.format("/v1/accounts/%s/reject", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -475,12 +539,17 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * live-mode keys may only be rejected once all balances are zero.
    */
   public Account reject(AccountRejectParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s/reject", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Account.class,
             options,
-            String.format("/v1/accounts/%s/reject", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the details of an account. */
@@ -496,15 +565,32 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
   /** Retrieves the details of an account. */
   public static Account retrieve(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/account");
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Account.class, options);
+    String path = "/v1/account";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Account.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves the details of an account. */
   public static Account retrieve(AccountRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/account");
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Account.class, options);
+    String path = "/v1/account";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Account.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves the details of an account. */
@@ -520,23 +606,32 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
   /** Retrieves the details of an account. */
   public static Account retrieve(String account, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s", ApiResource.urlEncodeId(account));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Account.class,
             options,
-            String.format("/v1/accounts/%s", ApiResource.urlEncodeId(account)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the details of an account. */
   public static Account retrieve(
       String account, AccountRetrieveParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s", ApiResource.urlEncodeId(account));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Account.class,
             options,
-            String.format("/v1/accounts/%s", ApiResource.urlEncodeId(account)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -550,7 +645,7 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * <strong>Custom Only</strong> or <strong>Custom and Express</strong> below.
    *
    * <p>To update your own account, use the <a
-   * href="https://dashboard.stripe.com/account">Dashboard</a>. Refer to our <a
+   * href="https://dashboard.stripe.com/settings/account">Dashboard</a>. Refer to our <a
    * href="https://stripe.com/docs/connect/updating-accounts">Connect</a> documentation to learn
    * more about updating accounts.
    */
@@ -570,18 +665,22 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * <strong>Custom Only</strong> or <strong>Custom and Express</strong> below.
    *
    * <p>To update your own account, use the <a
-   * href="https://dashboard.stripe.com/account">Dashboard</a>. Refer to our <a
+   * href="https://dashboard.stripe.com/settings/account">Dashboard</a>. Refer to our <a
    * href="https://stripe.com/docs/connect/updating-accounts">Connect</a> documentation to learn
    * more about updating accounts.
    */
   @Override
   public Account update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Account.class,
             options,
-            String.format("/v1/accounts/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -595,7 +694,7 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * <strong>Custom Only</strong> or <strong>Custom and Express</strong> below.
    *
    * <p>To update your own account, use the <a
-   * href="https://dashboard.stripe.com/account">Dashboard</a>. Refer to our <a
+   * href="https://dashboard.stripe.com/settings/account">Dashboard</a>. Refer to our <a
    * href="https://stripe.com/docs/connect/updating-accounts">Connect</a> documentation to learn
    * more about updating accounts.
    */
@@ -614,17 +713,22 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
    * <strong>Custom Only</strong> or <strong>Custom and Express</strong> below.
    *
    * <p>To update your own account, use the <a
-   * href="https://dashboard.stripe.com/account">Dashboard</a>. Refer to our <a
+   * href="https://dashboard.stripe.com/settings/account">Dashboard</a>. Refer to our <a
    * href="https://stripe.com/docs/connect/updating-accounts">Connect</a> documentation to learn
    * more about updating accounts.
    */
   public Account update(AccountUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/accounts/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Account.class,
             options,
-            String.format("/v1/accounts/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Account.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -638,6 +742,9 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
      */
     @SerializedName("mcc")
     String mcc;
+
+    @SerializedName("monthly_estimated_revenue")
+    MonthlyEstimatedRevenue monthlyEstimatedRevenue;
 
     /** The customer-facing business name. */
     @SerializedName("name")
@@ -669,6 +776,26 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
     /** The business's publicly available website. */
     @SerializedName("url")
     String url;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class MonthlyEstimatedRevenue extends StripeObject {
+      /**
+       * A non-negative integer representing how much to charge in the <a
+       * href="https://stripe.com/docs/currencies#zero-decimal">smallest currency unit</a>.
+       */
+      @SerializedName("amount")
+      Long amount;
+
+      /**
+       * Three-letter <a href="https://www.iso.org/iso-4217-currency-codes.html">ISO currency
+       * code</a>, in lowercase. Must be a <a href="https://stripe.com/docs/currencies">supported
+       * currency</a>.
+       */
+      @SerializedName("currency")
+      String currency;
+    }
   }
 
   @Getter
@@ -927,6 +1054,15 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
     String promptpayPayments;
 
     /**
+     * The status of the RevolutPay capability of the account, or whether the account can directly
+     * process RevolutPay payments.
+     *
+     * <p>One of {@code active}, {@code inactive}, or {@code pending}.
+     */
+    @SerializedName("revolut_pay_payments")
+    String revolutPayPayments;
+
+    /**
      * The status of the SEPA Direct Debits payments capability of the account, or whether the
      * account can directly process SEPA Direct Debits charges.
      *
@@ -985,6 +1121,15 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
      */
     @SerializedName("us_bank_account_ach_payments")
     String usBankAccountAchPayments;
+
+    /**
+     * The status of the Zip capability of the account, or whether the account can directly process
+     * Zip charges.
+     *
+     * <p>One of {@code active}, {@code inactive}, or {@code pending}.
+     */
+    @SerializedName("zip_payments")
+    String zipPayments;
   }
 
   @Getter
@@ -1074,12 +1219,13 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
      *
      * <p>One of {@code free_zone_establishment}, {@code free_zone_llc}, {@code
      * government_instrumentality}, {@code governmental_unit}, {@code incorporated_non_profit},
-     * {@code limited_liability_partnership}, {@code llc}, {@code multi_member_llc}, {@code
-     * private_company}, {@code private_corporation}, {@code private_partnership}, {@code
-     * public_company}, {@code public_corporation}, {@code public_partnership}, {@code
-     * single_member_llc}, {@code sole_establishment}, {@code sole_proprietorship}, {@code
-     * tax_exempt_government_instrumentality}, {@code unincorporated_association}, or {@code
-     * unincorporated_non_profit}.
+     * {@code incorporated_partnership}, {@code limited_liability_partnership}, {@code llc}, {@code
+     * multi_member_llc}, {@code private_company}, {@code private_corporation}, {@code
+     * private_partnership}, {@code public_company}, {@code public_corporation}, {@code
+     * public_partnership}, {@code single_member_llc}, {@code sole_establishment}, {@code
+     * sole_proprietorship}, {@code tax_exempt_government_instrumentality}, {@code
+     * unincorporated_association}, {@code unincorporated_non_profit}, or {@code
+     * unincorporated_partnership}.
      */
     @SerializedName("structure")
     String structure;
@@ -1326,11 +1472,7 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
     @SerializedName("currently_due")
     List<String> currentlyDue;
 
-    /**
-     * This is typed as a string for consistency with {@code requirements.disabled_reason}, but it
-     * safe to assume {@code future_requirements.disabled_reason} is empty because fields in {@code
-     * future_requirements} will never disable the account.
-     */
+    /** This is typed as a string for consistency with {@code requirements.disabled_reason}. */
     @SerializedName("disabled_reason")
     String disabledReason;
 
@@ -1388,13 +1530,38 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -1406,13 +1573,14 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -1462,10 +1630,13 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
     List<String> currentlyDue;
 
     /**
-     * If the account is disabled, this string describes why. Can be {@code requirements.past_due},
-     * {@code requirements.pending_verification}, {@code listed}, {@code platform_paused}, {@code
-     * rejected.fraud}, {@code rejected.listed}, {@code rejected.terms_of_service}, {@code
-     * rejected.other}, {@code under_review}, or {@code other}.
+     * If the account is disabled, this string describes why. <a
+     * href="https://stripe.com/docs/connect/handling-api-verification">Learn more about handling
+     * verification issues</a>. Can be {@code action_required.requested_capabilities}, {@code
+     * requirements.past_due}, {@code requirements.pending_verification}, {@code listed}, {@code
+     * platform_paused}, {@code rejected.fraud}, {@code rejected.incomplete_verification}, {@code
+     * rejected.listed}, {@code rejected.other}, {@code rejected.terms_of_service}, {@code
+     * under_review}, or {@code other}.
      */
     @SerializedName("disabled_reason")
     String disabledReason;
@@ -1523,13 +1694,38 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
       /**
        * The code for the type of error.
        *
-       * <p>One of {@code invalid_address_city_state_postal_code}, {@code invalid_dob_age_under_18},
-       * {@code invalid_representative_country}, {@code invalid_street_address}, {@code
-       * invalid_tos_acceptance}, {@code invalid_value_other}, {@code
+       * <p>One of {@code invalid_address_city_state_postal_code}, {@code
+       * invalid_address_highway_contract_box}, {@code invalid_address_private_mailbox}, {@code
+       * invalid_business_profile_name}, {@code invalid_business_profile_name_denylisted}, {@code
+       * invalid_company_name_denylisted}, {@code invalid_dob_age_over_maximum}, {@code
+       * invalid_dob_age_under_18}, {@code invalid_dob_age_under_minimum}, {@code
+       * invalid_product_description_length}, {@code invalid_product_description_url_match}, {@code
+       * invalid_representative_country}, {@code invalid_statement_descriptor_business_mismatch},
+       * {@code invalid_statement_descriptor_denylisted}, {@code
+       * invalid_statement_descriptor_length}, {@code
+       * invalid_statement_descriptor_prefix_denylisted}, {@code
+       * invalid_statement_descriptor_prefix_mismatch}, {@code invalid_street_address}, {@code
+       * invalid_tax_id}, {@code invalid_tax_id_format}, {@code invalid_tos_acceptance}, {@code
+       * invalid_url_denylisted}, {@code invalid_url_format}, {@code invalid_url_length}, {@code
+       * invalid_url_web_presence_detected}, {@code
+       * invalid_url_website_business_information_mismatch}, {@code invalid_url_website_empty},
+       * {@code invalid_url_website_inaccessible}, {@code
+       * invalid_url_website_inaccessible_geoblocked}, {@code
+       * invalid_url_website_inaccessible_password_protected}, {@code
+       * invalid_url_website_incomplete}, {@code
+       * invalid_url_website_incomplete_cancellation_policy}, {@code
+       * invalid_url_website_incomplete_customer_service_details}, {@code
+       * invalid_url_website_incomplete_legal_restrictions}, {@code
+       * invalid_url_website_incomplete_refund_policy}, {@code
+       * invalid_url_website_incomplete_return_policy}, {@code
+       * invalid_url_website_incomplete_terms_and_conditions}, {@code
+       * invalid_url_website_incomplete_under_construction}, {@code invalid_url_website_other},
+       * {@code invalid_value_other}, {@code verification_directors_mismatch}, {@code
        * verification_document_address_mismatch}, {@code verification_document_address_missing},
        * {@code verification_document_corrupt}, {@code verification_document_country_not_supported},
-       * {@code verification_document_dob_mismatch}, {@code verification_document_duplicate_type},
-       * {@code verification_document_expired}, {@code verification_document_failed_copy}, {@code
+       * {@code verification_document_directors_mismatch}, {@code
+       * verification_document_dob_mismatch}, {@code verification_document_duplicate_type}, {@code
+       * verification_document_expired}, {@code verification_document_failed_copy}, {@code
        * verification_document_failed_greyscale}, {@code verification_document_failed_other}, {@code
        * verification_document_failed_test_mode}, {@code verification_document_fraudulent}, {@code
        * verification_document_id_number_mismatch}, {@code verification_document_id_number_missing},
@@ -1541,13 +1737,14 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
        * {@code verification_document_not_readable}, {@code verification_document_not_signed},
        * {@code verification_document_not_uploaded}, {@code verification_document_photo_mismatch},
        * {@code verification_document_too_large}, {@code verification_document_type_not_supported},
-       * {@code verification_failed_address_match}, {@code verification_failed_business_iec_number},
-       * {@code verification_failed_document_match}, {@code verification_failed_id_number_match},
-       * {@code verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
+       * {@code verification_extraneous_directors}, {@code verification_failed_address_match},
+       * {@code verification_failed_business_iec_number}, {@code
+       * verification_failed_document_match}, {@code verification_failed_id_number_match}, {@code
+       * verification_failed_keyed_identity}, {@code verification_failed_keyed_match}, {@code
        * verification_failed_name_match}, {@code verification_failed_other}, {@code
        * verification_failed_residential_address}, {@code verification_failed_tax_id_match}, {@code
-       * verification_failed_tax_id_not_issued}, {@code verification_missing_executives}, {@code
-       * verification_missing_owners}, or {@code
+       * verification_failed_tax_id_not_issued}, {@code verification_missing_directors}, {@code
+       * verification_missing_executives}, {@code verification_missing_owners}, or {@code
        * verification_requires_additional_memorandum_of_associations}.
        */
       @SerializedName("code")
@@ -1605,11 +1802,23 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
     @EqualsAndHashCode(callSuper = false)
     public static class BacsDebitPayments extends StripeObject {
       /**
-       * The Bacs Direct Debit Display Name for this account. For payments made with Bacs Direct
-       * Debit, this will appear on the mandate, and as the statement descriptor.
+       * The Bacs Direct Debit display name for this account. For payments made with Bacs Direct
+       * Debit, this name appears on the mandate as the statement descriptor. Mobile banking apps
+       * display it as the name of the business. To use custom branding, set the Bacs Direct Debit
+       * Display Name during or right after creation. Custom branding incurs an additional monthly
+       * fee for the platform. The fee appears 5 business days after requesting Bacs. If you don't
+       * set the display name before requesting Bacs capability, it's automatically set as
+       * &quot;Stripe&quot; and the account is onboarded to Stripe branding, which is free.
        */
       @SerializedName("display_name")
       String displayName;
+
+      /**
+       * The Bacs Direct Debit Service user number for this account. For payments made with Bacs
+       * Direct Debit, this number is a unique identifier of the account with our banking partners.
+       */
+      @SerializedName("service_user_number")
+      String serviceUserNumber;
     }
 
     @Getter
@@ -1955,5 +2164,20 @@ public class Account extends ApiResource implements MetadataStore<Account>, Paym
      */
     @SerializedName("user_agent")
     String userAgent;
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(businessProfile, responseGetter);
+    trySetResponseGetter(capabilities, responseGetter);
+    trySetResponseGetter(company, responseGetter);
+    trySetResponseGetter(controller, responseGetter);
+    trySetResponseGetter(externalAccounts, responseGetter);
+    trySetResponseGetter(futureRequirements, responseGetter);
+    trySetResponseGetter(individual, responseGetter);
+    trySetResponseGetter(requirements, responseGetter);
+    trySetResponseGetter(settings, responseGetter);
+    trySetResponseGetter(tosAcceptance, responseGetter);
   }
 }

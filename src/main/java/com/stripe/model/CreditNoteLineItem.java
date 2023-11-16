@@ -9,20 +9,21 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+/** The credit note line item object. */
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class CreditNoteLineItem extends StripeObject implements HasId {
   /**
-   * The integer amount in %s representing the gross amount being credited for this line item,
-   * excluding (exclusive) tax and discounts.
+   * The integer amount in cents (or local equivalent) representing the gross amount being credited
+   * for this line item, excluding (exclusive) tax and discounts.
    */
   @SerializedName("amount")
   Long amount;
 
   /**
-   * The integer amount in %s representing the amount being credited for this line item, excluding
-   * all tax and discounts.
+   * The integer amount in cents (or local equivalent) representing the amount being credited for
+   * this line item, excluding all tax and discounts.
    */
   @SerializedName("amount_excluding_tax")
   Long amountExcludingTax;
@@ -31,7 +32,10 @@ public class CreditNoteLineItem extends StripeObject implements HasId {
   @SerializedName("description")
   String description;
 
-  /** The integer amount in %s representing the discount being credited for this line item. */
+  /**
+   * The integer amount in cents (or local equivalent) representing the discount being credited for
+   * this line item.
+   */
   @SerializedName("discount_amount")
   Long discountAmount;
 
@@ -93,8 +97,8 @@ public class CreditNoteLineItem extends StripeObject implements HasId {
   BigDecimal unitAmountDecimal;
 
   /**
-   * The amount in %s representing the unit amount being credited for this line item, excluding all
-   * tax and discounts.
+   * The amount in cents (or local equivalent) representing the unit amount being credited for this
+   * line item, excluding all tax and discounts.
    */
   @SerializedName("unit_amount_excluding_tax")
   BigDecimal unitAmountExcludingTax;
@@ -103,7 +107,7 @@ public class CreditNoteLineItem extends StripeObject implements HasId {
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class DiscountAmount extends StripeObject {
-    /** The amount, in %s, of the discount. */
+    /** The amount, in cents (or local equivalent), of the discount. */
     @SerializedName("amount")
     Long amount;
 
@@ -136,7 +140,7 @@ public class CreditNoteLineItem extends StripeObject implements HasId {
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class TaxAmount extends StripeObject {
-    /** The amount, in %s, of the tax. */
+    /** The amount, in cents (or local equivalent), of the tax. */
     @SerializedName("amount")
     Long amount;
 
@@ -149,6 +153,23 @@ public class CreditNoteLineItem extends StripeObject implements HasId {
     @Getter(lombok.AccessLevel.NONE)
     @Setter(lombok.AccessLevel.NONE)
     ExpandableField<TaxRate> taxRate;
+
+    /**
+     * The reasoning behind this tax, for example, if the product is tax exempt. The possible values
+     * for this field may be extended as new tax rules are supported.
+     *
+     * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax}, {@code
+     * not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated}, {@code
+     * portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday}, {@code
+     * proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code standard_rated},
+     * {@code taxable_basis_reduced}, or {@code zero_rated}.
+     */
+    @SerializedName("taxability_reason")
+    String taxabilityReason;
+
+    /** The amount on which tax is calculated, in cents (or local equivalent). */
+    @SerializedName("taxable_amount")
+    Long taxableAmount;
 
     /** Get ID of expandable {@code taxRate} object. */
     public String getTaxRate() {

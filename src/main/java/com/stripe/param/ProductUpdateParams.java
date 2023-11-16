@@ -18,29 +18,6 @@ public class ProductUpdateParams extends ApiRequestParams {
   Boolean active;
 
   /**
-   * A list of up to 5 alphanumeric attributes that each SKU can provide values for (e.g., {@code
-   * ["color", "size"]}). If a value for {@code attributes} is specified, the list specified will
-   * replace the existing attributes list on this product. Any attributes not present after the
-   * update will be deleted from the SKUs for this product.
-   */
-  @SerializedName("attributes")
-  Object attributes;
-
-  /**
-   * A short one-line description of the product, meant to be displayable to the customer. May only
-   * be set if {@code type=good}.
-   */
-  @SerializedName("caption")
-  Object caption;
-
-  /**
-   * An array of Connect application names or identifiers that should not be able to order the SKUs
-   * for this product. May only be set if {@code type=good}.
-   */
-  @SerializedName("deactivate_on")
-  List<String> deactivateOn;
-
-  /**
    * The ID of the <a href="https://stripe.com/docs/api/prices">Price</a> object that is the default
    * price for this product.
    */
@@ -67,6 +44,13 @@ public class ProductUpdateParams extends ApiRequestParams {
    */
   @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
   Map<String, Object> extraParams;
+
+  /**
+   * A list of up to 15 features for this product. These are displayed in <a
+   * href="https://stripe.com/docs/payments/checkout/pricing-table">pricing tables</a>.
+   */
+  @SerializedName("features")
+  Object features;
 
   /** A list of up to 8 URLs of images for this product, meant to be displayable to the customer. */
   @SerializedName("images")
@@ -123,13 +107,11 @@ public class ProductUpdateParams extends ApiRequestParams {
 
   private ProductUpdateParams(
       Boolean active,
-      Object attributes,
-      Object caption,
-      List<String> deactivateOn,
       Object defaultPrice,
       Object description,
       List<String> expand,
       Map<String, Object> extraParams,
+      Object features,
       Object images,
       Object metadata,
       Object name,
@@ -140,13 +122,11 @@ public class ProductUpdateParams extends ApiRequestParams {
       Object unitLabel,
       Object url) {
     this.active = active;
-    this.attributes = attributes;
-    this.caption = caption;
-    this.deactivateOn = deactivateOn;
     this.defaultPrice = defaultPrice;
     this.description = description;
     this.expand = expand;
     this.extraParams = extraParams;
+    this.features = features;
     this.images = images;
     this.metadata = metadata;
     this.name = name;
@@ -165,12 +145,6 @@ public class ProductUpdateParams extends ApiRequestParams {
   public static class Builder {
     private Boolean active;
 
-    private Object attributes;
-
-    private Object caption;
-
-    private List<String> deactivateOn;
-
     private Object defaultPrice;
 
     private Object description;
@@ -178,6 +152,8 @@ public class ProductUpdateParams extends ApiRequestParams {
     private List<String> expand;
 
     private Map<String, Object> extraParams;
+
+    private Object features;
 
     private Object images;
 
@@ -201,13 +177,11 @@ public class ProductUpdateParams extends ApiRequestParams {
     public ProductUpdateParams build() {
       return new ProductUpdateParams(
           this.active,
-          this.attributes,
-          this.caption,
-          this.deactivateOn,
           this.defaultPrice,
           this.description,
           this.expand,
           this.extraParams,
+          this.features,
           this.images,
           this.metadata,
           this.name,
@@ -222,100 +196,6 @@ public class ProductUpdateParams extends ApiRequestParams {
     /** Whether the product is available for purchase. */
     public Builder setActive(Boolean active) {
       this.active = active;
-      return this;
-    }
-
-    /**
-     * Add an element to `attributes` list. A list is initialized for the first `add/addAll` call,
-     * and subsequent calls adds additional elements to the original list. See {@link
-     * ProductUpdateParams#attributes} for the field documentation.
-     */
-    @SuppressWarnings("unchecked")
-    public Builder addAttribute(String element) {
-      if (this.attributes == null || this.attributes instanceof EmptyParam) {
-        this.attributes = new ArrayList<String>();
-      }
-      ((List<String>) this.attributes).add(element);
-      return this;
-    }
-
-    /**
-     * Add all elements to `attributes` list. A list is initialized for the first `add/addAll` call,
-     * and subsequent calls adds additional elements to the original list. See {@link
-     * ProductUpdateParams#attributes} for the field documentation.
-     */
-    @SuppressWarnings("unchecked")
-    public Builder addAllAttribute(List<String> elements) {
-      if (this.attributes == null || this.attributes instanceof EmptyParam) {
-        this.attributes = new ArrayList<String>();
-      }
-      ((List<String>) this.attributes).addAll(elements);
-      return this;
-    }
-
-    /**
-     * A list of up to 5 alphanumeric attributes that each SKU can provide values for (e.g., {@code
-     * ["color", "size"]}). If a value for {@code attributes} is specified, the list specified will
-     * replace the existing attributes list on this product. Any attributes not present after the
-     * update will be deleted from the SKUs for this product.
-     */
-    public Builder setAttributes(EmptyParam attributes) {
-      this.attributes = attributes;
-      return this;
-    }
-
-    /**
-     * A list of up to 5 alphanumeric attributes that each SKU can provide values for (e.g., {@code
-     * ["color", "size"]}). If a value for {@code attributes} is specified, the list specified will
-     * replace the existing attributes list on this product. Any attributes not present after the
-     * update will be deleted from the SKUs for this product.
-     */
-    public Builder setAttributes(List<String> attributes) {
-      this.attributes = attributes;
-      return this;
-    }
-
-    /**
-     * A short one-line description of the product, meant to be displayable to the customer. May
-     * only be set if {@code type=good}.
-     */
-    public Builder setCaption(String caption) {
-      this.caption = caption;
-      return this;
-    }
-
-    /**
-     * A short one-line description of the product, meant to be displayable to the customer. May
-     * only be set if {@code type=good}.
-     */
-    public Builder setCaption(EmptyParam caption) {
-      this.caption = caption;
-      return this;
-    }
-
-    /**
-     * Add an element to `deactivateOn` list. A list is initialized for the first `add/addAll` call,
-     * and subsequent calls adds additional elements to the original list. See {@link
-     * ProductUpdateParams#deactivateOn} for the field documentation.
-     */
-    public Builder addDeactivateOn(String element) {
-      if (this.deactivateOn == null) {
-        this.deactivateOn = new ArrayList<>();
-      }
-      this.deactivateOn.add(element);
-      return this;
-    }
-
-    /**
-     * Add all elements to `deactivateOn` list. A list is initialized for the first `add/addAll`
-     * call, and subsequent calls adds additional elements to the original list. See {@link
-     * ProductUpdateParams#deactivateOn} for the field documentation.
-     */
-    public Builder addAllDeactivateOn(List<String> elements) {
-      if (this.deactivateOn == null) {
-        this.deactivateOn = new ArrayList<>();
-      }
-      this.deactivateOn.addAll(elements);
       return this;
     }
 
@@ -406,6 +286,52 @@ public class ProductUpdateParams extends ApiRequestParams {
         this.extraParams = new HashMap<>();
       }
       this.extraParams.putAll(map);
+      return this;
+    }
+
+    /**
+     * Add an element to `features` list. A list is initialized for the first `add/addAll` call, and
+     * subsequent calls adds additional elements to the original list. See {@link
+     * ProductUpdateParams#features} for the field documentation.
+     */
+    @SuppressWarnings("unchecked")
+    public Builder addFeature(ProductUpdateParams.Feature element) {
+      if (this.features == null || this.features instanceof EmptyParam) {
+        this.features = new ArrayList<ProductUpdateParams.Feature>();
+      }
+      ((List<ProductUpdateParams.Feature>) this.features).add(element);
+      return this;
+    }
+
+    /**
+     * Add all elements to `features` list. A list is initialized for the first `add/addAll` call,
+     * and subsequent calls adds additional elements to the original list. See {@link
+     * ProductUpdateParams#features} for the field documentation.
+     */
+    @SuppressWarnings("unchecked")
+    public Builder addAllFeature(List<ProductUpdateParams.Feature> elements) {
+      if (this.features == null || this.features instanceof EmptyParam) {
+        this.features = new ArrayList<ProductUpdateParams.Feature>();
+      }
+      ((List<ProductUpdateParams.Feature>) this.features).addAll(elements);
+      return this;
+    }
+
+    /**
+     * A list of up to 15 features for this product. These are displayed in <a
+     * href="https://stripe.com/docs/payments/checkout/pricing-table">pricing tables</a>.
+     */
+    public Builder setFeatures(EmptyParam features) {
+      this.features = features;
+      return this;
+    }
+
+    /**
+     * A list of up to 15 features for this product. These are displayed in <a
+     * href="https://stripe.com/docs/payments/checkout/pricing-table">pricing tables</a>.
+     */
+    public Builder setFeatures(List<ProductUpdateParams.Feature> features) {
+      this.features = features;
       return this;
     }
 
@@ -605,6 +531,80 @@ public class ProductUpdateParams extends ApiRequestParams {
     public Builder setUrl(EmptyParam url) {
       this.url = url;
       return this;
+    }
+  }
+
+  @Getter
+  public static class Feature {
+    /**
+     * Map of extra parameters for custom features not available in this client library. The content
+     * in this map is not serialized under this field's {@code @SerializedName} value. Instead, each
+     * key/value pair is serialized as if the key is a root-level field (serialized) name in this
+     * param object. Effectively, this map is flattened to its parent instance.
+     */
+    @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+    Map<String, Object> extraParams;
+
+    /** <strong>Required.</strong> The feature's name. Up to 80 characters long. */
+    @SerializedName("name")
+    Object name;
+
+    private Feature(Map<String, Object> extraParams, Object name) {
+      this.extraParams = extraParams;
+      this.name = name;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public static class Builder {
+      private Map<String, Object> extraParams;
+
+      private Object name;
+
+      /** Finalize and obtain parameter instance from this builder. */
+      public ProductUpdateParams.Feature build() {
+        return new ProductUpdateParams.Feature(this.extraParams, this.name);
+      }
+
+      /**
+       * Add a key/value pair to `extraParams` map. A map is initialized for the first `put/putAll`
+       * call, and subsequent calls add additional key/value pairs to the original map. See {@link
+       * ProductUpdateParams.Feature#extraParams} for the field documentation.
+       */
+      public Builder putExtraParam(String key, Object value) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.put(key, value);
+        return this;
+      }
+
+      /**
+       * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+       * `put/putAll` call, and subsequent calls add additional key/value pairs to the original map.
+       * See {@link ProductUpdateParams.Feature#extraParams} for the field documentation.
+       */
+      public Builder putAllExtraParam(Map<String, Object> map) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.putAll(map);
+        return this;
+      }
+
+      /** <strong>Required.</strong> The feature's name. Up to 80 characters long. */
+      public Builder setName(String name) {
+        this.name = name;
+        return this;
+      }
+
+      /** <strong>Required.</strong> The feature's name. Up to 80 characters long. */
+      public Builder setName(EmptyParam name) {
+        this.name = name;
+        return this;
+      }
     }
   }
 

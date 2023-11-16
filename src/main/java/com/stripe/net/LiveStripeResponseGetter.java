@@ -3,38 +3,30 @@ package com.stripe.net;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.stripe.Stripe;
-import com.stripe.exception.ApiConnectionException;
-import com.stripe.exception.ApiException;
-import com.stripe.exception.AuthenticationException;
-import com.stripe.exception.CardException;
-import com.stripe.exception.IdempotencyException;
-import com.stripe.exception.InvalidRequestException;
-import com.stripe.exception.PermissionException;
-import com.stripe.exception.RateLimitException;
-import com.stripe.exception.StripeException;
+import com.stripe.exception.*;
 import com.stripe.exception.oauth.InvalidClientException;
 import com.stripe.exception.oauth.InvalidGrantException;
 import com.stripe.exception.oauth.InvalidScopeException;
 import com.stripe.exception.oauth.OAuthException;
 import com.stripe.exception.oauth.UnsupportedGrantTypeException;
 import com.stripe.exception.oauth.UnsupportedResponseTypeException;
-import com.stripe.model.StripeError;
-import com.stripe.model.StripeObject;
-import com.stripe.model.StripeObjectInterface;
+import com.stripe.model.*;
 import com.stripe.model.oauth.OAuthError;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 public class LiveStripeResponseGetter implements StripeResponseGetter {
   private final HttpClient httpClient;
+  private final StripeResponseGetterOptions options;
 
   /**
    * Initializes a new instance of the {@link LiveStripeResponseGetter} class with default
    * parameters.
    */
   public LiveStripeResponseGetter() {
-    this(null);
+    this(null, null);
   }
 
   /**
@@ -43,18 +35,28 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
    * @param httpClient the HTTP client to use
    */
   public LiveStripeResponseGetter(HttpClient httpClient) {
+    this(null, httpClient);
+  }
+
+  public LiveStripeResponseGetter(StripeResponseGetterOptions options, HttpClient httpClient) {
+    this.options = options != null ? options : GlobalStripeResponseGetterOptions.INSTANCE;
     this.httpClient = (httpClient != null) ? httpClient : buildDefaultHttpClient();
   }
 
   @Override
+  @SuppressWarnings({"TypeParameterUnusedInFormals", "unchecked"})
   public <T extends StripeObjectInterface> T request(
+      BaseAddress baseAddress,
       ApiResource.RequestMethod method,
-      String url,
+      String path,
       Map<String, Object> params,
-      Class<T> clazz,
-      RequestOptions options)
+      Type typeToken,
+      RequestOptions options,
+      ApiMode apiMode)
       throws StripeException {
-    StripeRequest request = new StripeRequest(method, url, params, options);
+    String fullUrl = fullUrl(baseAddress, options, path);
+    StripeRequest request =
+        new StripeRequest(method, fullUrl, params, RequestOptions.merge(this.options, options));
     StripeResponse response = httpClient.requestWithRetries(request);
 
     int responseCode = response.code();
@@ -62,14 +64,19 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
     String requestId = response.requestId();
 
     if (responseCode < 200 || responseCode >= 300) {
-      handleApiError(response);
+      handleError(response, apiMode);
     }
 
     T resource = null;
     try {
-      resource = ApiResource.GSON.fromJson(responseBody, clazz);
+      resource = (T) ApiResource.deserializeStripeObject(responseBody, typeToken, this);
     } catch (JsonSyntaxException e) {
       raiseMalformedJsonError(responseBody, responseCode, requestId, e);
+    }
+
+    if (resource instanceof StripeCollectionInterface<?>) {
+      ((StripeCollectionInterface<?>) resource).setRequestOptions(options);
+      ((StripeCollectionInterface<?>) resource).setRequestParams(params);
     }
 
     resource.setLastResponse(response);
@@ -79,12 +86,17 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 
   @Override
   public InputStream requestStream(
+      BaseAddress baseAddress,
       ApiResource.RequestMethod method,
-      String url,
+      String path,
       Map<String, Object> params,
-      RequestOptions options)
+      RequestOptions options,
+      ApiMode apiMode)
       throws StripeException {
-    StripeRequest request = new StripeRequest(method, url, params, options);
+    String fullUrl = fullUrl(baseAddress, options, path);
+
+    StripeRequest request =
+        new StripeRequest(method, fullUrl, params, RequestOptions.merge(this.options, options));
     StripeResponseStream responseStream = httpClient.requestStreamWithRetries(request);
 
     int responseCode = responseStream.code();
@@ -103,44 +115,10 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
                 Stripe.getApiBase(), e.getMessage()),
             e);
       }
-      handleApiError(response);
+      handleError(response, apiMode);
     }
 
     return responseStream.body();
-  }
-
-  @Override
-  public <T extends StripeObjectInterface> T oauthRequest(
-      ApiResource.RequestMethod method,
-      String url,
-      Map<String, Object> params,
-      Class<T> clazz,
-      RequestOptions options)
-      throws StripeException {
-    StripeRequest request = new StripeRequest(method, url, params, options);
-    StripeResponse response = this.httpClient.requestWithRetries(request);
-
-    int responseCode = response.code();
-    String responseBody = response.body();
-    String requestId = response.requestId();
-
-    if (responseCode < 200 || responseCode >= 300) {
-      handleOAuthError(response);
-    }
-
-    T resource = null;
-    try {
-      resource = ApiResource.GSON.fromJson(responseBody, clazz);
-    } catch (JsonSyntaxException e) {
-      raiseMalformedJsonError(responseBody, responseCode, requestId, e);
-    }
-
-    if (resource instanceof StripeObject) {
-      StripeObject obj = (StripeObject) resource;
-      obj.setLastResponse(response);
-    }
-
-    return resource;
   }
 
   private static HttpClient buildDefaultHttpClient() {
@@ -160,14 +138,24 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
         e);
   }
 
-  private static void handleApiError(StripeResponse response) throws StripeException {
+  private void handleError(StripeResponse response, ApiMode apiMode) throws StripeException {
+    if (apiMode == ApiMode.V1) {
+      handleApiError(response);
+    } else if (apiMode == ApiMode.OAuth) {
+      handleOAuthError(response);
+    }
+  }
+
+  private void handleApiError(StripeResponse response) throws StripeException {
     StripeError error = null;
     StripeException exception = null;
 
     try {
       JsonObject jsonObject =
-          ApiResource.GSON.fromJson(response.body(), JsonObject.class).getAsJsonObject("error");
-      error = ApiResource.GSON.fromJson(jsonObject, StripeError.class);
+          ApiResource.INTERNAL_GSON
+              .fromJson(response.body(), JsonObject.class)
+              .getAsJsonObject("error");
+      error = ApiResource.deserializeStripeObject(jsonObject.toString(), StripeError.class, this);
     } catch (JsonSyntaxException e) {
       raiseMalformedJsonError(response.body(), response.code(), response.requestId(), e);
     }
@@ -239,12 +227,12 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
     throw exception;
   }
 
-  private static void handleOAuthError(StripeResponse response) throws StripeException {
+  private void handleOAuthError(StripeResponse response) throws StripeException {
     OAuthError error = null;
     StripeException exception = null;
 
     try {
-      error = ApiResource.GSON.fromJson(response.body(), OAuthError.class);
+      error = ApiResource.deserializeStripeObject(response.body(), OAuthError.class, this);
     } catch (JsonSyntaxException e) {
       raiseMalformedJsonError(response.body(), response.code(), response.requestId(), e);
     }
@@ -298,5 +286,34 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
     }
 
     throw exception;
+  }
+
+  @Override
+  public void validateRequestOptions(RequestOptions options) {
+    if ((options == null || options.getApiKey() == null) && this.options.getApiKey() == null) {
+      throw new ApiKeyMissingException(
+          "API key is not set. You can set the API key globally using Stripe.ApiKey, or by passing RequestOptions");
+    }
+  }
+
+  private String fullUrl(BaseAddress baseAddress, RequestOptions options, String relativeUrl) {
+    String baseUrl;
+    switch (baseAddress) {
+      case API:
+        baseUrl = this.options.getApiBase();
+        break;
+      case CONNECT:
+        baseUrl = this.options.getConnectBase();
+        break;
+      case FILES:
+        baseUrl = this.options.getFilesBase();
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown base address " + baseAddress);
+    }
+    if (options != null && options.getBaseUrl() != null) {
+      baseUrl = options.getBaseUrl();
+    }
+    return String.format("%s%s", baseUrl, relativeUrl);
   }
 }

@@ -241,9 +241,6 @@ public class PaymentMethodListParams extends ApiRequestParams {
     @SerializedName("card")
     CARD("card"),
 
-    @SerializedName("card_present")
-    CARD_PRESENT("card_present"),
-
     @SerializedName("cashapp")
     CASHAPP("cashapp"),
 
@@ -283,11 +280,17 @@ public class PaymentMethodListParams extends ApiRequestParams {
     @SerializedName("paynow")
     PAYNOW("paynow"),
 
+    @SerializedName("paypal")
+    PAYPAL("paypal"),
+
     @SerializedName("pix")
     PIX("pix"),
 
     @SerializedName("promptpay")
     PROMPTPAY("promptpay"),
+
+    @SerializedName("revolut_pay")
+    REVOLUT_PAY("revolut_pay"),
 
     @SerializedName("sepa_debit")
     SEPA_DEBIT("sepa_debit"),
@@ -299,7 +302,10 @@ public class PaymentMethodListParams extends ApiRequestParams {
     US_BANK_ACCOUNT("us_bank_account"),
 
     @SerializedName("wechat_pay")
-    WECHAT_PAY("wechat_pay");
+    WECHAT_PAY("wechat_pay"),
+
+    @SerializedName("zip")
+    ZIP("zip");
 
     @Getter(onMethod_ = {@Override})
     private final String value;

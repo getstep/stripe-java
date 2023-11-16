@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.PaymentMethodAttachParams;
 import com.stripe.param.PaymentMethodCreateParams;
 import com.stripe.param.PaymentMethodDetachParams;
@@ -150,6 +153,9 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @SerializedName("paynow")
   Paynow paynow;
 
+  @SerializedName("paypal")
+  Paypal paypal;
+
   @SerializedName("pix")
   Pix pix;
 
@@ -162,6 +168,9 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   @SerializedName("radar_options")
   RadarOptions radarOptions;
+
+  @SerializedName("revolut_pay")
+  RevolutPay revolutPay;
 
   @SerializedName("sepa_debit")
   SepaDebit sepaDebit;
@@ -177,8 +186,9 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    * au_becs_debit}, {@code bacs_debit}, {@code bancontact}, {@code blik}, {@code boleto}, {@code
    * card}, {@code card_present}, {@code cashapp}, {@code customer_balance}, {@code eps}, {@code
    * fpx}, {@code giropay}, {@code grabpay}, {@code ideal}, {@code interac_present}, {@code klarna},
-   * {@code konbini}, {@code link}, {@code oxxo}, {@code p24}, {@code paynow}, {@code pix}, {@code
-   * promptpay}, {@code sepa_debit}, {@code sofort}, {@code us_bank_account}, or {@code wechat_pay}.
+   * {@code konbini}, {@code link}, {@code oxxo}, {@code p24}, {@code paynow}, {@code paypal},
+   * {@code pix}, {@code promptpay}, {@code revolut_pay}, {@code sepa_debit}, {@code sofort}, {@code
+   * us_bank_account}, {@code wechat_pay}, or {@code zip}.
    */
   @SerializedName("type")
   String type;
@@ -188,6 +198,9 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
 
   @SerializedName("wechat_pay")
   WechatPay wechatPay;
+
+  @SerializedName("zip")
+  Zip zip;
 
   /** Get ID of expandable {@code customer} object. */
   public String getCustomer() {
@@ -247,13 +260,17 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public PaymentMethod attach(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/payment_methods/%s/attach", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s/attach", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -296,13 +313,18 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public PaymentMethod attach(PaymentMethodAttachParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/payment_methods/%s/attach", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s/attach", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -333,9 +355,16 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public static PaymentMethod create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_methods");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+    String path = "/v1/payment_methods";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            PaymentMethod.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -366,9 +395,17 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public static PaymentMethod create(PaymentMethodCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_methods");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+    String path = "/v1/payment_methods";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentMethod.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -401,13 +438,17 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public PaymentMethod detach(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/payment_methods/%s/detach", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s/detach", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -424,13 +465,18 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public PaymentMethod detach(PaymentMethodDetachParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/payment_methods/%s/detach", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s/detach", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -451,8 +497,16 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public static PaymentMethodCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_methods");
-    return ApiResource.requestCollection(url, params, PaymentMethodCollection.class, options);
+    String path = "/v1/payment_methods";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            PaymentMethodCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -474,8 +528,17 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
    */
   public static PaymentMethodCollection list(PaymentMethodListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_methods");
-    return ApiResource.requestCollection(url, params, PaymentMethodCollection.class, options);
+    String path = "/v1/payment_methods";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentMethodCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -508,13 +571,16 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   public static PaymentMethod retrieve(
       String paymentMethod, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(paymentMethod));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(paymentMethod)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -526,13 +592,17 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   public static PaymentMethod retrieve(
       String paymentMethod, PaymentMethodRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(paymentMethod));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(paymentMethod)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /** Updates a PaymentMethod object. A PaymentMethod must be attached a customer to be updated. */
@@ -545,13 +615,16 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @Override
   public PaymentMethod update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   /** Updates a PaymentMethod object. A PaymentMethod must be attached a customer to be updated. */
@@ -562,13 +635,17 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   /** Updates a PaymentMethod object. A PaymentMethod must be attached a customer to be updated. */
   public PaymentMethod update(PaymentMethodUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentMethod.class,
             options,
-            String.format("/v1/payment_methods/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentMethod.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -737,8 +814,8 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
      * payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number
      * might be provided instead of the underlying card number.
      *
-     * <p><em>Starting May 1, 2021, card fingerprint in India for Connect will change to allow two
-     * fingerprints for the same card --- one for India and one for the rest of the world.</em>
+     * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+     * fingerprints for the same card---one for India and one for the rest of the world.</em>
      */
     @SerializedName("fingerprint")
     String fingerprint;
@@ -844,6 +921,9 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
       @SerializedName("google_pay")
       GooglePay googlePay;
 
+      @SerializedName("link")
+      Link link;
+
       @SerializedName("masterpass")
       Masterpass masterpass;
 
@@ -876,6 +956,11 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
       @Setter
       @EqualsAndHashCode(callSuper = false)
       public static class GooglePay extends StripeObject {}
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class Link extends StripeObject {}
 
       @Getter
       @Setter
@@ -953,12 +1038,122 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
-  public static class CardPresent extends StripeObject {}
+  public static class CardPresent extends StripeObject {
+    /**
+     * Card brand. Can be {@code amex}, {@code diners}, {@code discover}, {@code eftpos_au}, {@code
+     * jcb}, {@code mastercard}, {@code unionpay}, {@code visa}, or {@code unknown}.
+     */
+    @SerializedName("brand")
+    String brand;
+
+    /**
+     * The cardholder name as read from the card, in <a
+     * href="https://en.wikipedia.org/wiki/ISO/IEC_7813">ISO 7813</a> format. May include
+     * alphanumeric characters, special characters and first/last name separator ({@code /}). In
+     * some cases, the cardholder name may not be available depending on how the issuer has
+     * configured the card. Cardholder name is typically not available on swipe or contactless
+     * payments, such as those made with Apple Pay and Google Pay.
+     */
+    @SerializedName("cardholder_name")
+    String cardholderName;
+
+    /**
+     * Two-letter ISO code representing the country of the card. You could use this attribute to get
+     * a sense of the international breakdown of cards you've collected.
+     */
+    @SerializedName("country")
+    String country;
+
+    /**
+     * A high-level description of the type of cards issued in this range. (For internal use only
+     * and not typically available in standard API requests.)
+     */
+    @SerializedName("description")
+    String description;
+
+    /** Two-digit number representing the card's expiration month. */
+    @SerializedName("exp_month")
+    Long expMonth;
+
+    /** Four-digit number representing the card's expiration year. */
+    @SerializedName("exp_year")
+    Long expYear;
+
+    /**
+     * Uniquely identifies this particular card number. You can use this attribute to check whether
+     * two customers who’ve signed up with you are using the same card number, for example. For
+     * payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number
+     * might be provided instead of the underlying card number.
+     *
+     * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+     * fingerprints for the same card---one for India and one for the rest of the world.</em>
+     */
+    @SerializedName("fingerprint")
+    String fingerprint;
+
+    /**
+     * Card funding type. Can be {@code credit}, {@code debit}, {@code prepaid}, or {@code unknown}.
+     */
+    @SerializedName("funding")
+    String funding;
+
+    /**
+     * Issuer identification number of the card. (For internal use only and not typically available
+     * in standard API requests.)
+     */
+    @SerializedName("iin")
+    String iin;
+
+    /**
+     * The name of the card's issuing bank. (For internal use only and not typically available in
+     * standard API requests.)
+     */
+    @SerializedName("issuer")
+    String issuer;
+
+    /** The last four digits of the card. */
+    @SerializedName("last4")
+    String last4;
+
+    /** Contains information about card networks that can be used to process the payment. */
+    @SerializedName("networks")
+    Networks networks;
+
+    /**
+     * How card details were read in this transaction.
+     *
+     * <p>One of {@code contact_emv}, {@code contactless_emv}, {@code contactless_magstripe_mode},
+     * {@code magnetic_stripe_fallback}, or {@code magnetic_stripe_track2}.
+     */
+    @SerializedName("read_method")
+    String readMethod;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Networks extends StripeObject {
+      /** All available networks for the card. */
+      @SerializedName("available")
+      List<String> available;
+
+      /** The preferred network for the card. */
+      @SerializedName("preferred")
+      String preferred;
+    }
+  }
 
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
-  public static class Cashapp extends StripeObject {}
+  public static class Cashapp extends StripeObject {
+    /** A unique and immutable identifier assigned by Cash App to every buyer. */
+    @SerializedName("buyer_id")
+    String buyerId;
+
+    /** A public identifier for buyers using Cash App. */
+    @SerializedName("cashtag")
+    String cashtag;
+  }
 
   @Getter
   @Setter
@@ -1023,8 +1218,8 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   public static class Ideal extends StripeObject {
     /**
      * The customer's bank, if provided. Can be one of {@code abn_amro}, {@code asn_bank}, {@code
-     * bunq}, {@code handelsbanken}, {@code ing}, {@code knab}, {@code moneyou}, {@code rabobank},
-     * {@code regiobank}, {@code revolut}, {@code sns_bank}, {@code triodos_bank}, {@code
+     * bunq}, {@code handelsbanken}, {@code ing}, {@code knab}, {@code moneyou}, {@code n26}, {@code
+     * rabobank}, {@code regiobank}, {@code revolut}, {@code sns_bank}, {@code triodos_bank}, {@code
      * van_lanschot}, or {@code yoursafe}.
      */
     @SerializedName("bank")
@@ -1035,7 +1230,8 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
      *
      * <p>One of {@code ABNANL2A}, {@code ASNBNL21}, {@code BITSNL2A}, {@code BUNQNL2A}, {@code
      * FVLBNL22}, {@code HANDNL2A}, {@code INGBNL2A}, {@code KNABNL2H}, {@code MOYONL21}, {@code
-     * RABONL2U}, {@code RBRBNL21}, {@code REVOLT21}, {@code SNSBNL2A}, or {@code TRIONL2U}.
+     * NTSBDEB1}, {@code RABONL2U}, {@code RBRBNL21}, {@code REVOIE23}, {@code REVOLT21}, {@code
+     * SNSBNL2A}, or {@code TRIONL2U}.
      */
     @SerializedName("bic")
     String bic;
@@ -1044,7 +1240,110 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
-  public static class InteracPresent extends StripeObject {}
+  public static class InteracPresent extends StripeObject {
+    /** Card brand. Can be {@code interac}, {@code mastercard} or {@code visa}. */
+    @SerializedName("brand")
+    String brand;
+
+    /**
+     * The cardholder name as read from the card, in <a
+     * href="https://en.wikipedia.org/wiki/ISO/IEC_7813">ISO 7813</a> format. May include
+     * alphanumeric characters, special characters and first/last name separator ({@code /}). In
+     * some cases, the cardholder name may not be available depending on how the issuer has
+     * configured the card. Cardholder name is typically not available on swipe or contactless
+     * payments, such as those made with Apple Pay and Google Pay.
+     */
+    @SerializedName("cardholder_name")
+    String cardholderName;
+
+    /**
+     * Two-letter ISO code representing the country of the card. You could use this attribute to get
+     * a sense of the international breakdown of cards you've collected.
+     */
+    @SerializedName("country")
+    String country;
+
+    /**
+     * A high-level description of the type of cards issued in this range. (For internal use only
+     * and not typically available in standard API requests.)
+     */
+    @SerializedName("description")
+    String description;
+
+    /** Two-digit number representing the card's expiration month. */
+    @SerializedName("exp_month")
+    Long expMonth;
+
+    /** Four-digit number representing the card's expiration year. */
+    @SerializedName("exp_year")
+    Long expYear;
+
+    /**
+     * Uniquely identifies this particular card number. You can use this attribute to check whether
+     * two customers who’ve signed up with you are using the same card number, for example. For
+     * payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number
+     * might be provided instead of the underlying card number.
+     *
+     * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+     * fingerprints for the same card---one for India and one for the rest of the world.</em>
+     */
+    @SerializedName("fingerprint")
+    String fingerprint;
+
+    /**
+     * Card funding type. Can be {@code credit}, {@code debit}, {@code prepaid}, or {@code unknown}.
+     */
+    @SerializedName("funding")
+    String funding;
+
+    /**
+     * Issuer identification number of the card. (For internal use only and not typically available
+     * in standard API requests.)
+     */
+    @SerializedName("iin")
+    String iin;
+
+    /**
+     * The name of the card's issuing bank. (For internal use only and not typically available in
+     * standard API requests.)
+     */
+    @SerializedName("issuer")
+    String issuer;
+
+    /** The last four digits of the card. */
+    @SerializedName("last4")
+    String last4;
+
+    /** Contains information about card networks that can be used to process the payment. */
+    @SerializedName("networks")
+    Networks networks;
+
+    /** EMV tag 5F2D. Preferred languages specified by the integrated circuit chip. */
+    @SerializedName("preferred_locales")
+    List<String> preferredLocales;
+
+    /**
+     * How card details were read in this transaction.
+     *
+     * <p>One of {@code contact_emv}, {@code contactless_emv}, {@code contactless_magstripe_mode},
+     * {@code magnetic_stripe_fallback}, or {@code magnetic_stripe_track2}.
+     */
+    @SerializedName("read_method")
+    String readMethod;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Networks extends StripeObject {
+      /** All available networks for the card. */
+      @SerializedName("available")
+      List<String> available;
+
+      /** The preferred network for the card. */
+      @SerializedName("preferred")
+      String preferred;
+    }
+  }
 
   @Getter
   @Setter
@@ -1081,19 +1380,11 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class Link extends StripeObject {
-    /**
-     * Two-letter ISO code representing the funding source (i.e. card, bank) country beneath the
-     * Link payment method. You could use this attribute to get a sense of the international
-     * breakdown of funding sources you've collected.
-     */
-    @SerializedName("country")
-    String country;
-
     /** Account owner's email address. */
     @SerializedName("email")
     String email;
 
-    /** Token used for persistent Link logins. */
+    /** [Deprecated] This is a legacy parameter that no longer has any function. */
     @SerializedName("persistent_token")
     String persistentToken;
   }
@@ -1130,6 +1421,22 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
+  public static class Paypal extends StripeObject {
+    /**
+     * Owner's email. Values are provided by PayPal directly (if supported) at the time of
+     * authorization or settlement. They cannot be set or mutated.
+     */
+    @SerializedName("payer_email")
+    String payerEmail;
+
+    /** PayPal account PayerID. This identifier uniquely identifies the PayPal customer. */
+    @SerializedName("payer_id")
+    String payerId;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
   public static class Pix extends StripeObject {}
 
   @Getter
@@ -1153,6 +1460,11 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
     @SerializedName("session")
     String session;
   }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class RevolutPay extends StripeObject {}
 
   @Getter
   @Setter
@@ -1350,4 +1662,51 @@ public class PaymentMethod extends ApiResource implements HasId, MetadataStore<P
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class WechatPay extends StripeObject {}
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class Zip extends StripeObject {}
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(acssDebit, responseGetter);
+    trySetResponseGetter(affirm, responseGetter);
+    trySetResponseGetter(afterpayClearpay, responseGetter);
+    trySetResponseGetter(alipay, responseGetter);
+    trySetResponseGetter(auBecsDebit, responseGetter);
+    trySetResponseGetter(bacsDebit, responseGetter);
+    trySetResponseGetter(bancontact, responseGetter);
+    trySetResponseGetter(billingDetails, responseGetter);
+    trySetResponseGetter(blik, responseGetter);
+    trySetResponseGetter(boleto, responseGetter);
+    trySetResponseGetter(card, responseGetter);
+    trySetResponseGetter(cardPresent, responseGetter);
+    trySetResponseGetter(cashapp, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(customerBalance, responseGetter);
+    trySetResponseGetter(eps, responseGetter);
+    trySetResponseGetter(fpx, responseGetter);
+    trySetResponseGetter(giropay, responseGetter);
+    trySetResponseGetter(grabpay, responseGetter);
+    trySetResponseGetter(ideal, responseGetter);
+    trySetResponseGetter(interacPresent, responseGetter);
+    trySetResponseGetter(klarna, responseGetter);
+    trySetResponseGetter(konbini, responseGetter);
+    trySetResponseGetter(link, responseGetter);
+    trySetResponseGetter(oxxo, responseGetter);
+    trySetResponseGetter(p24, responseGetter);
+    trySetResponseGetter(paynow, responseGetter);
+    trySetResponseGetter(paypal, responseGetter);
+    trySetResponseGetter(pix, responseGetter);
+    trySetResponseGetter(promptpay, responseGetter);
+    trySetResponseGetter(radarOptions, responseGetter);
+    trySetResponseGetter(revolutPay, responseGetter);
+    trySetResponseGetter(sepaDebit, responseGetter);
+    trySetResponseGetter(sofort, responseGetter);
+    trySetResponseGetter(usBankAccount, responseGetter);
+    trySetResponseGetter(wechatPay, responseGetter);
+    trySetResponseGetter(zip, responseGetter);
+  }
 }

@@ -2,11 +2,14 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.testhelpers.TestClock;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.QuoteAcceptParams;
 import com.stripe.param.QuoteCancelParams;
 import com.stripe.param.QuoteCreateParams;
@@ -58,7 +61,7 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /**
    * A non-negative decimal between 0 and 100, with at most two decimal places. This represents the
-   * percentage of the subscription invoice subtotal that will be transferred to the application
+   * percentage of the subscription invoice total that will be transferred to the application
    * owner's Stripe account. Only applicable if there are line items with recurring prices on the
    * quote.
    */
@@ -469,12 +472,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /** Accepts the specified quote. */
   public Quote accept(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/accept", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s/accept", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** Accepts the specified quote. */
@@ -484,12 +491,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /** Accepts the specified quote. */
   public Quote accept(QuoteAcceptParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/accept", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s/accept", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** Cancels the quote. */
@@ -509,12 +521,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /** Cancels the quote. */
   public Quote cancel(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/cancel", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s/cancel", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** Cancels the quote. */
@@ -524,12 +540,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /** Cancels the quote. */
   public Quote cancel(QuoteCancelParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/cancel", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s/cancel", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -548,8 +569,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
    */
   public static Quote create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/quotes");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+    String path = "/v1/quotes";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Quote.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -568,8 +597,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
    */
   public static Quote create(QuoteCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/quotes");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+    String path = "/v1/quotes";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Quote.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Finalizes the quote. */
@@ -590,12 +628,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** Finalizes the quote. */
   public Quote finalizeQuote(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/finalize", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s/finalize", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** Finalizes the quote. */
@@ -606,12 +648,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** Finalizes the quote. */
   public Quote finalizeQuote(QuoteFinalizeQuoteParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/finalize", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s/finalize", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** Returns a list of your quotes. */
@@ -622,8 +669,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** Returns a list of your quotes. */
   public static QuoteCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/quotes");
-    return ApiResource.requestCollection(url, params, QuoteCollection.class, options);
+    String path = "/v1/quotes";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            QuoteCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of your quotes. */
@@ -634,8 +689,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** Returns a list of your quotes. */
   public static QuoteCollection list(QuoteListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/quotes");
-    return ApiResource.requestCollection(url, params, QuoteCollection.class, options);
+    String path = "/v1/quotes";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            QuoteCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -667,14 +731,18 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
    */
   public LineItemCollection listComputedUpfrontLineItems(
       Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/quotes/%s/computed_upfront_line_items", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            LineItemCollection.class,
             options,
-            String.format(
-                "/v1/quotes/%s/computed_upfront_line_items",
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -697,14 +765,19 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   public LineItemCollection listComputedUpfrontLineItems(
       QuoteListComputedUpfrontLineItemsParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/quotes/%s/computed_upfront_line_items", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            LineItemCollection.class,
             options,
-            String.format(
-                "/v1/quotes/%s/computed_upfront_line_items",
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -732,12 +805,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
    */
   public LineItemCollection listLineItems(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            LineItemCollection.class,
             options,
-            String.format("/v1/quotes/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -756,12 +833,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
    */
   public LineItemCollection listLineItems(QuoteListLineItemsParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            LineItemCollection.class,
             options,
-            String.format("/v1/quotes/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /** Download the PDF for a finalized quote. */
@@ -777,12 +859,10 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** Download the PDF for a finalized quote. */
   public InputStream pdf(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getUploadBase(),
-            options,
-            String.format("/v1/quotes/%s/pdf", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestStream(ApiResource.RequestMethod.GET, url, params, options);
+    String path = String.format("/v1/quotes/%s/pdf", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .requestStream(
+            BaseAddress.FILES, ApiResource.RequestMethod.GET, path, params, options, ApiMode.V1);
   }
 
   /** Download the PDF for a finalized quote. */
@@ -792,12 +872,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /** Download the PDF for a finalized quote. */
   public InputStream pdf(QuotePdfParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getUploadBase(),
+    String path = String.format("/v1/quotes/%s/pdf", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .requestStream(
+            BaseAddress.FILES,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
             options,
-            String.format("/v1/quotes/%s/pdf", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestStream(ApiResource.RequestMethod.GET, url, params, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the quote with the given ID. */
@@ -813,23 +897,32 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** Retrieves the quote with the given ID. */
   public static Quote retrieve(String quote, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s", ApiResource.urlEncodeId(quote));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s", ApiResource.urlEncodeId(quote)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the quote with the given ID. */
   public static Quote retrieve(String quote, QuoteRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s", ApiResource.urlEncodeId(quote));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s", ApiResource.urlEncodeId(quote)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** A quote models prices and services for a customer. */
@@ -841,12 +934,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   /** A quote models prices and services for a customer. */
   @Override
   public Quote update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   /** A quote models prices and services for a customer. */
@@ -856,12 +953,17 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
 
   /** A quote models prices and services for a customer. */
   public Quote update(QuoteUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/quotes/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Quote.class,
             options,
-            String.format("/v1/quotes/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Quote.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -973,8 +1075,8 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
              * to.
              *
              * <p>Related guide: <a
-             * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying Discounts to
-             * Subscriptions</a>.
+             * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying discounts to
+             * subscriptions</a>
              */
             @SerializedName("discount")
             com.stripe.model.Discount discount;
@@ -996,10 +1098,28 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
              * Sessions</a> to collect tax.
              *
              * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax
-             * Rates</a>.
+             * rates</a>
              */
             @SerializedName("rate")
             TaxRate rate;
+
+            /**
+             * The reasoning behind this tax, for example, if the product is tax exempt. The
+             * possible values for this field may be extended as new tax rules are supported.
+             *
+             * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code
+             * not_subject_to_tax}, {@code not_supported}, {@code portion_product_exempt}, {@code
+             * portion_reduced_rated}, {@code portion_standard_rated}, {@code product_exempt},
+             * {@code product_exempt_holiday}, {@code proportionally_rated}, {@code reduced_rated},
+             * {@code reverse_charge}, {@code standard_rated}, {@code taxable_basis_reduced}, or
+             * {@code zero_rated}.
+             */
+            @SerializedName("taxability_reason")
+            String taxabilityReason;
+
+            /** The amount on which tax is calculated, in cents (or local equivalent). */
+            @SerializedName("taxable_amount")
+            Long taxableAmount;
           }
         }
       }
@@ -1075,8 +1195,8 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
              * to.
              *
              * <p>Related guide: <a
-             * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying Discounts to
-             * Subscriptions</a>.
+             * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying discounts to
+             * subscriptions</a>
              */
             @SerializedName("discount")
             com.stripe.model.Discount discount;
@@ -1098,10 +1218,28 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
              * Sessions</a> to collect tax.
              *
              * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax
-             * Rates</a>.
+             * rates</a>
              */
             @SerializedName("rate")
             TaxRate rate;
+
+            /**
+             * The reasoning behind this tax, for example, if the product is tax exempt. The
+             * possible values for this field may be extended as new tax rules are supported.
+             *
+             * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code
+             * not_subject_to_tax}, {@code not_supported}, {@code portion_product_exempt}, {@code
+             * portion_reduced_rated}, {@code portion_standard_rated}, {@code product_exempt},
+             * {@code product_exempt_holiday}, {@code proportionally_rated}, {@code reduced_rated},
+             * {@code reverse_charge}, {@code standard_rated}, {@code taxable_basis_reduced}, or
+             * {@code zero_rated}.
+             */
+            @SerializedName("taxability_reason")
+            String taxabilityReason;
+
+            /** The amount on which tax is calculated, in cents (or local equivalent). */
+            @SerializedName("taxable_amount")
+            Long taxableAmount;
           }
         }
       }
@@ -1176,7 +1314,8 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   public static class SubscriptionData extends StripeObject {
     /**
      * The subscription's description, meant to be displayable to the customer. Use this field to
-     * optionally store an explanation of the subscription.
+     * optionally store an explanation of the subscription for rendering in Stripe surfaces and
+     * certain local payment methods UIs.
      */
     @SerializedName("description")
     String description;
@@ -1188,6 +1327,18 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
      */
     @SerializedName("effective_date")
     Long effectiveDate;
+
+    /**
+     * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that will set
+     * metadata on the subscription or subscription schedule when the quote is accepted. If a
+     * recurring price is included in {@code line_items}, this field will be passed to the resulting
+     * subscription's {@code metadata} field. If {@code subscription_data.effective_date} is used,
+     * this field will be passed to the resulting subscription schedule's {@code phases.metadata}
+     * field. Unlike object-level metadata, this field is declarative. Updates will clear prior
+     * values.
+     */
+    @SerializedName("metadata")
+    Map<String, String> metadata;
 
     /**
      * Integer representing the number of trial period days before the customer is charged for the
@@ -1243,8 +1394,8 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
          * information about when the discount began, when it will end, and what it is applied to.
          *
          * <p>Related guide: <a
-         * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying Discounts to
-         * Subscriptions</a>.
+         * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying discounts to
+         * subscriptions</a>
          */
         @SerializedName("discount")
         com.stripe.model.Discount discount;
@@ -1265,11 +1416,27 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
          * href="https://stripe.com/docs/payments/checkout/set-up-a-subscription#tax-rates">Checkout
          * Sessions</a> to collect tax.
          *
-         * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax
-         * Rates</a>.
+         * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax rates</a>
          */
         @SerializedName("rate")
         TaxRate rate;
+
+        /**
+         * The reasoning behind this tax, for example, if the product is tax exempt. The possible
+         * values for this field may be extended as new tax rules are supported.
+         *
+         * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax},
+         * {@code not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated},
+         * {@code portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday},
+         * {@code proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code
+         * standard_rated}, {@code taxable_basis_reduced}, or {@code zero_rated}.
+         */
+        @SerializedName("taxability_reason")
+        String taxabilityReason;
+
+        /** The amount on which tax is calculated, in cents (or local equivalent). */
+        @SerializedName("taxable_amount")
+        Long taxableAmount;
       }
     }
   }
@@ -1279,16 +1446,16 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
   @EqualsAndHashCode(callSuper = false)
   public static class TransferData extends StripeObject {
     /**
-     * The amount in %s that will be transferred to the destination account when the invoice is
-     * paid. By default, the entire amount is transferred to the destination.
+     * The amount in cents (or local equivalent) that will be transferred to the destination account
+     * when the invoice is paid. By default, the entire amount is transferred to the destination.
      */
     @SerializedName("amount")
     Long amount;
 
     /**
      * A non-negative decimal between 0 and 100, with at most two decimal places. This represents
-     * the percentage of the subscription invoice subtotal that will be transferred to the
-     * destination account. By default, the entire amount will be transferred to the destination.
+     * the percentage of the subscription invoice total that will be transferred to the destination
+     * account. By default, the entire amount will be transferred to the destination.
      */
     @SerializedName("amount_percent")
     BigDecimal amountPercent;
@@ -1316,5 +1483,26 @@ public class Quote extends ApiResource implements HasId, MetadataStore<Quote> {
     public void setDestinationObject(Account expandableObject) {
       this.destination = new ExpandableField<Account>(expandableObject.getId(), expandableObject);
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(automaticTax, responseGetter);
+    trySetResponseGetter(computed, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(fromQuote, responseGetter);
+    trySetResponseGetter(invoice, responseGetter);
+    trySetResponseGetter(invoiceSettings, responseGetter);
+    trySetResponseGetter(lineItems, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(statusTransitions, responseGetter);
+    trySetResponseGetter(subscription, responseGetter);
+    trySetResponseGetter(subscriptionData, responseGetter);
+    trySetResponseGetter(subscriptionSchedule, responseGetter);
+    trySetResponseGetter(testClock, responseGetter);
+    trySetResponseGetter(totalDetails, responseGetter);
+    trySetResponseGetter(transferData, responseGetter);
   }
 }

@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.PaymentLinkCreateParams;
 import com.stripe.param.PaymentLinkListLineItemsParams;
 import com.stripe.param.PaymentLinkListParams;
@@ -49,6 +52,12 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   @SerializedName("allow_promotion_codes")
   Boolean allowPromotionCodes;
 
+  /** The ID of the Connect application that created the Payment Link. */
+  @SerializedName("application")
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  ExpandableField<Application> application;
+
   /**
    * The amount of the application fee (if any) that will be requested to be applied to the payment
    * and transferred to the application owner's Stripe account.
@@ -57,7 +66,7 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   Long applicationFeeAmount;
 
   /**
-   * This represents the percentage of the subscription invoice subtotal that will be transferred to
+   * This represents the percentage of the subscription invoice total that will be transferred to
    * the application owner's Stripe account.
    */
   @SerializedName("application_fee_percent")
@@ -211,6 +220,24 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   @SerializedName("url")
   String url;
 
+  /** Get ID of expandable {@code application} object. */
+  public String getApplication() {
+    return (this.application != null) ? this.application.getId() : null;
+  }
+
+  public void setApplication(String id) {
+    this.application = ApiResource.setExpandableFieldId(id, this.application);
+  }
+
+  /** Get expanded {@code application}. */
+  public Application getApplicationObject() {
+    return (this.application != null) ? this.application.getExpanded() : null;
+  }
+
+  public void setApplicationObject(Application expandableObject) {
+    this.application = new ExpandableField<Application>(expandableObject.getId(), expandableObject);
+  }
+
   /** Get ID of expandable {@code onBehalfOf} object. */
   public String getOnBehalfOf() {
     return (this.onBehalfOf != null) ? this.onBehalfOf.getId() : null;
@@ -237,9 +264,16 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   /** Creates a payment link. */
   public static PaymentLink create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_links");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentLink.class, options);
+    String path = "/v1/payment_links";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            PaymentLink.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Creates a payment link. */
@@ -250,9 +284,17 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   /** Creates a payment link. */
   public static PaymentLink create(PaymentLinkCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_links");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentLink.class, options);
+    String path = "/v1/payment_links";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentLink.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of your payment links. */
@@ -263,8 +305,16 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   /** Returns a list of your payment links. */
   public static PaymentLinkCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_links");
-    return ApiResource.requestCollection(url, params, PaymentLinkCollection.class, options);
+    String path = "/v1/payment_links";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            PaymentLinkCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of your payment links. */
@@ -275,8 +325,17 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   /** Returns a list of your payment links. */
   public static PaymentLinkCollection list(PaymentLinkListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/payment_links");
-    return ApiResource.requestCollection(url, params, PaymentLinkCollection.class, options);
+    String path = "/v1/payment_links";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentLinkCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -304,13 +363,17 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
    */
   public LineItemCollection listLineItems(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/payment_links/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            LineItemCollection.class,
             options,
-            String.format(
-                "/v1/payment_links/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -330,13 +393,18 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
    */
   public LineItemCollection listLineItems(
       PaymentLinkListLineItemsParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/payment_links/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            LineItemCollection.class,
             options,
-            String.format(
-                "/v1/payment_links/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieve a payment link. */
@@ -354,26 +422,33 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   public static PaymentLink retrieve(
       String paymentLink, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(paymentLink));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            PaymentLink.class,
             options,
-            String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(paymentLink)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, PaymentLink.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieve a payment link. */
   public static PaymentLink retrieve(
       String paymentLink, PaymentLinkRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(paymentLink));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentLink.class,
             options,
-            String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(paymentLink)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, PaymentLink.class, options);
+            ApiMode.V1);
   }
 
   /** Updates a payment link. */
@@ -386,13 +461,16 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   @Override
   public PaymentLink update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            PaymentLink.class,
             options,
-            String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentLink.class, options);
+            ApiMode.V1);
   }
 
   /** Updates a payment link. */
@@ -403,13 +481,17 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   /** Updates a payment link. */
   public PaymentLink update(PaymentLinkUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            PaymentLink.class,
             options,
-            String.format("/v1/payment_links/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, PaymentLink.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -486,7 +568,6 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class CustomField extends StripeObject {
-    /** Configuration for {@code type=dropdown} fields. */
     @SerializedName("dropdown")
     Dropdown dropdown;
 
@@ -500,12 +581,18 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
     @SerializedName("label")
     Label label;
 
+    @SerializedName("numeric")
+    Numeric numeric;
+
     /**
      * Whether the customer is required to complete the field before completing the Checkout
      * Session. Defaults to {@code false}.
      */
     @SerializedName("optional")
     Boolean optional;
+
+    @SerializedName("text")
+    Text text;
 
     /**
      * The type of the field.
@@ -557,6 +644,32 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
       @SerializedName("type")
       String type;
     }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Numeric extends StripeObject {
+      /** The maximum character length constraint for the customer's input. */
+      @SerializedName("maximum_length")
+      Long maximumLength;
+
+      /** The minimum character length requirement for the customer's input. */
+      @SerializedName("minimum_length")
+      Long minimumLength;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Text extends StripeObject {
+      /** The maximum character length constraint for the customer's input. */
+      @SerializedName("maximum_length")
+      Long maximumLength;
+
+      /** The minimum character length requirement for the customer's input. */
+      @SerializedName("minimum_length")
+      Long minimumLength;
+    }
   }
 
   @Getter
@@ -571,11 +684,17 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
     @SerializedName("submit")
     Submit submit;
 
+    /**
+     * Custom text that should be displayed in place of the default terms of service agreement text.
+     */
+    @SerializedName("terms_of_service_acceptance")
+    TermsOfServiceAcceptance termsOfServiceAcceptance;
+
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class ShippingAddress extends StripeObject {
-      /** Text may be up to 1000 characters in length. */
+      /** Text may be up to 1200 characters in length. */
       @SerializedName("message")
       String message;
     }
@@ -584,7 +703,16 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Submit extends StripeObject {
-      /** Text may be up to 1000 characters in length. */
+      /** Text may be up to 1200 characters in length. */
+      @SerializedName("message")
+      String message;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class TermsOfServiceAcceptance extends StripeObject {
+      /** Text may be up to 1200 characters in length. */
       @SerializedName("message")
       String message;
     }
@@ -716,6 +844,18 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
     @SerializedName("capture_method")
     String captureMethod;
 
+    /** An arbitrary string attached to the object. Often useful for displaying to users. */
+    @SerializedName("description")
+    String description;
+
+    /**
+     * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that will set
+     * metadata on <a href="https://stripe.com/docs/api/payment_intents">Payment Intents</a>
+     * generated from this payment link.
+     */
+    @SerializedName("metadata")
+    Map<String, String> metadata;
+
     /**
      * Indicates that you intend to make future payments with the payment method collected during
      * checkout.
@@ -724,6 +864,22 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
      */
     @SerializedName("setup_future_usage")
     String setupFutureUsage;
+
+    /**
+     * Extra information about the payment. This will appear on your customer's statement when this
+     * payment succeeds in creating a charge.
+     */
+    @SerializedName("statement_descriptor")
+    String statementDescriptor;
+
+    /**
+     * Provides information about the charge that customers see on their statements. Concatenated
+     * with the prefix (shortened descriptor) or statement descriptor that's set on the account to
+     * form the complete statement descriptor. Maximum 22 characters for the concatenated
+     * descriptor.
+     */
+    @SerializedName("statement_descriptor_suffix")
+    String statementDescriptorSuffix;
   }
 
   @Getter
@@ -788,10 +944,19 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   public static class SubscriptionData extends StripeObject {
     /**
      * The subscription's description, meant to be displayable to the customer. Use this field to
-     * optionally store an explanation of the subscription.
+     * optionally store an explanation of the subscription for rendering in Stripe surfaces and
+     * certain local payment methods UIs.
      */
     @SerializedName("description")
     String description;
+
+    /**
+     * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that will set
+     * metadata on <a href="https://stripe.com/docs/api/subscriptions">Subscriptions</a> generated
+     * from this payment link.
+     */
+    @SerializedName("metadata")
+    Map<String, String> metadata;
 
     /**
      * Integer representing the number of trial period days before the customer is charged for the
@@ -815,8 +980,8 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
   @EqualsAndHashCode(callSuper = false)
   public static class TransferData extends StripeObject {
     /**
-     * The amount in %s that will be transferred to the destination account. By default, the entire
-     * amount is transferred to the destination.
+     * The amount in cents (or local equivalent) that will be transferred to the destination
+     * account. By default, the entire amount is transferred to the destination.
      */
     @SerializedName("amount")
     Long amount;
@@ -844,5 +1009,24 @@ public class PaymentLink extends ApiResource implements HasId, MetadataStore<Pay
     public void setDestinationObject(Account expandableObject) {
       this.destination = new ExpandableField<Account>(expandableObject.getId(), expandableObject);
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(afterCompletion, responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(automaticTax, responseGetter);
+    trySetResponseGetter(consentCollection, responseGetter);
+    trySetResponseGetter(customText, responseGetter);
+    trySetResponseGetter(invoiceCreation, responseGetter);
+    trySetResponseGetter(lineItems, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(paymentIntentData, responseGetter);
+    trySetResponseGetter(phoneNumberCollection, responseGetter);
+    trySetResponseGetter(shippingAddressCollection, responseGetter);
+    trySetResponseGetter(subscriptionData, responseGetter);
+    trySetResponseGetter(taxIdCollection, responseGetter);
+    trySetResponseGetter(transferData, responseGetter);
   }
 }

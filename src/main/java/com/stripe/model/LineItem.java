@@ -86,7 +86,7 @@ public class LineItem extends StripeObject implements HasId {
      * information about when the discount began, when it will end, and what it is applied to.
      *
      * <p>Related guide: <a href="https://stripe.com/docs/billing/subscriptions/discounts">Applying
-     * Discounts to Subscriptions</a>.
+     * discounts to subscriptions</a>
      */
     @SerializedName("discount")
     com.stripe.model.Discount discount;
@@ -107,9 +107,26 @@ public class LineItem extends StripeObject implements HasId {
      * href="https://stripe.com/docs/payments/checkout/set-up-a-subscription#tax-rates">Checkout
      * Sessions</a> to collect tax.
      *
-     * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax Rates</a>.
+     * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax rates</a>
      */
     @SerializedName("rate")
     TaxRate rate;
+
+    /**
+     * The reasoning behind this tax, for example, if the product is tax exempt. The possible values
+     * for this field may be extended as new tax rules are supported.
+     *
+     * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax}, {@code
+     * not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated}, {@code
+     * portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday}, {@code
+     * proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code standard_rated},
+     * {@code taxable_basis_reduced}, or {@code zero_rated}.
+     */
+    @SerializedName("taxability_reason")
+    String taxabilityReason;
+
+    /** The amount on which tax is calculated, in cents (or local equivalent). */
+    @SerializedName("taxable_amount")
+    Long taxableAmount;
   }
 }

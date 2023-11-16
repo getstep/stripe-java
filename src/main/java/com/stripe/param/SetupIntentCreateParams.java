@@ -23,16 +23,16 @@ public class SetupIntentCreateParams extends ApiRequestParams {
   Boolean attachToSelf;
 
   /**
-   * When enabled, this SetupIntent will accept payment methods that you have enabled in the
-   * Dashboard and are compatible with this SetupIntent's other parameters.
+   * When you enable this parameter, this SetupIntent accepts payment methods that you enable in the
+   * Dashboard and that are compatible with its other parameters.
    */
   @SerializedName("automatic_payment_methods")
   AutomaticPaymentMethods automaticPaymentMethods;
 
   /**
    * Set to {@code true} to attempt to confirm this SetupIntent immediately. This parameter defaults
-   * to {@code false}. If the payment method attached is a card, a return_url may be provided in
-   * case additional authentication is required.
+   * to {@code false}. If a card is the attached payment method, you can provide a {@code
+   * return_url} in case further authentication is necessary.
    */
   @SerializedName("confirm")
   Boolean confirm;
@@ -75,12 +75,12 @@ public class SetupIntentCreateParams extends ApiRequestParams {
   List<SetupIntentCreateParams.FlowDirection> flowDirections;
 
   /**
-   * This hash contains details about the Mandate to create. This parameter can only be used with <a
+   * This hash contains details about the mandate to create. This parameter can only be used with <a
    * href="https://stripe.com/docs/api/setup_intents/create#create_setup_intent-confirm">{@code
    * confirm=true}</a>.
    */
   @SerializedName("mandate_data")
-  MandateData mandateData;
+  Object mandateData;
 
   /**
    * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that you can attach
@@ -91,7 +91,7 @@ public class SetupIntentCreateParams extends ApiRequestParams {
   @SerializedName("metadata")
   Map<String, String> metadata;
 
-  /** The Stripe account ID for which this SetupIntent is created. */
+  /** The Stripe account ID created for this SetupIntent. */
   @SerializedName("on_behalf_of")
   String onBehalfOf;
 
@@ -102,6 +102,10 @@ public class SetupIntentCreateParams extends ApiRequestParams {
   @SerializedName("payment_method")
   String paymentMethod;
 
+  /** The ID of the payment method configuration to use with this SetupIntent. */
+  @SerializedName("payment_method_configuration")
+  String paymentMethodConfiguration;
+
   /**
    * When included, this hash creates a PaymentMethod that is set as the <a
    * href="https://stripe.com/docs/api/setup_intents/object#setup_intent_object-payment_method">{@code
@@ -110,28 +114,31 @@ public class SetupIntentCreateParams extends ApiRequestParams {
   @SerializedName("payment_method_data")
   PaymentMethodData paymentMethodData;
 
-  /** Payment-method-specific configuration for this SetupIntent. */
+  /** Payment method-specific configuration for this SetupIntent. */
   @SerializedName("payment_method_options")
   PaymentMethodOptions paymentMethodOptions;
 
   /**
-   * The list of payment method types (e.g. card) that this SetupIntent is allowed to use. If this
-   * is not provided, defaults to [&quot;card&quot;].
+   * The list of payment method types (for example, card) that this SetupIntent can use. If you
+   * don't provide this, it defaults to [&quot;card&quot;].
    */
   @SerializedName("payment_method_types")
   List<String> paymentMethodTypes;
 
   /**
    * The URL to redirect your customer back to after they authenticate or cancel their payment on
-   * the payment method's app or site. If you'd prefer to redirect to a mobile application, you can
-   * alternatively supply an application URI scheme. This parameter can only be used with <a
+   * the payment method's app or site. To redirect to a mobile application, you can alternatively
+   * supply an application URI scheme. This parameter can only be used with <a
    * href="https://stripe.com/docs/api/setup_intents/create#create_setup_intent-confirm">{@code
    * confirm=true}</a>.
    */
   @SerializedName("return_url")
   String returnUrl;
 
-  /** If this hash is populated, this SetupIntent will generate a single_use Mandate on success. */
+  /**
+   * If you populate this hash, this SetupIntent generates a {@code single_use} mandate after
+   * successful completion.
+   */
   @SerializedName("single_use")
   SingleUse singleUse;
 
@@ -142,6 +149,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
   @SerializedName("usage")
   Usage usage;
 
+  /**
+   * Set to {@code true} when confirming server-side and using Stripe.js, iOS, or Android
+   * client-side SDKs to handle the next actions.
+   */
+  @SerializedName("use_stripe_sdk")
+  Boolean useStripeSdk;
+
   private SetupIntentCreateParams(
       Boolean attachToSelf,
       AutomaticPaymentMethods automaticPaymentMethods,
@@ -151,16 +165,18 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       List<String> expand,
       Map<String, Object> extraParams,
       List<SetupIntentCreateParams.FlowDirection> flowDirections,
-      MandateData mandateData,
+      Object mandateData,
       Map<String, String> metadata,
       String onBehalfOf,
       String paymentMethod,
+      String paymentMethodConfiguration,
       PaymentMethodData paymentMethodData,
       PaymentMethodOptions paymentMethodOptions,
       List<String> paymentMethodTypes,
       String returnUrl,
       SingleUse singleUse,
-      Usage usage) {
+      Usage usage,
+      Boolean useStripeSdk) {
     this.attachToSelf = attachToSelf;
     this.automaticPaymentMethods = automaticPaymentMethods;
     this.confirm = confirm;
@@ -173,12 +189,14 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     this.metadata = metadata;
     this.onBehalfOf = onBehalfOf;
     this.paymentMethod = paymentMethod;
+    this.paymentMethodConfiguration = paymentMethodConfiguration;
     this.paymentMethodData = paymentMethodData;
     this.paymentMethodOptions = paymentMethodOptions;
     this.paymentMethodTypes = paymentMethodTypes;
     this.returnUrl = returnUrl;
     this.singleUse = singleUse;
     this.usage = usage;
+    this.useStripeSdk = useStripeSdk;
   }
 
   public static Builder builder() {
@@ -202,13 +220,15 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
     private List<SetupIntentCreateParams.FlowDirection> flowDirections;
 
-    private MandateData mandateData;
+    private Object mandateData;
 
     private Map<String, String> metadata;
 
     private String onBehalfOf;
 
     private String paymentMethod;
+
+    private String paymentMethodConfiguration;
 
     private PaymentMethodData paymentMethodData;
 
@@ -221,6 +241,8 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     private SingleUse singleUse;
 
     private Usage usage;
+
+    private Boolean useStripeSdk;
 
     /** Finalize and obtain parameter instance from this builder. */
     public SetupIntentCreateParams build() {
@@ -237,12 +259,14 @@ public class SetupIntentCreateParams extends ApiRequestParams {
           this.metadata,
           this.onBehalfOf,
           this.paymentMethod,
+          this.paymentMethodConfiguration,
           this.paymentMethodData,
           this.paymentMethodOptions,
           this.paymentMethodTypes,
           this.returnUrl,
           this.singleUse,
-          this.usage);
+          this.usage,
+          this.useStripeSdk);
     }
 
     /**
@@ -260,8 +284,8 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     }
 
     /**
-     * When enabled, this SetupIntent will accept payment methods that you have enabled in the
-     * Dashboard and are compatible with this SetupIntent's other parameters.
+     * When you enable this parameter, this SetupIntent accepts payment methods that you enable in
+     * the Dashboard and that are compatible with its other parameters.
      */
     public Builder setAutomaticPaymentMethods(
         SetupIntentCreateParams.AutomaticPaymentMethods automaticPaymentMethods) {
@@ -271,8 +295,8 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
     /**
      * Set to {@code true} to attempt to confirm this SetupIntent immediately. This parameter
-     * defaults to {@code false}. If the payment method attached is a card, a return_url may be
-     * provided in case additional authentication is required.
+     * defaults to {@code false}. If a card is the attached payment method, you can provide a {@code
+     * return_url} in case further authentication is necessary.
      */
     public Builder setConfirm(Boolean confirm) {
       this.confirm = confirm;
@@ -376,11 +400,21 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     }
 
     /**
-     * This hash contains details about the Mandate to create. This parameter can only be used with
+     * This hash contains details about the mandate to create. This parameter can only be used with
      * <a href="https://stripe.com/docs/api/setup_intents/create#create_setup_intent-confirm">{@code
      * confirm=true}</a>.
      */
     public Builder setMandateData(SetupIntentCreateParams.MandateData mandateData) {
+      this.mandateData = mandateData;
+      return this;
+    }
+
+    /**
+     * This hash contains details about the mandate to create. This parameter can only be used with
+     * <a href="https://stripe.com/docs/api/setup_intents/create#create_setup_intent-confirm">{@code
+     * confirm=true}</a>.
+     */
+    public Builder setMandateData(EmptyParam mandateData) {
       this.mandateData = mandateData;
       return this;
     }
@@ -411,7 +445,7 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       return this;
     }
 
-    /** The Stripe account ID for which this SetupIntent is created. */
+    /** The Stripe account ID created for this SetupIntent. */
     public Builder setOnBehalfOf(String onBehalfOf) {
       this.onBehalfOf = onBehalfOf;
       return this;
@@ -426,6 +460,12 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       return this;
     }
 
+    /** The ID of the payment method configuration to use with this SetupIntent. */
+    public Builder setPaymentMethodConfiguration(String paymentMethodConfiguration) {
+      this.paymentMethodConfiguration = paymentMethodConfiguration;
+      return this;
+    }
+
     /**
      * When included, this hash creates a PaymentMethod that is set as the <a
      * href="https://stripe.com/docs/api/setup_intents/object#setup_intent_object-payment_method">{@code
@@ -437,7 +477,7 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       return this;
     }
 
-    /** Payment-method-specific configuration for this SetupIntent. */
+    /** Payment method-specific configuration for this SetupIntent. */
     public Builder setPaymentMethodOptions(
         SetupIntentCreateParams.PaymentMethodOptions paymentMethodOptions) {
       this.paymentMethodOptions = paymentMethodOptions;
@@ -472,8 +512,8 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
     /**
      * The URL to redirect your customer back to after they authenticate or cancel their payment on
-     * the payment method's app or site. If you'd prefer to redirect to a mobile application, you
-     * can alternatively supply an application URI scheme. This parameter can only be used with <a
+     * the payment method's app or site. To redirect to a mobile application, you can alternatively
+     * supply an application URI scheme. This parameter can only be used with <a
      * href="https://stripe.com/docs/api/setup_intents/create#create_setup_intent-confirm">{@code
      * confirm=true}</a>.
      */
@@ -483,7 +523,8 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     }
 
     /**
-     * If this hash is populated, this SetupIntent will generate a single_use Mandate on success.
+     * If you populate this hash, this SetupIntent generates a {@code single_use} mandate after
+     * successful completion.
      */
     public Builder setSingleUse(SetupIntentCreateParams.SingleUse singleUse) {
       this.singleUse = singleUse;
@@ -498,10 +539,31 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       this.usage = usage;
       return this;
     }
+
+    /**
+     * Set to {@code true} when confirming server-side and using Stripe.js, iOS, or Android
+     * client-side SDKs to handle the next actions.
+     */
+    public Builder setUseStripeSdk(Boolean useStripeSdk) {
+      this.useStripeSdk = useStripeSdk;
+      return this;
+    }
   }
 
   @Getter
   public static class AutomaticPaymentMethods {
+    /**
+     * Controls whether this SetupIntent will accept redirect-based payment methods.
+     *
+     * <p>Redirect-based payment methods may require your customer to be redirected to a payment
+     * method's app or site for authentication or additional steps. To <a
+     * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> this SetupIntent, you
+     * may be required to provide a {@code return_url} to redirect customers back to your site after
+     * they authenticate or complete the setup.
+     */
+    @SerializedName("allow_redirects")
+    AllowRedirects allowRedirects;
+
     /** <strong>Required.</strong> Whether this feature is enabled. */
     @SerializedName("enabled")
     Boolean enabled;
@@ -515,7 +577,9 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
     Map<String, Object> extraParams;
 
-    private AutomaticPaymentMethods(Boolean enabled, Map<String, Object> extraParams) {
+    private AutomaticPaymentMethods(
+        AllowRedirects allowRedirects, Boolean enabled, Map<String, Object> extraParams) {
+      this.allowRedirects = allowRedirects;
       this.enabled = enabled;
       this.extraParams = extraParams;
     }
@@ -525,13 +589,31 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     }
 
     public static class Builder {
+      private AllowRedirects allowRedirects;
+
       private Boolean enabled;
 
       private Map<String, Object> extraParams;
 
       /** Finalize and obtain parameter instance from this builder. */
       public SetupIntentCreateParams.AutomaticPaymentMethods build() {
-        return new SetupIntentCreateParams.AutomaticPaymentMethods(this.enabled, this.extraParams);
+        return new SetupIntentCreateParams.AutomaticPaymentMethods(
+            this.allowRedirects, this.enabled, this.extraParams);
+      }
+
+      /**
+       * Controls whether this SetupIntent will accept redirect-based payment methods.
+       *
+       * <p>Redirect-based payment methods may require your customer to be redirected to a payment
+       * method's app or site for authentication or additional steps. To <a
+       * href="https://stripe.com/docs/api/setup_intents/confirm">confirm</a> this SetupIntent, you
+       * may be required to provide a {@code return_url} to redirect customers back to your site
+       * after they authenticate or complete the setup.
+       */
+      public Builder setAllowRedirects(
+          SetupIntentCreateParams.AutomaticPaymentMethods.AllowRedirects allowRedirects) {
+        this.allowRedirects = allowRedirects;
+        return this;
       }
 
       /** <strong>Required.</strong> Whether this feature is enabled. */
@@ -565,6 +647,21 @@ public class SetupIntentCreateParams extends ApiRequestParams {
         }
         this.extraParams.putAll(map);
         return this;
+      }
+    }
+
+    public enum AllowRedirects implements ApiRequestParams.EnumParam {
+      @SerializedName("always")
+      ALWAYS("always"),
+
+      @SerializedName("never")
+      NEVER("never");
+
+      @Getter(onMethod_ = {@Override})
+      private final String value;
+
+      AllowRedirects(String value) {
+        this.value = value;
       }
     }
   }
@@ -1143,6 +1240,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     Paynow paynow;
 
     /**
+     * If this is a {@code paypal} PaymentMethod, this hash contains details about the PayPal
+     * payment method.
+     */
+    @SerializedName("paypal")
+    Paypal paypal;
+
+    /**
      * If this is a {@code pix} PaymentMethod, this hash contains details about the Pix payment
      * method.
      */
@@ -1162,6 +1266,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
      */
     @SerializedName("radar_options")
     RadarOptions radarOptions;
+
+    /**
+     * If this is a {@code Revolut Pay} PaymentMethod, this hash contains details about the Revolut
+     * Pay payment method.
+     */
+    @SerializedName("revolut_pay")
+    RevolutPay revolutPay;
 
     /**
      * If this is a {@code sepa_debit} PaymentMethod, this hash contains details about the SEPA
@@ -1199,6 +1310,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     @SerializedName("wechat_pay")
     WechatPay wechatPay;
 
+    /**
+     * If this is a {@code zip} PaymentMethod, this hash contains details about the Zip payment
+     * method.
+     */
+    @SerializedName("zip")
+    Zip zip;
+
     private PaymentMethodData(
         AcssDebit acssDebit,
         Affirm affirm,
@@ -1226,14 +1344,17 @@ public class SetupIntentCreateParams extends ApiRequestParams {
         Oxxo oxxo,
         P24 p24,
         Paynow paynow,
+        Paypal paypal,
         Pix pix,
         Promptpay promptpay,
         RadarOptions radarOptions,
+        RevolutPay revolutPay,
         SepaDebit sepaDebit,
         Sofort sofort,
         Type type,
         UsBankAccount usBankAccount,
-        WechatPay wechatPay) {
+        WechatPay wechatPay,
+        Zip zip) {
       this.acssDebit = acssDebit;
       this.affirm = affirm;
       this.afterpayClearpay = afterpayClearpay;
@@ -1260,14 +1381,17 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       this.oxxo = oxxo;
       this.p24 = p24;
       this.paynow = paynow;
+      this.paypal = paypal;
       this.pix = pix;
       this.promptpay = promptpay;
       this.radarOptions = radarOptions;
+      this.revolutPay = revolutPay;
       this.sepaDebit = sepaDebit;
       this.sofort = sofort;
       this.type = type;
       this.usBankAccount = usBankAccount;
       this.wechatPay = wechatPay;
+      this.zip = zip;
     }
 
     public static Builder builder() {
@@ -1327,11 +1451,15 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
       private Paynow paynow;
 
+      private Paypal paypal;
+
       private Pix pix;
 
       private Promptpay promptpay;
 
       private RadarOptions radarOptions;
+
+      private RevolutPay revolutPay;
 
       private SepaDebit sepaDebit;
 
@@ -1342,6 +1470,8 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       private UsBankAccount usBankAccount;
 
       private WechatPay wechatPay;
+
+      private Zip zip;
 
       /** Finalize and obtain parameter instance from this builder. */
       public SetupIntentCreateParams.PaymentMethodData build() {
@@ -1372,14 +1502,17 @@ public class SetupIntentCreateParams extends ApiRequestParams {
             this.oxxo,
             this.p24,
             this.paynow,
+            this.paypal,
             this.pix,
             this.promptpay,
             this.radarOptions,
+            this.revolutPay,
             this.sepaDebit,
             this.sofort,
             this.type,
             this.usBankAccount,
-            this.wechatPay);
+            this.wechatPay,
+            this.zip);
       }
 
       /**
@@ -1658,6 +1791,15 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       }
 
       /**
+       * If this is a {@code paypal} PaymentMethod, this hash contains details about the PayPal
+       * payment method.
+       */
+      public Builder setPaypal(SetupIntentCreateParams.PaymentMethodData.Paypal paypal) {
+        this.paypal = paypal;
+        return this;
+      }
+
+      /**
        * If this is a {@code pix} PaymentMethod, this hash contains details about the Pix payment
        * method.
        */
@@ -1682,6 +1824,16 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       public Builder setRadarOptions(
           SetupIntentCreateParams.PaymentMethodData.RadarOptions radarOptions) {
         this.radarOptions = radarOptions;
+        return this;
+      }
+
+      /**
+       * If this is a {@code Revolut Pay} PaymentMethod, this hash contains details about the
+       * Revolut Pay payment method.
+       */
+      public Builder setRevolutPay(
+          SetupIntentCreateParams.PaymentMethodData.RevolutPay revolutPay) {
+        this.revolutPay = revolutPay;
         return this;
       }
 
@@ -1729,6 +1881,15 @@ public class SetupIntentCreateParams extends ApiRequestParams {
        */
       public Builder setWechatPay(SetupIntentCreateParams.PaymentMethodData.WechatPay wechatPay) {
         this.wechatPay = wechatPay;
+        return this;
+      }
+
+      /**
+       * If this is a {@code zip} PaymentMethod, this hash contains details about the Zip payment
+       * method.
+       */
+      public Builder setZip(SetupIntentCreateParams.PaymentMethodData.Zip zip) {
+        this.zip = zip;
         return this;
       }
     }
@@ -2251,18 +2412,18 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
       /** Full name. */
       @SerializedName("name")
-      String name;
+      Object name;
 
       /** Billing phone number (including extension). */
       @SerializedName("phone")
-      String phone;
+      Object phone;
 
       private BillingDetails(
           Object address,
           Object email,
           Map<String, Object> extraParams,
-          String name,
-          String phone) {
+          Object name,
+          Object phone) {
         this.address = address;
         this.email = email;
         this.extraParams = extraParams;
@@ -2281,9 +2442,9 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
         private Map<String, Object> extraParams;
 
-        private String name;
+        private Object name;
 
-        private String phone;
+        private Object phone;
 
         /** Finalize and obtain parameter instance from this builder. */
         public SetupIntentCreateParams.PaymentMethodData.BillingDetails build() {
@@ -2350,8 +2511,20 @@ public class SetupIntentCreateParams extends ApiRequestParams {
           return this;
         }
 
+        /** Full name. */
+        public Builder setName(EmptyParam name) {
+          this.name = name;
+          return this;
+        }
+
         /** Billing phone number (including extension). */
         public Builder setPhone(String phone) {
+          this.phone = phone;
+          return this;
+        }
+
+        /** Billing phone number (including extension). */
+        public Builder setPhone(EmptyParam phone) {
           this.phone = phone;
           return this;
         }
@@ -3306,6 +3479,9 @@ public class SetupIntentCreateParams extends ApiRequestParams {
         @SerializedName("moneyou")
         MONEYOU("moneyou"),
 
+        @SerializedName("n26")
+        N26("n26"),
+
         @SerializedName("rabobank")
         RABOBANK("rabobank"),
 
@@ -3944,6 +4120,63 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     }
 
     @Getter
+    public static class Paypal {
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private Paypal(Map<String, Object> extraParams) {
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public SetupIntentCreateParams.PaymentMethodData.Paypal build() {
+          return new SetupIntentCreateParams.PaymentMethodData.Paypal(this.extraParams);
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodData.Paypal#extraParams} for the
+         * field documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodData.Paypal#extraParams} for the
+         * field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+      }
+    }
+
+    @Getter
     public static class Pix {
       /**
        * Map of extra parameters for custom features not available in this client library. The
@@ -4131,6 +4364,63 @@ public class SetupIntentCreateParams extends ApiRequestParams {
          */
         public Builder setSession(String session) {
           this.session = session;
+          return this;
+        }
+      }
+    }
+
+    @Getter
+    public static class RevolutPay {
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private RevolutPay(Map<String, Object> extraParams) {
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public SetupIntentCreateParams.PaymentMethodData.RevolutPay build() {
+          return new SetupIntentCreateParams.PaymentMethodData.RevolutPay(this.extraParams);
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodData.RevolutPay#extraParams} for the
+         * field documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodData.RevolutPay#extraParams} for the
+         * field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
           return this;
         }
       }
@@ -4536,6 +4826,63 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       }
     }
 
+    @Getter
+    public static class Zip {
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private Zip(Map<String, Object> extraParams) {
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public SetupIntentCreateParams.PaymentMethodData.Zip build() {
+          return new SetupIntentCreateParams.PaymentMethodData.Zip(this.extraParams);
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodData.Zip#extraParams} for the field
+         * documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodData.Zip#extraParams} for the field
+         * documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+      }
+    }
+
     public enum Type implements ApiRequestParams.EnumParam {
       @SerializedName("acss_debit")
       ACSS_DEBIT("acss_debit"),
@@ -4603,11 +4950,17 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       @SerializedName("paynow")
       PAYNOW("paynow"),
 
+      @SerializedName("paypal")
+      PAYPAL("paypal"),
+
       @SerializedName("pix")
       PIX("pix"),
 
       @SerializedName("promptpay")
       PROMPTPAY("promptpay"),
+
+      @SerializedName("revolut_pay")
+      REVOLUT_PAY("revolut_pay"),
 
       @SerializedName("sepa_debit")
       SEPA_DEBIT("sepa_debit"),
@@ -4619,7 +4972,10 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       US_BANK_ACCOUNT("us_bank_account"),
 
       @SerializedName("wechat_pay")
-      WECHAT_PAY("wechat_pay");
+      WECHAT_PAY("wechat_pay"),
+
+      @SerializedName("zip")
+      ZIP("zip");
 
       @Getter(onMethod_ = {@Override})
       private final String value;
@@ -4638,13 +4994,6 @@ public class SetupIntentCreateParams extends ApiRequestParams {
      */
     @SerializedName("acss_debit")
     AcssDebit acssDebit;
-
-    /**
-     * If this is a {@code blik} PaymentMethod, this hash contains details about the BLIK payment
-     * method.
-     */
-    @SerializedName("blik")
-    Blik blik;
 
     /** Configuration for any card setup attempted on this SetupIntent. */
     @SerializedName("card")
@@ -4667,6 +5016,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     Link link;
 
     /**
+     * If this is a {@code paypal} PaymentMethod, this sub-hash contains details about the PayPal
+     * payment method options.
+     */
+    @SerializedName("paypal")
+    Paypal paypal;
+
+    /**
      * If this is a {@code sepa_debit} SetupIntent, this sub-hash contains details about the SEPA
      * Debit payment method options.
      */
@@ -4682,17 +5038,17 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
     private PaymentMethodOptions(
         AcssDebit acssDebit,
-        Blik blik,
         Card card,
         Map<String, Object> extraParams,
         Link link,
+        Paypal paypal,
         SepaDebit sepaDebit,
         UsBankAccount usBankAccount) {
       this.acssDebit = acssDebit;
-      this.blik = blik;
       this.card = card;
       this.extraParams = extraParams;
       this.link = link;
+      this.paypal = paypal;
       this.sepaDebit = sepaDebit;
       this.usBankAccount = usBankAccount;
     }
@@ -4704,13 +5060,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
     public static class Builder {
       private AcssDebit acssDebit;
 
-      private Blik blik;
-
       private Card card;
 
       private Map<String, Object> extraParams;
 
       private Link link;
+
+      private Paypal paypal;
 
       private SepaDebit sepaDebit;
 
@@ -4720,10 +5076,10 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       public SetupIntentCreateParams.PaymentMethodOptions build() {
         return new SetupIntentCreateParams.PaymentMethodOptions(
             this.acssDebit,
-            this.blik,
             this.card,
             this.extraParams,
             this.link,
+            this.paypal,
             this.sepaDebit,
             this.usBankAccount);
       }
@@ -4735,15 +5091,6 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       public Builder setAcssDebit(
           SetupIntentCreateParams.PaymentMethodOptions.AcssDebit acssDebit) {
         this.acssDebit = acssDebit;
-        return this;
-      }
-
-      /**
-       * If this is a {@code blik} PaymentMethod, this hash contains details about the BLIK payment
-       * method.
-       */
-      public Builder setBlik(SetupIntentCreateParams.PaymentMethodOptions.Blik blik) {
-        this.blik = blik;
         return this;
       }
 
@@ -4786,6 +5133,15 @@ public class SetupIntentCreateParams extends ApiRequestParams {
        */
       public Builder setLink(SetupIntentCreateParams.PaymentMethodOptions.Link link) {
         this.link = link;
+        return this;
+      }
+
+      /**
+       * If this is a {@code paypal} PaymentMethod, this sub-hash contains details about the PayPal
+       * payment method options.
+       */
+      public Builder setPaypal(SetupIntentCreateParams.PaymentMethodOptions.Paypal paypal) {
+        this.paypal = paypal;
         return this;
       }
 
@@ -5198,82 +5554,6 @@ public class SetupIntentCreateParams extends ApiRequestParams {
 
         VerificationMethod(String value) {
           this.value = value;
-        }
-      }
-    }
-
-    @Getter
-    public static class Blik {
-      /**
-       * The 6-digit BLIK code that a customer has generated using their banking application. Can
-       * only be set on confirmation.
-       */
-      @SerializedName("code")
-      String code;
-
-      /**
-       * Map of extra parameters for custom features not available in this client library. The
-       * content in this map is not serialized under this field's {@code @SerializedName} value.
-       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
-       * name in this param object. Effectively, this map is flattened to its parent instance.
-       */
-      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
-      Map<String, Object> extraParams;
-
-      private Blik(String code, Map<String, Object> extraParams) {
-        this.code = code;
-        this.extraParams = extraParams;
-      }
-
-      public static Builder builder() {
-        return new Builder();
-      }
-
-      public static class Builder {
-        private String code;
-
-        private Map<String, Object> extraParams;
-
-        /** Finalize and obtain parameter instance from this builder. */
-        public SetupIntentCreateParams.PaymentMethodOptions.Blik build() {
-          return new SetupIntentCreateParams.PaymentMethodOptions.Blik(this.code, this.extraParams);
-        }
-
-        /**
-         * The 6-digit BLIK code that a customer has generated using their banking application. Can
-         * only be set on confirmation.
-         */
-        public Builder setCode(String code) {
-          this.code = code;
-          return this;
-        }
-
-        /**
-         * Add a key/value pair to `extraParams` map. A map is initialized for the first
-         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
-         * map. See {@link SetupIntentCreateParams.PaymentMethodOptions.Blik#extraParams} for the
-         * field documentation.
-         */
-        public Builder putExtraParam(String key, Object value) {
-          if (this.extraParams == null) {
-            this.extraParams = new HashMap<>();
-          }
-          this.extraParams.put(key, value);
-          return this;
-        }
-
-        /**
-         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
-         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
-         * map. See {@link SetupIntentCreateParams.PaymentMethodOptions.Blik#extraParams} for the
-         * field documentation.
-         */
-        public Builder putAllExtraParam(Map<String, Object> map) {
-          if (this.extraParams == null) {
-            this.extraParams = new HashMap<>();
-          }
-          this.extraParams.putAll(map);
-          return this;
         }
       }
     }
@@ -5799,6 +6079,9 @@ public class SetupIntentCreateParams extends ApiRequestParams {
         @SerializedName("discover")
         DISCOVER("discover"),
 
+        @SerializedName("eftpos_au")
+        EFTPOS_AU("eftpos_au"),
+
         @SerializedName("interac")
         INTERAC("interac"),
 
@@ -5852,7 +6135,7 @@ public class SetupIntentCreateParams extends ApiRequestParams {
       @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
       Map<String, Object> extraParams;
 
-      /** Token used for persistent Link logins. */
+      /** [Deprecated] This is a legacy parameter that no longer has any function. */
       @SerializedName("persistent_token")
       String persistentToken;
 
@@ -5904,9 +6187,86 @@ public class SetupIntentCreateParams extends ApiRequestParams {
           return this;
         }
 
-        /** Token used for persistent Link logins. */
+        /** [Deprecated] This is a legacy parameter that no longer has any function. */
         public Builder setPersistentToken(String persistentToken) {
           this.persistentToken = persistentToken;
+          return this;
+        }
+      }
+    }
+
+    @Getter
+    public static class Paypal {
+      /**
+       * The PayPal Billing Agreement ID (BAID). This is an ID generated by PayPal which represents
+       * the mandate between the merchant and the customer.
+       */
+      @SerializedName("billing_agreement_id")
+      String billingAgreementId;
+
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      private Paypal(String billingAgreementId, Map<String, Object> extraParams) {
+        this.billingAgreementId = billingAgreementId;
+        this.extraParams = extraParams;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private String billingAgreementId;
+
+        private Map<String, Object> extraParams;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public SetupIntentCreateParams.PaymentMethodOptions.Paypal build() {
+          return new SetupIntentCreateParams.PaymentMethodOptions.Paypal(
+              this.billingAgreementId, this.extraParams);
+        }
+
+        /**
+         * The PayPal Billing Agreement ID (BAID). This is an ID generated by PayPal which
+         * represents the mandate between the merchant and the customer.
+         */
+        public Builder setBillingAgreementId(String billingAgreementId) {
+          this.billingAgreementId = billingAgreementId;
+          return this;
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodOptions.Paypal#extraParams} for the
+         * field documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link SetupIntentCreateParams.PaymentMethodOptions.Paypal#extraParams} for the
+         * field documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
           return this;
         }
       }
@@ -6173,6 +6533,13 @@ public class SetupIntentCreateParams extends ApiRequestParams {
                     .Permission>
             permissions;
 
+        /** List of data features that you would like to retrieve upon account creation. */
+        @SerializedName("prefetch")
+        List<
+                SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections
+                    .Prefetch>
+            prefetch;
+
         /**
          * For webview integrations only. Upon completing OAuth login in the native browser, the
          * user will be redirected to this URL to return to your app.
@@ -6186,9 +6553,14 @@ public class SetupIntentCreateParams extends ApiRequestParams {
                     SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections
                         .Permission>
                 permissions,
+            List<
+                    SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections
+                        .Prefetch>
+                prefetch,
             String returnUrl) {
           this.extraParams = extraParams;
           this.permissions = permissions;
+          this.prefetch = prefetch;
           this.returnUrl = returnUrl;
         }
 
@@ -6204,13 +6576,19 @@ public class SetupIntentCreateParams extends ApiRequestParams {
                       .Permission>
               permissions;
 
+          private List<
+                  SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections
+                      .Prefetch>
+              prefetch;
+
           private String returnUrl;
 
           /** Finalize and obtain parameter instance from this builder. */
           public SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections
               build() {
             return new SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount
-                .FinancialConnections(this.extraParams, this.permissions, this.returnUrl);
+                .FinancialConnections(
+                this.extraParams, this.permissions, this.prefetch, this.returnUrl);
           }
 
           /**
@@ -6280,6 +6658,41 @@ public class SetupIntentCreateParams extends ApiRequestParams {
           }
 
           /**
+           * Add an element to `prefetch` list. A list is initialized for the first `add/addAll`
+           * call, and subsequent calls adds additional elements to the original list. See {@link
+           * SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections#prefetch}
+           * for the field documentation.
+           */
+          public Builder addPrefetch(
+              SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections
+                      .Prefetch
+                  element) {
+            if (this.prefetch == null) {
+              this.prefetch = new ArrayList<>();
+            }
+            this.prefetch.add(element);
+            return this;
+          }
+
+          /**
+           * Add all elements to `prefetch` list. A list is initialized for the first `add/addAll`
+           * call, and subsequent calls adds additional elements to the original list. See {@link
+           * SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount.FinancialConnections#prefetch}
+           * for the field documentation.
+           */
+          public Builder addAllPrefetch(
+              List<
+                      SetupIntentCreateParams.PaymentMethodOptions.UsBankAccount
+                          .FinancialConnections.Prefetch>
+                  elements) {
+            if (this.prefetch == null) {
+              this.prefetch = new ArrayList<>();
+            }
+            this.prefetch.addAll(elements);
+            return this;
+          }
+
+          /**
            * For webview integrations only. Upon completing OAuth login in the native browser, the
            * user will be redirected to this URL to return to your app.
            */
@@ -6306,6 +6719,18 @@ public class SetupIntentCreateParams extends ApiRequestParams {
           private final String value;
 
           Permission(String value) {
+            this.value = value;
+          }
+        }
+
+        public enum Prefetch implements ApiRequestParams.EnumParam {
+          @SerializedName("balances")
+          BALANCES("balances");
+
+          @Getter(onMethod_ = {@Override})
+          private final String value;
+
+          Prefetch(String value) {
             this.value = value;
           }
         }

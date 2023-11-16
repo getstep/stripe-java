@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.MandateRetrieveParams;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +17,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * A Mandate is a record of the permission a customer has given you to debit their payment method.
+ * A Mandate is a record of the permission that your customer gives you to debit their payment
+ * method.
  */
 @Getter
 @Setter
@@ -46,6 +50,10 @@ public class Mandate extends ApiResource implements HasId {
   @SerializedName("object")
   String object;
 
+  /** The account (if any) that the mandate is intended for. */
+  @SerializedName("on_behalf_of")
+  String onBehalfOf;
+
   /** ID of the payment method associated with this mandate. */
   @SerializedName("payment_method")
   @Getter(lombok.AccessLevel.NONE)
@@ -59,7 +67,7 @@ public class Mandate extends ApiResource implements HasId {
   SingleUse singleUse;
 
   /**
-   * The status of the mandate, which indicates whether it can be used to initiate a payment.
+   * The mandate status indicates whether or not you can use it to initiate a payment.
    *
    * <p>One of {@code active}, {@code inactive}, or {@code pending}.
    */
@@ -106,30 +114,39 @@ public class Mandate extends ApiResource implements HasId {
   /** Retrieves a Mandate object. */
   public static Mandate retrieve(String mandate, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/mandates/%s", ApiResource.urlEncodeId(mandate));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Mandate.class,
             options,
-            String.format("/v1/mandates/%s", ApiResource.urlEncodeId(mandate)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Mandate.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves a Mandate object. */
   public static Mandate retrieve(
       String mandate, MandateRetrieveParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/mandates/%s", ApiResource.urlEncodeId(mandate));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Mandate.class,
             options,
-            String.format("/v1/mandates/%s", ApiResource.urlEncodeId(mandate)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Mandate.class, options);
+            ApiMode.V1);
   }
 
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class CustomerAcceptance extends StripeObject {
-    /** The time at which the customer accepted the Mandate. */
+    /** The time that the customer accepts the mandate. */
     @SerializedName("accepted_at")
     Long acceptedAt;
 
@@ -140,8 +157,10 @@ public class Mandate extends ApiResource implements HasId {
     Online online;
 
     /**
-     * The type of customer acceptance information included with the Mandate. One of {@code online}
-     * or {@code offline}.
+     * The mandate includes the type of customer acceptance information, such as: {@code online} or
+     * {@code offline}.
+     *
+     * <p>One of {@code offline}, or {@code online}.
      */
     @SerializedName("type")
     String type;
@@ -155,11 +174,11 @@ public class Mandate extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Online extends StripeObject {
-      /** The IP address from which the Mandate was accepted by the customer. */
+      /** The customer accepts the mandate from this IP address. */
       @SerializedName("ip_address")
       String ipAddress;
 
-      /** The user agent of the browser from which the Mandate was accepted by the customer. */
+      /** The customer accepts the mandate using the user agent of the browser. */
       @SerializedName("user_agent")
       String userAgent;
     }
@@ -183,9 +202,6 @@ public class Mandate extends ApiResource implements HasId {
     @SerializedName("bacs_debit")
     BacsDebit bacsDebit;
 
-    @SerializedName("blik")
-    Blik blik;
-
     @SerializedName("card")
     Card card;
 
@@ -195,13 +211,16 @@ public class Mandate extends ApiResource implements HasId {
     @SerializedName("link")
     Link link;
 
+    @SerializedName("paypal")
+    Paypal paypal;
+
     @SerializedName("sepa_debit")
     SepaDebit sepaDebit;
 
     /**
-     * The type of the payment method associated with this mandate. An additional hash is included
-     * on {@code payment_method_details} with a name matching this value. It contains mandate
-     * information specific to the payment method.
+     * This mandate corresponds with a specific payment method type. The {@code
+     * payment_method_details} includes an additional hash with the same name and contains mandate
+     * information that's specific to that payment method.
      */
     @SerializedName("type")
     String type;
@@ -276,51 +295,6 @@ public class Mandate extends ApiResource implements HasId {
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
-    public static class Blik extends StripeObject {
-      /** Date at which the mandate expires. */
-      @SerializedName("expires_after")
-      Long expiresAfter;
-
-      @SerializedName("off_session")
-      OffSession offSession;
-
-      /**
-       * Type of the mandate.
-       *
-       * <p>One of {@code off_session}, or {@code on_session}.
-       */
-      @SerializedName("type")
-      String type;
-
-      @Getter
-      @Setter
-      @EqualsAndHashCode(callSuper = false)
-      public static class OffSession extends StripeObject {
-        /** Amount of each recurring payment. */
-        @SerializedName("amount")
-        Long amount;
-
-        /** Currency of each recurring payment. */
-        @SerializedName("currency")
-        String currency;
-
-        /**
-         * Frequency interval of each recurring payment.
-         *
-         * <p>One of {@code day}, {@code month}, {@code week}, or {@code year}.
-         */
-        @SerializedName("interval")
-        String interval;
-
-        /** Frequency indicator of each recurring payment. */
-        @SerializedName("interval_count")
-        Long intervalCount;
-      }
-    }
-
-    @Getter
-    @Setter
-    @EqualsAndHashCode(callSuper = false)
     public static class Card extends StripeObject {}
 
     @Getter
@@ -332,6 +306,22 @@ public class Mandate extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Link extends StripeObject {}
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Paypal extends StripeObject {
+      /**
+       * The PayPal Billing Agreement ID (BAID). This is an ID generated by PayPal which represents
+       * the mandate between the merchant and the customer.
+       */
+      @SerializedName("billing_agreement_id")
+      String billingAgreementId;
+
+      /** PayPal account PayerID. This identifier uniquely identifies the PayPal customer. */
+      @SerializedName("payer_id")
+      String payerId;
+    }
 
     @Getter
     @Setter
@@ -359,12 +349,22 @@ public class Mandate extends ApiResource implements HasId {
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class SingleUse extends StripeObject {
-    /** On a single use mandate, the amount of the payment. */
+    /** The amount of the payment on a single use mandate. */
     @SerializedName("amount")
     Long amount;
 
-    /** On a single use mandate, the currency of the payment. */
+    /** The currency of the payment on a single use mandate. */
     @SerializedName("currency")
     String currency;
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(customerAcceptance, responseGetter);
+    trySetResponseGetter(multiUse, responseGetter);
+    trySetResponseGetter(paymentMethod, responseGetter);
+    trySetResponseGetter(paymentMethodDetails, responseGetter);
+    trySetResponseGetter(singleUse, responseGetter);
   }
 }

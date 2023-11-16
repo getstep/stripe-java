@@ -33,11 +33,19 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
   @SerializedName("currency")
   String currency;
 
-  /** The identifier of the customer whose upcoming invoice you'd like to retrieve. */
+  /**
+   * The identifier of the customer whose upcoming invoice you'd like to retrieve. If {@code
+   * automatic_tax} is enabled then one of {@code customer}, {@code customer_details}, {@code
+   * subscription}, or {@code schedule} must be set.
+   */
   @SerializedName("customer")
   String customer;
 
-  /** Details about the customer you want to invoice or overrides for an existing customer. */
+  /**
+   * Details about the customer you want to invoice or overrides for an existing customer. If {@code
+   * automatic_tax} is enabled then one of {@code customer}, {@code customer_details}, {@code
+   * subscription}, or {@code schedule} must be set.
+   */
   @SerializedName("customer_details")
   CustomerDetails customerDetails;
 
@@ -85,8 +93,8 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
   Long limit;
 
   /**
-   * The identifier of the unstarted schedule whose upcoming invoice you'd like to retrieve. Cannot
-   * be used with subscription or subscription fields.
+   * The identifier of the schedule whose upcoming invoice you'd like to retrieve. Cannot be used
+   * with subscription or subscription fields.
    */
   @SerializedName("schedule")
   String schedule;
@@ -369,13 +377,21 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
       return this;
     }
 
-    /** The identifier of the customer whose upcoming invoice you'd like to retrieve. */
+    /**
+     * The identifier of the customer whose upcoming invoice you'd like to retrieve. If {@code
+     * automatic_tax} is enabled then one of {@code customer}, {@code customer_details}, {@code
+     * subscription}, or {@code schedule} must be set.
+     */
     public Builder setCustomer(String customer) {
       this.customer = customer;
       return this;
     }
 
-    /** Details about the customer you want to invoice or overrides for an existing customer. */
+    /**
+     * Details about the customer you want to invoice or overrides for an existing customer. If
+     * {@code automatic_tax} is enabled then one of {@code customer}, {@code customer_details},
+     * {@code subscription}, or {@code schedule} must be set.
+     */
     public Builder setCustomerDetails(InvoiceUpcomingLinesParams.CustomerDetails customerDetails) {
       this.customerDetails = customerDetails;
       return this;
@@ -532,8 +548,8 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
     }
 
     /**
-     * The identifier of the unstarted schedule whose upcoming invoice you'd like to retrieve.
-     * Cannot be used with subscription or subscription fields.
+     * The identifier of the schedule whose upcoming invoice you'd like to retrieve. Cannot be used
+     * with subscription or subscription fields.
      */
     public Builder setSchedule(String schedule) {
       this.schedule = schedule;
@@ -1532,17 +1548,19 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
       Map<String, Object> extraParams;
 
       /**
-       * <strong>Required.</strong> Type of the tax ID, one of {@code ae_trn}, {@code au_abn},
-       * {@code au_arn}, {@code bg_uic}, {@code br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code
-       * ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst},
-       * {@code ch_vat}, {@code cl_tin}, {@code eg_tin}, {@code es_cif}, {@code eu_oss_vat}, {@code
-       * eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code hk_br}, {@code hu_tin}, {@code id_npwp},
-       * {@code il_vat}, {@code in_gst}, {@code is_vat}, {@code jp_cn}, {@code jp_rn}, {@code
-       * jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code li_uid}, {@code mx_rfc}, {@code my_frp},
-       * {@code my_itn}, {@code my_sst}, {@code no_vat}, {@code nz_gst}, {@code ph_tin}, {@code
+       * <strong>Required.</strong> Type of the tax ID, one of {@code ad_nrt}, {@code ae_trn},
+       * {@code ar_cuit}, {@code au_abn}, {@code au_arn}, {@code bg_uic}, {@code bo_tin}, {@code
+       * br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code
+       * ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst}, {@code ch_vat}, {@code cl_tin}, {@code
+       * cn_tin}, {@code co_nit}, {@code cr_tin}, {@code do_rcn}, {@code ec_ruc}, {@code eg_tin},
+       * {@code es_cif}, {@code eu_oss_vat}, {@code eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code
+       * hk_br}, {@code hu_tin}, {@code id_npwp}, {@code il_vat}, {@code in_gst}, {@code is_vat},
+       * {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code
+       * li_uid}, {@code mx_rfc}, {@code my_frp}, {@code my_itn}, {@code my_sst}, {@code no_vat},
+       * {@code nz_gst}, {@code pe_ruc}, {@code ph_tin}, {@code ro_tin}, {@code rs_pib}, {@code
        * ru_inn}, {@code ru_kpp}, {@code sa_vat}, {@code sg_gst}, {@code sg_uen}, {@code si_tin},
-       * {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code us_ein}, or {@code
-       * za_vat}
+       * {@code sv_nit}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code
+       * us_ein}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, or {@code za_vat}
        */
       @SerializedName("type")
       Type type;
@@ -1603,17 +1621,19 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
         }
 
         /**
-         * <strong>Required.</strong> Type of the tax ID, one of {@code ae_trn}, {@code au_abn},
-         * {@code au_arn}, {@code bg_uic}, {@code br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code
-         * ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst},
-         * {@code ch_vat}, {@code cl_tin}, {@code eg_tin}, {@code es_cif}, {@code eu_oss_vat},
-         * {@code eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code hk_br}, {@code hu_tin}, {@code
-         * id_npwp}, {@code il_vat}, {@code in_gst}, {@code is_vat}, {@code jp_cn}, {@code jp_rn},
-         * {@code jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code li_uid}, {@code mx_rfc}, {@code
-         * my_frp}, {@code my_itn}, {@code my_sst}, {@code no_vat}, {@code nz_gst}, {@code ph_tin},
+         * <strong>Required.</strong> Type of the tax ID, one of {@code ad_nrt}, {@code ae_trn},
+         * {@code ar_cuit}, {@code au_abn}, {@code au_arn}, {@code bg_uic}, {@code bo_tin}, {@code
+         * br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code
+         * ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst}, {@code ch_vat}, {@code cl_tin}, {@code
+         * cn_tin}, {@code co_nit}, {@code cr_tin}, {@code do_rcn}, {@code ec_ruc}, {@code eg_tin},
+         * {@code es_cif}, {@code eu_oss_vat}, {@code eu_vat}, {@code gb_vat}, {@code ge_vat},
+         * {@code hk_br}, {@code hu_tin}, {@code id_npwp}, {@code il_vat}, {@code in_gst}, {@code
+         * is_vat}, {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code ke_pin}, {@code kr_brn},
+         * {@code li_uid}, {@code mx_rfc}, {@code my_frp}, {@code my_itn}, {@code my_sst}, {@code
+         * no_vat}, {@code nz_gst}, {@code pe_ruc}, {@code ph_tin}, {@code ro_tin}, {@code rs_pib},
          * {@code ru_inn}, {@code ru_kpp}, {@code sa_vat}, {@code sg_gst}, {@code sg_uen}, {@code
-         * si_tin}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code us_ein},
-         * or {@code za_vat}
+         * si_tin}, {@code sv_nit}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat},
+         * {@code us_ein}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, or {@code za_vat}
          */
         public Builder setType(InvoiceUpcomingLinesParams.CustomerDetails.TaxId.Type type) {
           this.type = type;
@@ -1628,8 +1648,14 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
       }
 
       public enum Type implements ApiRequestParams.EnumParam {
+        @SerializedName("ad_nrt")
+        AD_NRT("ad_nrt"),
+
         @SerializedName("ae_trn")
         AE_TRN("ae_trn"),
+
+        @SerializedName("ar_cuit")
+        AR_CUIT("ar_cuit"),
 
         @SerializedName("au_abn")
         AU_ABN("au_abn"),
@@ -1639,6 +1665,9 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
 
         @SerializedName("bg_uic")
         BG_UIC("bg_uic"),
+
+        @SerializedName("bo_tin")
+        BO_TIN("bo_tin"),
 
         @SerializedName("br_cnpj")
         BR_CNPJ("br_cnpj"),
@@ -1669,6 +1698,21 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
 
         @SerializedName("cl_tin")
         CL_TIN("cl_tin"),
+
+        @SerializedName("cn_tin")
+        CN_TIN("cn_tin"),
+
+        @SerializedName("co_nit")
+        CO_NIT("co_nit"),
+
+        @SerializedName("cr_tin")
+        CR_TIN("cr_tin"),
+
+        @SerializedName("do_rcn")
+        DO_RCN("do_rcn"),
+
+        @SerializedName("ec_ruc")
+        EC_RUC("ec_ruc"),
 
         @SerializedName("eg_tin")
         EG_TIN("eg_tin"),
@@ -1742,8 +1786,17 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
         @SerializedName("nz_gst")
         NZ_GST("nz_gst"),
 
+        @SerializedName("pe_ruc")
+        PE_RUC("pe_ruc"),
+
         @SerializedName("ph_tin")
         PH_TIN("ph_tin"),
+
+        @SerializedName("ro_tin")
+        RO_TIN("ro_tin"),
+
+        @SerializedName("rs_pib")
+        RS_PIB("rs_pib"),
 
         @SerializedName("ru_inn")
         RU_INN("ru_inn"),
@@ -1763,6 +1816,9 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
         @SerializedName("si_tin")
         SI_TIN("si_tin"),
 
+        @SerializedName("sv_nit")
+        SV_NIT("sv_nit"),
+
         @SerializedName("th_vat")
         TH_VAT("th_vat"),
 
@@ -1777,6 +1833,15 @@ public class InvoiceUpcomingLinesParams extends ApiRequestParams {
 
         @SerializedName("us_ein")
         US_EIN("us_ein"),
+
+        @SerializedName("uy_ruc")
+        UY_RUC("uy_ruc"),
+
+        @SerializedName("ve_rif")
+        VE_RIF("ve_rif"),
+
+        @SerializedName("vn_tin")
+        VN_TIN("vn_tin"),
 
         @SerializedName("za_vat")
         ZA_VAT("za_vat");

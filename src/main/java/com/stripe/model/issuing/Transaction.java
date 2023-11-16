@@ -2,16 +2,22 @@
 package com.stripe.model.issuing;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.BalanceTransactionSource;
 import com.stripe.model.ExpandableField;
 import com.stripe.model.MetadataStore;
 import com.stripe.model.StripeObject;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
+import com.stripe.param.issuing.TransactionCreateForceCaptureParams;
+import com.stripe.param.issuing.TransactionCreateUnlinkedRefundParams;
 import com.stripe.param.issuing.TransactionListParams;
+import com.stripe.param.issuing.TransactionRefundParams;
 import com.stripe.param.issuing.TransactionRetrieveParams;
 import com.stripe.param.issuing.TransactionUpdateParams;
 import java.math.BigDecimal;
@@ -26,8 +32,8 @@ import lombok.Setter;
  * entering or leaving your Stripe account, such as a completed purchase or refund, is represented
  * by an Issuing {@code Transaction} object.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/issuing/purchases/transactions">Issued Card
- * Transactions</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/issuing/purchases/transactions">Issued card
+ * transactions</a>
  */
 @Getter
 @Setter
@@ -129,6 +135,10 @@ public class Transaction extends ApiResource
   @SerializedName("metadata")
   Map<String, String> metadata;
 
+  /** Details about the transaction, such as processing dates, set by the card network. */
+  @SerializedName("network_data")
+  NetworkData networkData;
+
   /**
    * String representing the object's type. Objects of the same type share the same value.
    *
@@ -140,6 +150,15 @@ public class Transaction extends ApiResource
   /** Additional purchase information that is optionally provided by the merchant. */
   @SerializedName("purchase_details")
   PurchaseDetails purchaseDetails;
+
+  /**
+   * <a href="https://stripe.com/docs/api/issuing/tokens/object">Token</a> object used for this
+   * transaction. If a network token was not used for this transaction, this field will be null.
+   */
+  @SerializedName("token")
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  ExpandableField<Token> token;
 
   /**
    * <a href="https://stripe.com/docs/api/treasury">Treasury</a> details related to this transaction
@@ -255,6 +274,24 @@ public class Transaction extends ApiResource
     this.dispute = new ExpandableField<Dispute>(expandableObject.getId(), expandableObject);
   }
 
+  /** Get ID of expandable {@code token} object. */
+  public String getToken() {
+    return (this.token != null) ? this.token.getId() : null;
+  }
+
+  public void setToken(String id) {
+    this.token = ApiResource.setExpandableFieldId(id, this.token);
+  }
+
+  /** Get expanded {@code token}. */
+  public Token getTokenObject() {
+    return (this.token != null) ? this.token.getExpanded() : null;
+  }
+
+  public void setTokenObject(Token expandableObject) {
+    this.token = new ExpandableField<Token>(expandableObject.getId(), expandableObject);
+  }
+
   /**
    * Returns a list of Issuing {@code Transaction} objects. The objects are sorted in descending
    * order by creation date, with the most recently created object appearing first.
@@ -269,8 +306,16 @@ public class Transaction extends ApiResource
    */
   public static TransactionCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/issuing/transactions");
-    return ApiResource.requestCollection(url, params, TransactionCollection.class, options);
+    String path = "/v1/issuing/transactions";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            TransactionCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -287,8 +332,17 @@ public class Transaction extends ApiResource
    */
   public static TransactionCollection list(TransactionListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/issuing/transactions");
-    return ApiResource.requestCollection(url, params, TransactionCollection.class, options);
+    String path = "/v1/issuing/transactions";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            TransactionCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves an Issuing {@code Transaction} object. */
@@ -306,26 +360,35 @@ public class Transaction extends ApiResource
   public static Transaction retrieve(
       String transaction, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(transaction));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Transaction.class,
             options,
-            String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(transaction)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, Transaction.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves an Issuing {@code Transaction} object. */
   public static Transaction retrieve(
       String transaction, TransactionRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(transaction));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Transaction.class,
             options,
-            String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(transaction)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, Transaction.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -344,13 +407,17 @@ public class Transaction extends ApiResource
   @Override
   public Transaction update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Transaction.class,
             options,
-            String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Transaction.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -367,13 +434,18 @@ public class Transaction extends ApiResource
    */
   public Transaction update(TransactionUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Transaction.class,
             options,
-            String.format("/v1/issuing/transactions/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Transaction.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -383,6 +455,10 @@ public class Transaction extends ApiResource
     /** The fee charged by the ATM for the cash withdrawal. */
     @SerializedName("atm_fee")
     Long atmFee;
+
+    /** The amount of cash requested by the cardholder. */
+    @SerializedName("cashback_amount")
+    Long cashbackAmount;
   }
 
   @Getter
@@ -427,6 +503,27 @@ public class Transaction extends ApiResource
     /** State where the seller is located. */
     @SerializedName("state")
     String state;
+
+    /** An ID assigned by the seller to the location of the sale. */
+    @SerializedName("terminal_id")
+    String terminalId;
+
+    /** URL provided by the merchant on a 3DS request. */
+    @SerializedName("url")
+    String url;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class NetworkData extends StripeObject {
+    /**
+     * The date the transaction was processed by the card network. This can be different from the
+     * date the seller recorded the transaction depending on when the acquirer submits the
+     * transaction to the network.
+     */
+    @SerializedName("processing_date")
+    String processingDate;
   }
 
   @Getter
@@ -590,5 +687,179 @@ public class Transaction extends ApiResource
      */
     @SerializedName("received_debit")
     String receivedDebit;
+  }
+
+  public TestHelpers getTestHelpers() {
+    return new TestHelpers(this);
+  }
+
+  public static class TestHelpers {
+    private final Transaction resource;
+
+    private TestHelpers(Transaction resource) {
+      this.resource = resource;
+    }
+
+    /** Allows the user to capture an arbitrary amount, also known as a forced capture. */
+    public static Transaction createForceCapture(Map<String, Object> params)
+        throws StripeException {
+      return createForceCapture(params, (RequestOptions) null);
+    }
+
+    /** Allows the user to capture an arbitrary amount, also known as a forced capture. */
+    public static Transaction createForceCapture(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path = "/v1/test_helpers/issuing/transactions/create_force_capture";
+      return getGlobalResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Transaction.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Allows the user to capture an arbitrary amount, also known as a forced capture. */
+    public static Transaction createForceCapture(TransactionCreateForceCaptureParams params)
+        throws StripeException {
+      return createForceCapture(params, (RequestOptions) null);
+    }
+
+    /** Allows the user to capture an arbitrary amount, also known as a forced capture. */
+    public static Transaction createForceCapture(
+        TransactionCreateForceCaptureParams params, RequestOptions options) throws StripeException {
+      String path = "/v1/test_helpers/issuing/transactions/create_force_capture";
+      ApiResource.checkNullTypedParams(path, params);
+      return getGlobalResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Transaction.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Allows the user to refund an arbitrary amount, also known as a unlinked refund. */
+    public static Transaction createUnlinkedRefund(Map<String, Object> params)
+        throws StripeException {
+      return createUnlinkedRefund(params, (RequestOptions) null);
+    }
+
+    /** Allows the user to refund an arbitrary amount, also known as a unlinked refund. */
+    public static Transaction createUnlinkedRefund(
+        Map<String, Object> params, RequestOptions options) throws StripeException {
+      String path = "/v1/test_helpers/issuing/transactions/create_unlinked_refund";
+      return getGlobalResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Transaction.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Allows the user to refund an arbitrary amount, also known as a unlinked refund. */
+    public static Transaction createUnlinkedRefund(TransactionCreateUnlinkedRefundParams params)
+        throws StripeException {
+      return createUnlinkedRefund(params, (RequestOptions) null);
+    }
+
+    /** Allows the user to refund an arbitrary amount, also known as a unlinked refund. */
+    public static Transaction createUnlinkedRefund(
+        TransactionCreateUnlinkedRefundParams params, RequestOptions options)
+        throws StripeException {
+      String path = "/v1/test_helpers/issuing/transactions/create_unlinked_refund";
+      ApiResource.checkNullTypedParams(path, params);
+      return getGlobalResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Transaction.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Refund a test-mode Transaction. */
+    public Transaction refund() throws StripeException {
+      return refund((Map<String, Object>) null, (RequestOptions) null);
+    }
+
+    /** Refund a test-mode Transaction. */
+    public Transaction refund(RequestOptions options) throws StripeException {
+      return refund((Map<String, Object>) null, options);
+    }
+
+    /** Refund a test-mode Transaction. */
+    public Transaction refund(Map<String, Object> params) throws StripeException {
+      return refund(params, (RequestOptions) null);
+    }
+
+    /** Refund a test-mode Transaction. */
+    public Transaction refund(Map<String, Object> params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/transactions/%s/refund",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              params,
+              Transaction.class,
+              options,
+              ApiMode.V1);
+    }
+
+    /** Refund a test-mode Transaction. */
+    public Transaction refund(TransactionRefundParams params) throws StripeException {
+      return refund(params, (RequestOptions) null);
+    }
+
+    /** Refund a test-mode Transaction. */
+    public Transaction refund(TransactionRefundParams params, RequestOptions options)
+        throws StripeException {
+      String path =
+          String.format(
+              "/v1/test_helpers/issuing/transactions/%s/refund",
+              ApiResource.urlEncodeId(this.resource.getId()));
+      ApiResource.checkNullTypedParams(path, params);
+      return resource
+          .getResponseGetter()
+          .request(
+              BaseAddress.API,
+              ApiResource.RequestMethod.POST,
+              path,
+              ApiRequestParams.paramsToMap(params),
+              Transaction.class,
+              options,
+              ApiMode.V1);
+    }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(amountDetails, responseGetter);
+    trySetResponseGetter(authorization, responseGetter);
+    trySetResponseGetter(balanceTransaction, responseGetter);
+    trySetResponseGetter(card, responseGetter);
+    trySetResponseGetter(cardholder, responseGetter);
+    trySetResponseGetter(dispute, responseGetter);
+    trySetResponseGetter(merchantData, responseGetter);
+    trySetResponseGetter(networkData, responseGetter);
+    trySetResponseGetter(purchaseDetails, responseGetter);
+    trySetResponseGetter(token, responseGetter);
+    trySetResponseGetter(treasury, responseGetter);
   }
 }

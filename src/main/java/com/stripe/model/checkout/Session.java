@@ -2,7 +2,6 @@
 package com.stripe.model.checkout;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Address;
 import com.stripe.model.Customer;
@@ -20,8 +19,12 @@ import com.stripe.model.StripeObject;
 import com.stripe.model.Subscription;
 import com.stripe.model.TaxId;
 import com.stripe.model.TaxRate;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.checkout.SessionExpireParams;
 import com.stripe.param.checkout.SessionListLineItemsParams;
@@ -48,7 +51,7 @@ import lombok.Setter;
  *
  * <p>You can create a Checkout Session on your server and redirect to its URL to begin Checkout.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/checkout/quickstart">Checkout Quickstart</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/checkout/quickstart">Checkout quickstart</a>
  */
 @Getter
 @Setter
@@ -95,6 +98,10 @@ public class Session extends ApiResource implements HasId {
   @SerializedName("client_reference_id")
   String clientReferenceId;
 
+  /** Client secret to be used when initializing Stripe.js embedded checkout. */
+  @SerializedName("client_secret")
+  String clientSecret;
+
   /** Results of {@code consent_collection} for this session. */
   @SerializedName("consent")
   Consent consent;
@@ -132,9 +139,10 @@ public class Session extends ApiResource implements HasId {
   CustomText customText;
 
   /**
-   * The ID of the customer for this Session. For Checkout Sessions in {@code payment} or {@code
-   * subscription} mode, Checkout will create a new customer object based on information provided
-   * during the payment flow unless an existing customer was provided when the Session was created.
+   * The ID of the customer for this Session. For Checkout Sessions in {@code subscription} mode or
+   * Checkout Sessions with {@code customer_creation} set as {@code always} in {@code payment} mode,
+   * Checkout will create a new customer object based on information provided during the payment
+   * flow unless an existing customer was provided when the Session was created.
    */
   @SerializedName("customer")
   @Getter(lombok.AccessLevel.NONE)
@@ -254,6 +262,13 @@ public class Session extends ApiResource implements HasId {
   String paymentMethodCollection;
 
   /**
+   * Information about the payment method configuration used for this Checkout session if using
+   * dynamic payment methods.
+   */
+  @SerializedName("payment_method_configuration_details")
+  PaymentMethodConfigurationDetails paymentMethodConfigurationDetails;
+
+  /**
    * Payment-method-specific configuration for the PaymentIntent or SetupIntent of this
    * CheckoutSession.
    */
@@ -279,6 +294,24 @@ public class Session extends ApiResource implements HasId {
   /** The ID of the original expired Checkout Session that triggered the recovery flow. */
   @SerializedName("recovered_from")
   String recoveredFrom;
+
+  /**
+   * Applies to Checkout Sessions with {@code ui_mode: embedded}. By default, Stripe will always
+   * redirect to your return_url after a successful confirmation. If you set {@code
+   * redirect_on_completion: 'if_required'}, then we will only redirect if your user chooses a
+   * redirect-based payment method.
+   *
+   * <p>One of {@code always}, {@code if_required}, or {@code never}.
+   */
+  @SerializedName("redirect_on_completion")
+  String redirectOnCompletion;
+
+  /**
+   * Applies to Checkout Sessions with {@code ui_mode: embedded}. The URL to redirect your customer
+   * back to after they authenticate or cancel their payment on the payment method's app or site.
+   */
+  @SerializedName("return_url")
+  String returnUrl;
 
   /** The ID of the SetupIntent for Checkout Sessions in {@code setup} mode. */
   @SerializedName("setup_intent")
@@ -340,6 +373,10 @@ public class Session extends ApiResource implements HasId {
   /** Tax and discount details for the computed total amount. */
   @SerializedName("total_details")
   TotalDetails totalDetails;
+
+  /** The UI mode of the Session. Can be {@code hosted} (default) or {@code embedded}. */
+  @SerializedName("ui_mode")
+  String uiMode;
 
   /**
    * The URL to the Checkout Session. Redirect customers to this URL to take them to Checkout. If
@@ -468,8 +505,16 @@ public class Session extends ApiResource implements HasId {
   /** Creates a Session object. */
   public static Session create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/checkout/sessions");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Session.class, options);
+    String path = "/v1/checkout/sessions";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Session.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Creates a Session object. */
@@ -480,8 +525,17 @@ public class Session extends ApiResource implements HasId {
   /** Creates a Session object. */
   public static Session create(SessionCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/checkout/sessions");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Session.class, options);
+    String path = "/v1/checkout/sessions";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Session.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -521,13 +575,17 @@ public class Session extends ApiResource implements HasId {
    * a message saying the Session is expired.
    */
   public Session expire(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/checkout/sessions/%s/expire", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Session.class,
             options,
-            String.format(
-                "/v1/checkout/sessions/%s/expire", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Session.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -547,13 +605,18 @@ public class Session extends ApiResource implements HasId {
    * a message saying the Session is expired.
    */
   public Session expire(SessionExpireParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/checkout/sessions/%s/expire", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Session.class,
             options,
-            String.format(
-                "/v1/checkout/sessions/%s/expire", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Session.class, options);
+            ApiMode.V1);
   }
 
   /** Returns a list of Checkout Sessions. */
@@ -564,8 +627,16 @@ public class Session extends ApiResource implements HasId {
   /** Returns a list of Checkout Sessions. */
   public static SessionCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/checkout/sessions");
-    return ApiResource.requestCollection(url, params, SessionCollection.class, options);
+    String path = "/v1/checkout/sessions";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            SessionCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Returns a list of Checkout Sessions. */
@@ -576,8 +647,17 @@ public class Session extends ApiResource implements HasId {
   /** Returns a list of Checkout Sessions. */
   public static SessionCollection list(SessionListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/checkout/sessions");
-    return ApiResource.requestCollection(url, params, SessionCollection.class, options);
+    String path = "/v1/checkout/sessions";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SessionCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -605,13 +685,17 @@ public class Session extends ApiResource implements HasId {
    */
   public LineItemCollection listLineItems(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/checkout/sessions/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            LineItemCollection.class,
             options,
-            String.format(
-                "/v1/checkout/sessions/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -631,13 +715,18 @@ public class Session extends ApiResource implements HasId {
    */
   public LineItemCollection listLineItems(SessionListLineItemsParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/checkout/sessions/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            LineItemCollection.class,
             options,
-            String.format(
-                "/v1/checkout/sessions/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, LineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves a Session object. */
@@ -653,23 +742,32 @@ public class Session extends ApiResource implements HasId {
   /** Retrieves a Session object. */
   public static Session retrieve(String session, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/checkout/sessions/%s", ApiResource.urlEncodeId(session));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Session.class,
             options,
-            String.format("/v1/checkout/sessions/%s", ApiResource.urlEncodeId(session)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Session.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves a Session object. */
   public static Session retrieve(
       String session, SessionRetrieveParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/checkout/sessions/%s", ApiResource.urlEncodeId(session));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Session.class,
             options,
-            String.format("/v1/checkout/sessions/%s", ApiResource.urlEncodeId(session)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Session.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -802,7 +900,6 @@ public class Session extends ApiResource implements HasId {
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class CustomField extends StripeObject {
-    /** Configuration for {@code type=dropdown} fields. */
     @SerializedName("dropdown")
     Dropdown dropdown;
 
@@ -816,7 +913,6 @@ public class Session extends ApiResource implements HasId {
     @SerializedName("label")
     Label label;
 
-    /** Configuration for {@code type=numeric} fields. */
     @SerializedName("numeric")
     Numeric numeric;
 
@@ -827,7 +923,6 @@ public class Session extends ApiResource implements HasId {
     @SerializedName("optional")
     Boolean optional;
 
-    /** Configuration for {@code type=text} fields. */
     @SerializedName("text")
     Text text;
 
@@ -890,6 +985,14 @@ public class Session extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Numeric extends StripeObject {
+      /** The maximum character length constraint for the customer's input. */
+      @SerializedName("maximum_length")
+      Long maximumLength;
+
+      /** The minimum character length requirement for the customer's input. */
+      @SerializedName("minimum_length")
+      Long minimumLength;
+
       /** The value entered by the customer, containing only digits. */
       @SerializedName("value")
       String value;
@@ -899,6 +1002,14 @@ public class Session extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Text extends StripeObject {
+      /** The maximum character length constraint for the customer's input. */
+      @SerializedName("maximum_length")
+      Long maximumLength;
+
+      /** The minimum character length requirement for the customer's input. */
+      @SerializedName("minimum_length")
+      Long minimumLength;
+
       /** The value entered by the customer. */
       @SerializedName("value")
       String value;
@@ -917,11 +1028,17 @@ public class Session extends ApiResource implements HasId {
     @SerializedName("submit")
     Submit submit;
 
+    /**
+     * Custom text that should be displayed in place of the default terms of service agreement text.
+     */
+    @SerializedName("terms_of_service_acceptance")
+    TermsOfServiceAcceptance termsOfServiceAcceptance;
+
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class ShippingAddress extends StripeObject {
-      /** Text may be up to 1000 characters in length. */
+      /** Text may be up to 1200 characters in length. */
       @SerializedName("message")
       String message;
     }
@@ -930,7 +1047,16 @@ public class Session extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Submit extends StripeObject {
-      /** Text may be up to 1000 characters in length. */
+      /** Text may be up to 1200 characters in length. */
+      @SerializedName("message")
+      String message;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class TermsOfServiceAcceptance extends StripeObject {
+      /** Text may be up to 1200 characters in length. */
       @SerializedName("message")
       String message;
     }
@@ -984,17 +1110,19 @@ public class Session extends ApiResource implements HasId {
     @EqualsAndHashCode(callSuper = false)
     public static class TaxId extends StripeObject {
       /**
-       * The type of the tax ID, one of {@code eu_vat}, {@code br_cnpj}, {@code br_cpf}, {@code
-       * eu_oss_vat}, {@code gb_vat}, {@code nz_gst}, {@code au_abn}, {@code au_arn}, {@code
-       * in_gst}, {@code no_vat}, {@code za_vat}, {@code ch_vat}, {@code mx_rfc}, {@code sg_uen},
-       * {@code ru_inn}, {@code ru_kpp}, {@code ca_bn}, {@code hk_br}, {@code es_cif}, {@code
-       * tw_vat}, {@code th_vat}, {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code li_uid},
-       * {@code my_itn}, {@code us_ein}, {@code kr_brn}, {@code ca_qst}, {@code ca_gst_hst}, {@code
-       * ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code my_sst}, {@code sg_gst}, {@code
-       * ae_trn}, {@code cl_tin}, {@code sa_vat}, {@code id_npwp}, {@code my_frp}, {@code il_vat},
-       * {@code ge_vat}, {@code ua_vat}, {@code is_vat}, {@code bg_uic}, {@code hu_tin}, {@code
-       * si_tin}, {@code ke_pin}, {@code tr_tin}, {@code eg_tin}, {@code ph_tin}, or {@code
-       * unknown}.
+       * The type of the tax ID, one of {@code ad_nrt}, {@code ar_cuit}, {@code eu_vat}, {@code
+       * bo_tin}, {@code br_cnpj}, {@code br_cpf}, {@code cn_tin}, {@code co_nit}, {@code cr_tin},
+       * {@code do_rcn}, {@code ec_ruc}, {@code eu_oss_vat}, {@code pe_ruc}, {@code ro_tin}, {@code
+       * rs_pib}, {@code sv_nit}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, {@code gb_vat},
+       * {@code nz_gst}, {@code au_abn}, {@code au_arn}, {@code in_gst}, {@code no_vat}, {@code
+       * za_vat}, {@code ch_vat}, {@code mx_rfc}, {@code sg_uen}, {@code ru_inn}, {@code ru_kpp},
+       * {@code ca_bn}, {@code hk_br}, {@code es_cif}, {@code tw_vat}, {@code th_vat}, {@code
+       * jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code li_uid}, {@code my_itn}, {@code us_ein},
+       * {@code kr_brn}, {@code ca_qst}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb},
+       * {@code ca_pst_sk}, {@code my_sst}, {@code sg_gst}, {@code ae_trn}, {@code cl_tin}, {@code
+       * sa_vat}, {@code id_npwp}, {@code my_frp}, {@code il_vat}, {@code ge_vat}, {@code ua_vat},
+       * {@code is_vat}, {@code bg_uic}, {@code hu_tin}, {@code si_tin}, {@code ke_pin}, {@code
+       * tr_tin}, {@code eg_tin}, {@code ph_tin}, or {@code unknown}.
        */
       @SerializedName("type")
       String type;
@@ -1121,6 +1249,20 @@ public class Session extends ApiResource implements HasId {
   @Getter
   @Setter
   @EqualsAndHashCode(callSuper = false)
+  public static class PaymentMethodConfigurationDetails extends StripeObject implements HasId {
+    /** ID of the payment method configuration used. */
+    @Getter(onMethod_ = {@Override})
+    @SerializedName("id")
+    String id;
+
+    /** ID of the parent payment method configuration used. */
+    @SerializedName("parent")
+    String parent;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
   public static class PaymentMethodOptions extends StripeObject {
     @SerializedName("acss_debit")
     AcssDebit acssDebit;
@@ -1176,6 +1318,9 @@ public class Session extends ApiResource implements HasId {
     @SerializedName("konbini")
     Konbini konbini;
 
+    @SerializedName("link")
+    Link link;
+
     @SerializedName("oxxo")
     Oxxo oxxo;
 
@@ -1185,8 +1330,14 @@ public class Session extends ApiResource implements HasId {
     @SerializedName("paynow")
     Paynow paynow;
 
+    @SerializedName("paypal")
+    Paypal paypal;
+
     @SerializedName("pix")
     Pix pix;
+
+    @SerializedName("revolut_pay")
+    RevolutPay revolutPay;
 
     @SerializedName("sepa_debit")
     SepaDebit sepaDebit;
@@ -1601,10 +1752,10 @@ public class Session extends ApiResource implements HasId {
         /**
          * The bank transfer type that this PaymentIntent is allowed to use for funding Permitted
          * values include: {@code eu_bank_transfer}, {@code gb_bank_transfer}, {@code
-         * jp_bank_transfer}, or {@code mx_bank_transfer}.
+         * jp_bank_transfer}, {@code mx_bank_transfer}, or {@code us_bank_transfer}.
          *
          * <p>One of {@code eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer},
-         * or {@code mx_bank_transfer}.
+         * {@code mx_bank_transfer}, or {@code us_bank_transfer}.
          */
         @SerializedName("type")
         String type;
@@ -1812,6 +1963,31 @@ public class Session extends ApiResource implements HasId {
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
+    public static class Link extends StripeObject {
+      /**
+       * Indicates that you intend to make future payments with this PaymentIntent's payment method.
+       *
+       * <p>Providing this parameter will <a
+       * href="https://stripe.com/docs/payments/save-during-payment">attach the payment method</a>
+       * to the PaymentIntent's Customer, if present, after the PaymentIntent is confirmed and any
+       * required actions from the user are complete. If no Customer was provided, the payment
+       * method can still be <a
+       * href="https://stripe.com/docs/api/payment_methods/attach">attached</a> to a Customer after
+       * the transaction completes.
+       *
+       * <p>When processing card payments, Stripe also uses {@code setup_future_usage} to
+       * dynamically optimize your payment flow and comply with regional legislation and network
+       * rules, such as <a href="https://stripe.com/docs/strong-customer-authentication">SCA</a>.
+       *
+       * <p>One of {@code none}, or {@code off_session}.
+       */
+      @SerializedName("setup_future_usage")
+      String setupFutureUsage;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
     public static class Oxxo extends StripeObject {
       /**
        * The number of calendar days before an OXXO invoice expires. For example, if you create an
@@ -1895,11 +2071,61 @@ public class Session extends ApiResource implements HasId {
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
+    public static class Paypal extends StripeObject {
+      /**
+       * Controls when the funds will be captured from the customer's account.
+       *
+       * <p>Equal to {@code manual}.
+       */
+      @SerializedName("capture_method")
+      String captureMethod;
+
+      /** Preferred locale of the PayPal checkout page that the customer is redirected to. */
+      @SerializedName("preferred_locale")
+      String preferredLocale;
+
+      /**
+       * A reference of the PayPal transaction visible to customer which is mapped to PayPal's
+       * invoice ID. This must be a globally unique ID if you have configured in your PayPal
+       * settings to block multiple payments per invoice ID.
+       */
+      @SerializedName("reference")
+      String reference;
+
+      /**
+       * Indicates that you intend to make future payments with this PaymentIntent's payment method.
+       *
+       * <p>Providing this parameter will <a
+       * href="https://stripe.com/docs/payments/save-during-payment">attach the payment method</a>
+       * to the PaymentIntent's Customer, if present, after the PaymentIntent is confirmed and any
+       * required actions from the user are complete. If no Customer was provided, the payment
+       * method can still be <a
+       * href="https://stripe.com/docs/api/payment_methods/attach">attached</a> to a Customer after
+       * the transaction completes.
+       *
+       * <p>When processing card payments, Stripe also uses {@code setup_future_usage} to
+       * dynamically optimize your payment flow and comply with regional legislation and network
+       * rules, such as <a href="https://stripe.com/docs/strong-customer-authentication">SCA</a>.
+       *
+       * <p>One of {@code none}, or {@code off_session}.
+       */
+      @SerializedName("setup_future_usage")
+      String setupFutureUsage;
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
     public static class Pix extends StripeObject {
       /** The number of seconds after which Pix payment will expire. */
       @SerializedName("expires_after_seconds")
       Long expiresAfterSeconds;
     }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class RevolutPay extends StripeObject {}
 
     @Getter
     @Setter
@@ -1997,6 +2223,10 @@ public class Session extends ApiResource implements HasId {
         @SerializedName("permissions")
         List<String> permissions;
 
+        /** Data features requested to be retrieved upon account creation. */
+        @SerializedName("prefetch")
+        List<String> prefetch;
+
         /**
          * For webview integrations only. Upon completing OAuth login in the native browser, the
          * user will be redirected to this URL to return to your app.
@@ -2089,10 +2319,27 @@ public class Session extends ApiResource implements HasId {
        * href="https://stripe.com/docs/payments/checkout/set-up-a-subscription#tax-rates">Checkout
        * Sessions</a> to collect tax.
        *
-       * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax Rates</a>.
+       * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax rates</a>
        */
       @SerializedName("rate")
       TaxRate rate;
+
+      /**
+       * The reasoning behind this tax, for example, if the product is tax exempt. The possible
+       * values for this field may be extended as new tax rules are supported.
+       *
+       * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax},
+       * {@code not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated},
+       * {@code portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday},
+       * {@code proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code
+       * standard_rated}, {@code taxable_basis_reduced}, or {@code zero_rated}.
+       */
+      @SerializedName("taxability_reason")
+      String taxabilityReason;
+
+      /** The amount on which tax is calculated, in cents (or local equivalent). */
+      @SerializedName("taxable_amount")
+      Long taxableAmount;
     }
   }
 
@@ -2185,8 +2432,8 @@ public class Session extends ApiResource implements HasId {
          * information about when the discount began, when it will end, and what it is applied to.
          *
          * <p>Related guide: <a
-         * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying Discounts to
-         * Subscriptions</a>.
+         * href="https://stripe.com/docs/billing/subscriptions/discounts">Applying discounts to
+         * subscriptions</a>
          */
         @SerializedName("discount")
         Discount discount;
@@ -2207,12 +2454,56 @@ public class Session extends ApiResource implements HasId {
          * href="https://stripe.com/docs/payments/checkout/set-up-a-subscription#tax-rates">Checkout
          * Sessions</a> to collect tax.
          *
-         * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax
-         * Rates</a>.
+         * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax rates</a>
          */
         @SerializedName("rate")
         TaxRate rate;
+
+        /**
+         * The reasoning behind this tax, for example, if the product is tax exempt. The possible
+         * values for this field may be extended as new tax rules are supported.
+         *
+         * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax},
+         * {@code not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated},
+         * {@code portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday},
+         * {@code proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code
+         * standard_rated}, {@code taxable_basis_reduced}, or {@code zero_rated}.
+         */
+        @SerializedName("taxability_reason")
+        String taxabilityReason;
+
+        /** The amount on which tax is calculated, in cents (or local equivalent). */
+        @SerializedName("taxable_amount")
+        Long taxableAmount;
       }
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(afterExpiration, responseGetter);
+    trySetResponseGetter(automaticTax, responseGetter);
+    trySetResponseGetter(consent, responseGetter);
+    trySetResponseGetter(consentCollection, responseGetter);
+    trySetResponseGetter(currencyConversion, responseGetter);
+    trySetResponseGetter(customText, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(customerDetails, responseGetter);
+    trySetResponseGetter(invoice, responseGetter);
+    trySetResponseGetter(invoiceCreation, responseGetter);
+    trySetResponseGetter(lineItems, responseGetter);
+    trySetResponseGetter(paymentIntent, responseGetter);
+    trySetResponseGetter(paymentLink, responseGetter);
+    trySetResponseGetter(paymentMethodConfigurationDetails, responseGetter);
+    trySetResponseGetter(paymentMethodOptions, responseGetter);
+    trySetResponseGetter(phoneNumberCollection, responseGetter);
+    trySetResponseGetter(setupIntent, responseGetter);
+    trySetResponseGetter(shippingAddressCollection, responseGetter);
+    trySetResponseGetter(shippingCost, responseGetter);
+    trySetResponseGetter(shippingDetails, responseGetter);
+    trySetResponseGetter(subscription, responseGetter);
+    trySetResponseGetter(taxIdCollection, responseGetter);
+    trySetResponseGetter(totalDetails, responseGetter);
   }
 }

@@ -2,11 +2,14 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.testhelpers.TestClock;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.SubscriptionCancelParams;
 import com.stripe.param.SubscriptionCreateParams;
 import com.stripe.param.SubscriptionListParams;
@@ -25,7 +28,7 @@ import lombok.Setter;
  * Subscriptions allow you to charge a customer on a recurring basis.
  *
  * <p>Related guide: <a href="https://stripe.com/docs/billing/subscriptions/creating">Creating
- * Subscriptions</a>.
+ * subscriptions</a>
  */
 @Getter
 @Setter
@@ -39,7 +42,7 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
 
   /**
    * A non-negative decimal between 0 and 100, with at most two decimal places. This represents the
-   * percentage of the subscription invoice subtotal that will be transferred to the application
+   * percentage of the subscription invoice total that will be transferred to the application
    * owner's Stripe account.
    */
   @SerializedName("application_fee_percent")
@@ -171,7 +174,8 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
 
   /**
    * The subscription's description, meant to be displayable to the customer. Use this field to
-   * optionally store an explanation of the subscription for rendering in Stripe surfaces.
+   * optionally store an explanation of the subscription for rendering in Stripe surfaces and
+   * certain local payment methods UIs.
    */
   @SerializedName("description")
   String description;
@@ -306,9 +310,10 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    * <p>A subscription that is currently in a trial period is {@code trialing} and moves to {@code
    * active} when the trial period is over.
    *
-   * <p>If subscription {@code collection_method=charge_automatically} it becomes {@code past_due}
-   * when payment to renew it fails and {@code canceled} or {@code unpaid} (depending on your
-   * subscriptions settings) when Stripe has exhausted all payment retry attempts.
+   * <p>If subscription {@code collection_method=charge_automatically}, it becomes {@code past_due}
+   * when payment is required but cannot be paid (due to failed payment or awaiting additional user
+   * actions). Once Stripe has exhausted all payment retry attempts, the subscription will become
+   * {@code canceled} or {@code unpaid} (depending on your subscriptions settings).
    *
    * <p>If subscription {@code collection_method=send_invoice} it becomes {@code past_due} when its
    * invoice is not paid by the due date, and {@code canceled} or {@code unpaid} if it is still not
@@ -575,13 +580,16 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public Subscription cancel(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -624,13 +632,17 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public Subscription cancel(SubscriptionCancelParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -667,9 +679,16 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public static Subscription create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/subscriptions");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Subscription.class, options);
+    String path = "/v1/subscriptions";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Subscription.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -706,9 +725,17 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public static Subscription create(SubscriptionCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/subscriptions");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Subscription.class, options);
+    String path = "/v1/subscriptions";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Subscription.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Removes the currently applied discount on a subscription. */
@@ -724,13 +751,17 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
   /** Removes the currently applied discount on a subscription. */
   public Discount deleteDiscount(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/subscriptions/%s/discount", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            Discount.class,
             options,
-            String.format("/v1/subscriptions/%s/discount", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Discount.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -747,8 +778,16 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public static SubscriptionCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/subscriptions");
-    return ApiResource.requestCollection(url, params, SubscriptionCollection.class, options);
+    String path = "/v1/subscriptions";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            SubscriptionCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -765,8 +804,17 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public static SubscriptionCollection list(SubscriptionListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/subscriptions");
-    return ApiResource.requestCollection(url, params, SubscriptionCollection.class, options);
+    String path = "/v1/subscriptions";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SubscriptionCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -811,13 +859,17 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public Subscription resume(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/subscriptions/%s/resume", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s/resume", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -840,13 +892,18 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public Subscription resume(SubscriptionResumeParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/subscriptions/%s/resume", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s/resume", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the subscription with the given ID. */
@@ -864,26 +921,35 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
   public static Subscription retrieve(
       String subscriptionExposedId, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(subscriptionExposedId));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(subscriptionExposedId)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the subscription with the given ID. */
   public static Subscription retrieve(
       String subscriptionExposedId, SubscriptionRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(subscriptionExposedId));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(subscriptionExposedId)));
-    return ApiResource.request(
-        ApiResource.RequestMethod.GET, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -908,8 +974,16 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public static SubscriptionSearchResult search(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/subscriptions/search");
-    return ApiResource.requestSearchResult(url, params, SubscriptionSearchResult.class, options);
+    String path = "/v1/subscriptions/search";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            SubscriptionSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -935,15 +1009,64 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
    */
   public static SubscriptionSearchResult search(
       SubscriptionSearchParams params, RequestOptions options) throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/subscriptions/search");
-    return ApiResource.requestSearchResult(url, params, SubscriptionSearchResult.class, options);
+    String path = "/v1/subscriptions/search";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SubscriptionSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
-   * Updates an existing subscription on a customer to match the specified parameters. When changing
-   * plans or quantities, we will optionally prorate the price we charge next month to make up for
-   * any price changes. To preview how the proration will be calculated, use the <a
-   * href="https://stripe.com/docs/api#upcoming_invoice">upcoming invoice</a> endpoint.
+   * Updates an existing subscription to match the specified parameters. When changing prices or
+   * quantities, we optionally prorate the price we charge next month to make up for any price
+   * changes. To preview how the proration is calculated, use the <a
+   * href="https://stripe.com/docs/api/invoices/upcoming">upcoming invoice</a> endpoint.
+   *
+   * <p>By default, we prorate subscription changes. For example, if a customer signs up on May 1
+   * for a 100 price, they’ll be billed 100 immediately. If on May 15 they switch to a 200 price,
+   * then on June 1 they’ll be billed 250 (200 for a renewal of her subscription, plus a 50
+   * prorating adjustment for half of the previous month’s 100 difference). Similarly, a downgrade
+   * generates a credit that is applied to the next invoice. We also prorate when you make quantity
+   * changes.
+   *
+   * <p>Switching prices does not normally change the billing date or generate an immediate charge
+   * unless:
+   *
+   * <p>
+   *
+   * <ul>
+   *   <li>The billing interval is changed (for example, from monthly to yearly).
+   *   <li>The subscription moves from free to paid, or paid to free.
+   *   <li>A trial starts or ends.
+   * </ul>
+   *
+   * <p>In these cases, we apply a credit for the unused time on the previous price, immediately
+   * charge the customer using the new price, and reset the billing date.
+   *
+   * <p>If you want to charge for an upgrade immediately, pass {@code proration_behavior} as {@code
+   * always_invoice} to create prorations, automatically invoice the customer for those proration
+   * adjustments, and attempt to collect payment. If you pass {@code create_prorations}, the
+   * prorations are created but not automatically invoiced. If you want to bill the customer for the
+   * prorations before the subscription’s renewal date, you need to manually <a
+   * href="https://stripe.com/docs/api/invoices/create">invoice the customer</a>.
+   *
+   * <p>If you don’t want to prorate, set the {@code proration_behavior} option to {@code none}.
+   * With this option, the customer is billed 100 on May 1 and 200 on June 1. Similarly, if you set
+   * {@code proration_behavior} to {@code none} when switching between different billing intervals
+   * (for example, from monthly to yearly), we don’t generate any credits for the old subscription’s
+   * unused time. We still reset the billing date and bill immediately for the new subscription.
+   *
+   * <p>Updating the quantity on a subscription many times in an hour may result in <a
+   * href="https://stripe.com/docs/rate-limits">rate limiting</a>. If you need to bill for a
+   * frequently changing quantity, consider integrating <a
+   * href="https://stripe.com/docs/billing/subscriptions/usage-based">usage-based billing</a>
+   * instead.
    */
   @Override
   public Subscription update(Map<String, Object> params) throws StripeException {
@@ -951,48 +1074,175 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
   }
 
   /**
-   * Updates an existing subscription on a customer to match the specified parameters. When changing
-   * plans or quantities, we will optionally prorate the price we charge next month to make up for
-   * any price changes. To preview how the proration will be calculated, use the <a
-   * href="https://stripe.com/docs/api#upcoming_invoice">upcoming invoice</a> endpoint.
+   * Updates an existing subscription to match the specified parameters. When changing prices or
+   * quantities, we optionally prorate the price we charge next month to make up for any price
+   * changes. To preview how the proration is calculated, use the <a
+   * href="https://stripe.com/docs/api/invoices/upcoming">upcoming invoice</a> endpoint.
+   *
+   * <p>By default, we prorate subscription changes. For example, if a customer signs up on May 1
+   * for a 100 price, they’ll be billed 100 immediately. If on May 15 they switch to a 200 price,
+   * then on June 1 they’ll be billed 250 (200 for a renewal of her subscription, plus a 50
+   * prorating adjustment for half of the previous month’s 100 difference). Similarly, a downgrade
+   * generates a credit that is applied to the next invoice. We also prorate when you make quantity
+   * changes.
+   *
+   * <p>Switching prices does not normally change the billing date or generate an immediate charge
+   * unless:
+   *
+   * <p>
+   *
+   * <ul>
+   *   <li>The billing interval is changed (for example, from monthly to yearly).
+   *   <li>The subscription moves from free to paid, or paid to free.
+   *   <li>A trial starts or ends.
+   * </ul>
+   *
+   * <p>In these cases, we apply a credit for the unused time on the previous price, immediately
+   * charge the customer using the new price, and reset the billing date.
+   *
+   * <p>If you want to charge for an upgrade immediately, pass {@code proration_behavior} as {@code
+   * always_invoice} to create prorations, automatically invoice the customer for those proration
+   * adjustments, and attempt to collect payment. If you pass {@code create_prorations}, the
+   * prorations are created but not automatically invoiced. If you want to bill the customer for the
+   * prorations before the subscription’s renewal date, you need to manually <a
+   * href="https://stripe.com/docs/api/invoices/create">invoice the customer</a>.
+   *
+   * <p>If you don’t want to prorate, set the {@code proration_behavior} option to {@code none}.
+   * With this option, the customer is billed 100 on May 1 and 200 on June 1. Similarly, if you set
+   * {@code proration_behavior} to {@code none} when switching between different billing intervals
+   * (for example, from monthly to yearly), we don’t generate any credits for the old subscription’s
+   * unused time. We still reset the billing date and bill immediately for the new subscription.
+   *
+   * <p>Updating the quantity on a subscription many times in an hour may result in <a
+   * href="https://stripe.com/docs/rate-limits">rate limiting</a>. If you need to bill for a
+   * frequently changing quantity, consider integrating <a
+   * href="https://stripe.com/docs/billing/subscriptions/usage-based">usage-based billing</a>
+   * instead.
    */
   @Override
   public Subscription update(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   /**
-   * Updates an existing subscription on a customer to match the specified parameters. When changing
-   * plans or quantities, we will optionally prorate the price we charge next month to make up for
-   * any price changes. To preview how the proration will be calculated, use the <a
-   * href="https://stripe.com/docs/api#upcoming_invoice">upcoming invoice</a> endpoint.
+   * Updates an existing subscription to match the specified parameters. When changing prices or
+   * quantities, we optionally prorate the price we charge next month to make up for any price
+   * changes. To preview how the proration is calculated, use the <a
+   * href="https://stripe.com/docs/api/invoices/upcoming">upcoming invoice</a> endpoint.
+   *
+   * <p>By default, we prorate subscription changes. For example, if a customer signs up on May 1
+   * for a 100 price, they’ll be billed 100 immediately. If on May 15 they switch to a 200 price,
+   * then on June 1 they’ll be billed 250 (200 for a renewal of her subscription, plus a 50
+   * prorating adjustment for half of the previous month’s 100 difference). Similarly, a downgrade
+   * generates a credit that is applied to the next invoice. We also prorate when you make quantity
+   * changes.
+   *
+   * <p>Switching prices does not normally change the billing date or generate an immediate charge
+   * unless:
+   *
+   * <p>
+   *
+   * <ul>
+   *   <li>The billing interval is changed (for example, from monthly to yearly).
+   *   <li>The subscription moves from free to paid, or paid to free.
+   *   <li>A trial starts or ends.
+   * </ul>
+   *
+   * <p>In these cases, we apply a credit for the unused time on the previous price, immediately
+   * charge the customer using the new price, and reset the billing date.
+   *
+   * <p>If you want to charge for an upgrade immediately, pass {@code proration_behavior} as {@code
+   * always_invoice} to create prorations, automatically invoice the customer for those proration
+   * adjustments, and attempt to collect payment. If you pass {@code create_prorations}, the
+   * prorations are created but not automatically invoiced. If you want to bill the customer for the
+   * prorations before the subscription’s renewal date, you need to manually <a
+   * href="https://stripe.com/docs/api/invoices/create">invoice the customer</a>.
+   *
+   * <p>If you don’t want to prorate, set the {@code proration_behavior} option to {@code none}.
+   * With this option, the customer is billed 100 on May 1 and 200 on June 1. Similarly, if you set
+   * {@code proration_behavior} to {@code none} when switching between different billing intervals
+   * (for example, from monthly to yearly), we don’t generate any credits for the old subscription’s
+   * unused time. We still reset the billing date and bill immediately for the new subscription.
+   *
+   * <p>Updating the quantity on a subscription many times in an hour may result in <a
+   * href="https://stripe.com/docs/rate-limits">rate limiting</a>. If you need to bill for a
+   * frequently changing quantity, consider integrating <a
+   * href="https://stripe.com/docs/billing/subscriptions/usage-based">usage-based billing</a>
+   * instead.
    */
   public Subscription update(SubscriptionUpdateParams params) throws StripeException {
     return update(params, (RequestOptions) null);
   }
 
   /**
-   * Updates an existing subscription on a customer to match the specified parameters. When changing
-   * plans or quantities, we will optionally prorate the price we charge next month to make up for
-   * any price changes. To preview how the proration will be calculated, use the <a
-   * href="https://stripe.com/docs/api#upcoming_invoice">upcoming invoice</a> endpoint.
+   * Updates an existing subscription to match the specified parameters. When changing prices or
+   * quantities, we optionally prorate the price we charge next month to make up for any price
+   * changes. To preview how the proration is calculated, use the <a
+   * href="https://stripe.com/docs/api/invoices/upcoming">upcoming invoice</a> endpoint.
+   *
+   * <p>By default, we prorate subscription changes. For example, if a customer signs up on May 1
+   * for a 100 price, they’ll be billed 100 immediately. If on May 15 they switch to a 200 price,
+   * then on June 1 they’ll be billed 250 (200 for a renewal of her subscription, plus a 50
+   * prorating adjustment for half of the previous month’s 100 difference). Similarly, a downgrade
+   * generates a credit that is applied to the next invoice. We also prorate when you make quantity
+   * changes.
+   *
+   * <p>Switching prices does not normally change the billing date or generate an immediate charge
+   * unless:
+   *
+   * <p>
+   *
+   * <ul>
+   *   <li>The billing interval is changed (for example, from monthly to yearly).
+   *   <li>The subscription moves from free to paid, or paid to free.
+   *   <li>A trial starts or ends.
+   * </ul>
+   *
+   * <p>In these cases, we apply a credit for the unused time on the previous price, immediately
+   * charge the customer using the new price, and reset the billing date.
+   *
+   * <p>If you want to charge for an upgrade immediately, pass {@code proration_behavior} as {@code
+   * always_invoice} to create prorations, automatically invoice the customer for those proration
+   * adjustments, and attempt to collect payment. If you pass {@code create_prorations}, the
+   * prorations are created but not automatically invoiced. If you want to bill the customer for the
+   * prorations before the subscription’s renewal date, you need to manually <a
+   * href="https://stripe.com/docs/api/invoices/create">invoice the customer</a>.
+   *
+   * <p>If you don’t want to prorate, set the {@code proration_behavior} option to {@code none}.
+   * With this option, the customer is billed 100 on May 1 and 200 on June 1. Similarly, if you set
+   * {@code proration_behavior} to {@code none} when switching between different billing intervals
+   * (for example, from monthly to yearly), we don’t generate any credits for the old subscription’s
+   * unused time. We still reset the billing date and bill immediately for the new subscription.
+   *
+   * <p>Updating the quantity on a subscription many times in an hour may result in <a
+   * href="https://stripe.com/docs/rate-limits">rate limiting</a>. If you need to bill for a
+   * frequently changing quantity, consider integrating <a
+   * href="https://stripe.com/docs/billing/subscriptions/usage-based">usage-based billing</a>
+   * instead.
    */
   public Subscription update(SubscriptionUpdateParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Subscription.class,
             options,
-            String.format("/v1/subscriptions/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Subscription.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -1028,13 +1278,13 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
   public static class CancellationDetails extends StripeObject {
     /**
      * Additional comments about why the user canceled the subscription, if the subscription was
-     * cancelled explicitly by the user.
+     * canceled explicitly by the user.
      */
     @SerializedName("comment")
     String comment;
 
     /**
-     * The customer submitted reason for why they cancelled, if the subscription was cancelled
+     * The customer submitted reason for why they canceled, if the subscription was canceled
      * explicitly by the user.
      *
      * <p>One of {@code customer_service}, {@code low_quality}, {@code missing_features}, {@code
@@ -1045,7 +1295,7 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
     String feedback;
 
     /**
-     * Why this subscription was cancelled.
+     * Why this subscription was canceled.
      *
      * <p>One of {@code cancellation_requested}, {@code payment_disputed}, or {@code
      * payment_failed}.
@@ -1269,8 +1519,8 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
 
           /**
            * The bank transfer type that can be used for funding. Permitted values include: {@code
-           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-           * mx_bank_transfer}.
+           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+           * mx_bank_transfer}, or {@code us_bank_transfer}.
            */
           @SerializedName("type")
           String type;
@@ -1321,6 +1571,10 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
            */
           @SerializedName("permissions")
           List<String> permissions;
+
+          /** Data features requested to be retrieved upon account creation. */
+          @SerializedName("prefetch")
+          List<String> prefetch;
         }
       }
     }
@@ -1402,8 +1656,8 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
   public static class TransferData extends StripeObject {
     /**
      * A non-negative decimal between 0 and 100, with at most two decimal places. This represents
-     * the percentage of the subscription invoice subtotal that will be transferred to the
-     * destination account. By default, the entire amount is transferred to the destination.
+     * the percentage of the subscription invoice total that will be transferred to the destination
+     * account. By default, the entire amount is transferred to the destination.
      */
     @SerializedName("amount_percent")
     BigDecimal amountPercent;
@@ -1456,5 +1710,30 @@ public class Subscription extends ApiResource implements HasId, MetadataStore<Su
       @SerializedName("missing_payment_method")
       String missingPaymentMethod;
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(automaticTax, responseGetter);
+    trySetResponseGetter(billingThresholds, responseGetter);
+    trySetResponseGetter(cancellationDetails, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(defaultPaymentMethod, responseGetter);
+    trySetResponseGetter(defaultSource, responseGetter);
+    trySetResponseGetter(discount, responseGetter);
+    trySetResponseGetter(items, responseGetter);
+    trySetResponseGetter(latestInvoice, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(pauseCollection, responseGetter);
+    trySetResponseGetter(paymentSettings, responseGetter);
+    trySetResponseGetter(pendingInvoiceItemInterval, responseGetter);
+    trySetResponseGetter(pendingSetupIntent, responseGetter);
+    trySetResponseGetter(pendingUpdate, responseGetter);
+    trySetResponseGetter(schedule, responseGetter);
+    trySetResponseGetter(testClock, responseGetter);
+    trySetResponseGetter(transferData, responseGetter);
+    trySetResponseGetter(trialSettings, responseGetter);
   }
 }

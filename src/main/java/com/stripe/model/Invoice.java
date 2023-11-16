@@ -2,11 +2,14 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.testhelpers.TestClock;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.InvoiceCreateParams;
 import com.stripe.param.InvoiceFinalizeInvoiceParams;
 import com.stripe.param.InvoiceListParams;
@@ -35,11 +38,11 @@ import lombok.Setter;
  *
  * <p>If your invoice is configured to be billed through automatic charges, Stripe automatically
  * finalizes your invoice and attempts payment. Note that finalizing the invoice, <a
- * href="https://stripe.com/docs/billing/invoices/workflow/#auto_advance">when automatic</a>, does
- * not happen immediately as the invoice is created. Stripe waits until one hour after the last
- * webhook was successfully sent (or the last webhook timed out after failing). If you (and the
- * platforms you may have connected to) have no webhooks configured, Stripe waits one hour after
- * creation to finalize the invoice.
+ * href="https://stripe.com/docs/invoicing/integration/automatic-advancement-collection">when
+ * automatic</a>, does not happen immediately as the invoice is created. Stripe waits until one hour
+ * after the last webhook was successfully sent (or the last webhook timed out after failing). If
+ * you (and the platforms you may have connected to) have no webhooks configured, Stripe waits one
+ * hour after creation to finalize the invoice.
  *
  * <p>If your invoice is configured to be billed by sending an email, then based on your <a
  * href="https://dashboard.stripe.com/account/billing/automatic">email settings</a>, Stripe will
@@ -56,8 +59,8 @@ import lombok.Setter;
  * <p>More details on the customer's credit balance are <a
  * href="https://stripe.com/docs/billing/customer/balance">here</a>.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/billing/invoices/sending">Send Invoices to
- * Customers</a>.
+ * <p>Related guide: <a href="https://stripe.com/docs/billing/invoices/sending">Send invoices to
+ * customers</a>
  */
 @Getter
 @Setter
@@ -92,11 +95,11 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @SerializedName("amount_due")
   Long amountDue;
 
-  /** The amount, in %s, that was paid. */
+  /** The amount, in cents (or local equivalent), that was paid. */
   @SerializedName("amount_paid")
   Long amountPaid;
 
-  /** The difference between amount_due and amount_paid, in %s. */
+  /** The difference between amount_due and amount_paid, in cents (or local equivalent). */
   @SerializedName("amount_remaining")
   Long amountRemaining;
 
@@ -111,8 +114,8 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   ExpandableField<Application> application;
 
   /**
-   * The fee in %s that will be applied to the invoice and transferred to the application owner's
-   * Stripe account when the invoice is paid.
+   * The fee in cents (or local equivalent) that will be applied to the invoice and transferred to
+   * the application owner's Stripe account when the invoice is paid.
    */
   @SerializedName("application_fee_amount")
   Long applicationFeeAmount;
@@ -135,10 +138,10 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   Boolean attempted;
 
   /**
-   * Controls whether Stripe will perform <a
-   * href="https://stripe.com/docs/billing/invoices/workflow/#auto_advance">automatic collection</a>
-   * of the invoice. When {@code false}, the invoice's state will not automatically advance without
-   * an explicit action.
+   * Controls whether Stripe performs <a
+   * href="https://stripe.com/docs/invoicing/integration/automatic-advancement-collection">automatic
+   * collection</a> of the invoice. If {@code false}, the invoice's state doesn't automatically
+   * advance without an explicit action.
    */
   @SerializedName("auto_advance")
   Boolean autoAdvance;
@@ -147,15 +150,15 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   AutomaticTax automaticTax;
 
   /**
-   * Indicates the reason why the invoice was created. {@code subscription_cycle} indicates an
-   * invoice created by a subscription advancing into a new period. {@code subscription_create}
-   * indicates an invoice created due to creating a subscription. {@code subscription_update}
-   * indicates an invoice created due to updating a subscription. {@code subscription} is set for
-   * all old invoices to indicate either a change to a subscription or a period advancement. {@code
-   * manual} is set for all invoices unrelated to a subscription (for example: created via the
-   * invoice editor). The {@code upcoming} value is reserved for simulated invoices per the upcoming
-   * invoice endpoint. {@code subscription_threshold} indicates an invoice created due to a billing
-   * threshold being reached.
+   * Indicates the reason why the invoice was created.
+   *
+   * <p>* {@code manual}: Unrelated to a subscription, for example, created via the invoice editor.
+   * * {@code subscription}: No longer in use. Applies to subscriptions from before May 2018 where
+   * no distinction was made between updates, cycles, and thresholds. * {@code subscription_create}:
+   * A new subscription was created. * {@code subscription_cycle}: A subscription advanced into a
+   * new period. * {@code subscription_threshold}: A subscription reached a billing threshold. *
+   * {@code subscription_update}: A subscription was updated. * {@code upcoming}: Reserved for
+   * simulated invoices, per the upcoming invoice endpoint.
    *
    * <p>One of {@code automatic_pending_invoice_item_invoice}, {@code manual}, {@code quote_accept},
    * {@code subscription}, {@code subscription_create}, {@code subscription_cycle}, {@code
@@ -308,6 +311,14 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   @SerializedName("due_date")
   Long dueDate;
+
+  /**
+   * The date when this invoice is in effect. Same as {@code finalized_at} unless overwritten. When
+   * defined, this value replaces the system-generated 'Date of issue' printed on the invoice PDF
+   * and receipt.
+   */
+  @SerializedName("effective_at")
+  Long effectiveAt;
 
   /**
    * Ending customer balance after the invoice is finalized. Invoices are finalized approximately an
@@ -476,7 +487,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @SerializedName("receipt_number")
   String receiptNumber;
 
-  /** Options for invoice PDF rendering. */
+  /**
+   * The rendering-related settings that control how the invoice is displayed on customer-facing
+   * surfaces such as PDF and Hosted Invoice Page.
+   */
+  @SerializedName("rendering")
+  Rendering rendering;
+
+  /**
+   * This is a legacy field that will be removed soon. For details about {@code rendering_options},
+   * refer to {@code rendering} instead. Options for invoice PDF rendering.
+   */
   @SerializedName("rendering_options")
   RenderingOptions renderingOptions;
 
@@ -520,6 +541,10 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @Setter(lombok.AccessLevel.NONE)
   ExpandableField<Subscription> subscription;
 
+  /** Details about the subscription that created this invoice. */
+  @SerializedName("subscription_details")
+  SubscriptionDetails subscriptionDetails;
+
   /**
    * Only set for upcoming invoices that preview prorations. The time used to calculate prorations.
    */
@@ -534,8 +559,8 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   Long subtotal;
 
   /**
-   * The integer amount in %s representing the subtotal of the invoice before any invoice level
-   * discount or tax is applied. Item discounts are already incorporated
+   * The integer amount in cents (or local equivalent) representing the subtotal of the invoice
+   * before any invoice level discount or tax is applied. Item discounts are already incorporated
    */
   @SerializedName("subtotal_excluding_tax")
   Long subtotalExcludingTax;
@@ -562,8 +587,8 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   List<Invoice.TotalDiscountAmount> totalDiscountAmounts;
 
   /**
-   * The integer amount in %s representing the total amount of the invoice including all discounts
-   * but excluding all tax.
+   * The integer amount in cents (or local equivalent) representing the total amount of the invoice
+   * including all discounts but excluding all tax.
    */
   @SerializedName("total_excluding_tax")
   Long totalExcludingTax;
@@ -894,8 +919,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static Invoice create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+    String path = "/v1/invoices";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -916,8 +949,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static Invoice create(InvoiceCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices");
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+    String path = "/v1/invoices";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -957,13 +999,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    * href="https://stripe.com/docs/api#void_invoice">voided</a>.
    */
   public Invoice delete(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(
-        ApiResource.RequestMethod.DELETE, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -996,12 +1041,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice finalizeInvoice(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/finalize", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/finalize", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1018,12 +1067,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice finalizeInvoice(InvoiceFinalizeInvoiceParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/finalize", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/finalize", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1040,8 +1094,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static InvoiceCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices");
-    return ApiResource.requestCollection(url, params, InvoiceCollection.class, options);
+    String path = "/v1/invoices";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            InvoiceCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1058,8 +1120,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static InvoiceCollection list(InvoiceListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices");
-    return ApiResource.requestCollection(url, params, InvoiceCollection.class, options);
+    String path = "/v1/invoices";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            InvoiceCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1092,13 +1163,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice markUncollectible(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/invoices/%s/mark_uncollectible", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format(
-                "/v1/invoices/%s/mark_uncollectible", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1115,13 +1190,18 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice markUncollectible(InvoiceMarkUncollectibleParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/invoices/%s/mark_uncollectible", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format(
-                "/v1/invoices/%s/mark_uncollectible", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1165,12 +1245,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    * or for some other reason, you can do so.
    */
   public Invoice pay(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/pay", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/pay", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1192,12 +1276,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    * or for some other reason, you can do so.
    */
   public Invoice pay(InvoicePayParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/pay", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/pay", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the invoice with the given ID. */
@@ -1213,23 +1302,32 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   /** Retrieves the invoice with the given ID. */
   public static Invoice retrieve(String invoice, Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s", ApiResource.urlEncodeId(invoice));
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s", ApiResource.urlEncodeId(invoice)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the invoice with the given ID. */
   public static Invoice retrieve(
       String invoice, InvoiceRetrieveParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s", ApiResource.urlEncodeId(invoice));
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s", ApiResource.urlEncodeId(invoice)));
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1254,8 +1352,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static InvoiceSearchResult search(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices/search");
-    return ApiResource.requestSearchResult(url, params, InvoiceSearchResult.class, options);
+    String path = "/v1/invoices/search";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            InvoiceSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1280,8 +1386,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static InvoiceSearchResult search(InvoiceSearchParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices/search");
-    return ApiResource.requestSearchResult(url, params, InvoiceSearchResult.class, options);
+    String path = "/v1/invoices/search";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            InvoiceSearchResult.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1338,12 +1453,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice sendInvoice(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/send", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/send", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1372,12 +1491,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice sendInvoice(InvoiceSendInvoiceParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/send", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/send", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1450,8 +1574,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static Invoice upcoming(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices/upcoming");
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Invoice.class, options);
+    String path = "/v1/invoices/upcoming";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Invoice.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1500,8 +1632,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static Invoice upcoming(InvoiceUpcomingParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices/upcoming");
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Invoice.class, options);
+    String path = "/v1/invoices/upcoming";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1530,8 +1671,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static InvoiceLineItemCollection upcomingLines(
       Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices/upcoming/lines");
-    return ApiResource.requestCollection(url, params, InvoiceLineItemCollection.class, options);
+    String path = "/v1/invoices/upcoming/lines";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            InvoiceLineItemCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1551,8 +1700,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public static InvoiceLineItemCollection upcomingLines(
       InvoiceUpcomingLinesParams params, RequestOptions options) throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/invoices/upcoming/lines");
-    return ApiResource.requestCollection(url, params, InvoiceLineItemCollection.class, options);
+    String path = "/v1/invoices/upcoming/lines";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            InvoiceLineItemCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -1582,12 +1740,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   @Override
   public Invoice update(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1615,12 +1777,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    * invoices, pass {@code auto_advance=false}.
    */
   public Invoice update(InvoiceUpdateParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1657,12 +1824,16 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice voidInvoice(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/void", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/void", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   /**
@@ -1681,12 +1852,17 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
    */
   public Invoice voidInvoice(InvoiceVoidInvoiceParams params, RequestOptions options)
       throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path = String.format("/v1/invoices/%s/void", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Invoice.class,
             options,
-            String.format("/v1/invoices/%s/void", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.POST, url, params, Invoice.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -1729,16 +1905,19 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @EqualsAndHashCode(callSuper = false)
   public static class CustomerTaxId extends StripeObject {
     /**
-     * The type of the tax ID, one of {@code eu_vat}, {@code br_cnpj}, {@code br_cpf}, {@code
-     * eu_oss_vat}, {@code gb_vat}, {@code nz_gst}, {@code au_abn}, {@code au_arn}, {@code in_gst},
-     * {@code no_vat}, {@code za_vat}, {@code ch_vat}, {@code mx_rfc}, {@code sg_uen}, {@code
-     * ru_inn}, {@code ru_kpp}, {@code ca_bn}, {@code hk_br}, {@code es_cif}, {@code tw_vat}, {@code
-     * th_vat}, {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code li_uid}, {@code my_itn}, {@code
-     * us_ein}, {@code kr_brn}, {@code ca_qst}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code
-     * ca_pst_mb}, {@code ca_pst_sk}, {@code my_sst}, {@code sg_gst}, {@code ae_trn}, {@code
-     * cl_tin}, {@code sa_vat}, {@code id_npwp}, {@code my_frp}, {@code il_vat}, {@code ge_vat},
-     * {@code ua_vat}, {@code is_vat}, {@code bg_uic}, {@code hu_tin}, {@code si_tin}, {@code
-     * ke_pin}, {@code tr_tin}, {@code eg_tin}, {@code ph_tin}, or {@code unknown}.
+     * The type of the tax ID, one of {@code ad_nrt}, {@code ar_cuit}, {@code eu_vat}, {@code
+     * bo_tin}, {@code br_cnpj}, {@code br_cpf}, {@code cn_tin}, {@code co_nit}, {@code cr_tin},
+     * {@code do_rcn}, {@code ec_ruc}, {@code eu_oss_vat}, {@code pe_ruc}, {@code ro_tin}, {@code
+     * rs_pib}, {@code sv_nit}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, {@code gb_vat},
+     * {@code nz_gst}, {@code au_abn}, {@code au_arn}, {@code in_gst}, {@code no_vat}, {@code
+     * za_vat}, {@code ch_vat}, {@code mx_rfc}, {@code sg_uen}, {@code ru_inn}, {@code ru_kpp},
+     * {@code ca_bn}, {@code hk_br}, {@code es_cif}, {@code tw_vat}, {@code th_vat}, {@code jp_cn},
+     * {@code jp_rn}, {@code jp_trn}, {@code li_uid}, {@code my_itn}, {@code us_ein}, {@code
+     * kr_brn}, {@code ca_qst}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb}, {@code
+     * ca_pst_sk}, {@code my_sst}, {@code sg_gst}, {@code ae_trn}, {@code cl_tin}, {@code sa_vat},
+     * {@code id_npwp}, {@code my_frp}, {@code il_vat}, {@code ge_vat}, {@code ua_vat}, {@code
+     * is_vat}, {@code bg_uic}, {@code hu_tin}, {@code si_tin}, {@code ke_pin}, {@code tr_tin},
+     * {@code eg_tin}, {@code ph_tin}, or {@code unknown}.
      */
     @SerializedName("type")
     String type;
@@ -1952,8 +2131,8 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
 
           /**
            * The bank transfer type that can be used for funding. Permitted values include: {@code
-           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, or {@code
-           * mx_bank_transfer}.
+           * eu_bank_transfer}, {@code gb_bank_transfer}, {@code jp_bank_transfer}, {@code
+           * mx_bank_transfer}, or {@code us_bank_transfer}.
            */
           @SerializedName("type")
           String type;
@@ -2004,8 +2183,39 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
            */
           @SerializedName("permissions")
           List<String> permissions;
+
+          /** Data features requested to be retrieved upon account creation. */
+          @SerializedName("prefetch")
+          List<String> prefetch;
         }
       }
+    }
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class Rendering extends StripeObject {
+    /** How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. */
+    @SerializedName("amount_tax_display")
+    String amountTaxDisplay;
+
+    /** Invoice pdf rendering options. */
+    @SerializedName("pdf")
+    Pdf pdf;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Pdf extends StripeObject {
+      /**
+       * Page size of invoice pdf. Options include a4, letter, and auto. If set to auto, page size
+       * will be switched to a4 or letter based on customer locale.
+       *
+       * <p>One of {@code a4}, {@code auto}, or {@code letter}.
+       */
+      @SerializedName("page_size")
+      String pageSize;
     }
   }
 
@@ -2078,10 +2288,27 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
        * href="https://stripe.com/docs/payments/checkout/set-up-a-subscription#tax-rates">Checkout
        * Sessions</a> to collect tax.
        *
-       * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax Rates</a>.
+       * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-rates">Tax rates</a>
        */
       @SerializedName("rate")
       TaxRate rate;
+
+      /**
+       * The reasoning behind this tax, for example, if the product is tax exempt. The possible
+       * values for this field may be extended as new tax rules are supported.
+       *
+       * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax},
+       * {@code not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated},
+       * {@code portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday},
+       * {@code proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code
+       * standard_rated}, {@code taxable_basis_reduced}, or {@code zero_rated}.
+       */
+      @SerializedName("taxability_reason")
+      String taxabilityReason;
+
+      /** The amount on which tax is calculated, in cents (or local equivalent). */
+      @SerializedName("taxable_amount")
+      Long taxableAmount;
     }
   }
 
@@ -2104,6 +2331,19 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
     /** The time that the invoice was voided. */
     @SerializedName("voided_at")
     Long voidedAt;
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class SubscriptionDetails extends StripeObject {
+    /**
+     * Set of <a href="https://stripe.com/docs/api/metadata">key-value pairs</a> that will reflect
+     * the metadata of the subscription at the time of invoice creation. <em>Note: This attribute is
+     * populated only for invoices created on or after June 29, 2023.</em>
+     */
+    @SerializedName("metadata")
+    Map<String, String> metadata;
   }
 
   @Getter
@@ -2136,7 +2376,7 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class TotalDiscountAmount extends StripeObject {
-    /** The amount, in %s, of the discount. */
+    /** The amount, in cents (or local equivalent), of the discount. */
     @SerializedName("amount")
     Long amount;
 
@@ -2169,7 +2409,7 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @Setter
   @EqualsAndHashCode(callSuper = false)
   public static class TotalTaxAmount extends StripeObject {
-    /** The amount, in %s, of the tax. */
+    /** The amount, in cents (or local equivalent), of the tax. */
     @SerializedName("amount")
     Long amount;
 
@@ -2182,6 +2422,23 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
     @Getter(lombok.AccessLevel.NONE)
     @Setter(lombok.AccessLevel.NONE)
     ExpandableField<TaxRate> taxRate;
+
+    /**
+     * The reasoning behind this tax, for example, if the product is tax exempt. The possible values
+     * for this field may be extended as new tax rules are supported.
+     *
+     * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax}, {@code
+     * not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated}, {@code
+     * portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday}, {@code
+     * proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code standard_rated},
+     * {@code taxable_basis_reduced}, or {@code zero_rated}.
+     */
+    @SerializedName("taxability_reason")
+    String taxabilityReason;
+
+    /** The amount on which tax is calculated, in cents (or local equivalent). */
+    @SerializedName("taxable_amount")
+    Long taxableAmount;
 
     /** Get ID of expandable {@code taxRate} object. */
     public String getTaxRate() {
@@ -2207,8 +2464,8 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
   @EqualsAndHashCode(callSuper = false)
   public static class TransferData extends StripeObject {
     /**
-     * The amount in %s that will be transferred to the destination account when the invoice is
-     * paid. By default, the entire amount is transferred to the destination.
+     * The amount in cents (or local equivalent) that will be transferred to the destination account
+     * when the invoice is paid. By default, the entire amount is transferred to the destination.
      */
     @SerializedName("amount")
     Long amount;
@@ -2236,5 +2493,37 @@ public class Invoice extends ApiResource implements HasId, MetadataStore<Invoice
     public void setDestinationObject(Account expandableObject) {
       this.destination = new ExpandableField<Account>(expandableObject.getId(), expandableObject);
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(automaticTax, responseGetter);
+    trySetResponseGetter(charge, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(customerAddress, responseGetter);
+    trySetResponseGetter(customerShipping, responseGetter);
+    trySetResponseGetter(defaultPaymentMethod, responseGetter);
+    trySetResponseGetter(defaultSource, responseGetter);
+    trySetResponseGetter(discount, responseGetter);
+    trySetResponseGetter(fromInvoice, responseGetter);
+    trySetResponseGetter(lastFinalizationError, responseGetter);
+    trySetResponseGetter(latestRevision, responseGetter);
+    trySetResponseGetter(lines, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(paymentIntent, responseGetter);
+    trySetResponseGetter(paymentSettings, responseGetter);
+    trySetResponseGetter(quote, responseGetter);
+    trySetResponseGetter(rendering, responseGetter);
+    trySetResponseGetter(renderingOptions, responseGetter);
+    trySetResponseGetter(shippingCost, responseGetter);
+    trySetResponseGetter(shippingDetails, responseGetter);
+    trySetResponseGetter(statusTransitions, responseGetter);
+    trySetResponseGetter(subscription, responseGetter);
+    trySetResponseGetter(subscriptionDetails, responseGetter);
+    trySetResponseGetter(testClock, responseGetter);
+    trySetResponseGetter(thresholdReason, responseGetter);
+    trySetResponseGetter(transferData, responseGetter);
   }
 }

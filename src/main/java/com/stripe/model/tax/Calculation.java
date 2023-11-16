@@ -2,12 +2,15 @@
 package com.stripe.model.tax;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.HasId;
 import com.stripe.model.StripeObject;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.tax.CalculationCreateParams;
 import com.stripe.param.tax.CalculationListLineItemsParams;
 import java.util.List;
@@ -20,7 +23,7 @@ import lombok.Setter;
  * A Tax Calculation allows you to calculate the tax to collect from your customer.
  *
  * <p>Related guide: <a href="https://stripe.com/docs/tax/custom">Calculate tax in your custom
- * payment flow</a>.
+ * payment flow</a>
  */
 @Getter
 @Setter
@@ -103,9 +106,16 @@ public class Calculation extends ApiResource implements HasId {
   /** Calculates tax based on input and returns a Tax {@code Calculation} object. */
   public static Calculation create(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/tax/calculations");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Calculation.class, options);
+    String path = "/v1/tax/calculations";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            params,
+            Calculation.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Calculates tax based on input and returns a Tax {@code Calculation} object. */
@@ -116,9 +126,17 @@ public class Calculation extends ApiResource implements HasId {
   /** Calculates tax based on input and returns a Tax {@code Calculation} object. */
   public static Calculation create(CalculationCreateParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/tax/calculations");
-    return ApiResource.request(
-        ApiResource.RequestMethod.POST, url, params, Calculation.class, options);
+    String path = "/v1/tax/calculations";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.POST,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Calculation.class,
+            options,
+            ApiMode.V1);
   }
 
   /** Retrieves the line items of a persisted tax calculation as a collection. */
@@ -135,13 +153,17 @@ public class Calculation extends ApiResource implements HasId {
   /** Retrieves the line items of a persisted tax calculation as a collection. */
   public CalculationLineItemCollection listLineItems(
       Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/tax/calculations/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            CalculationLineItemCollection.class,
             options,
-            String.format(
-                "/v1/tax/calculations/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, CalculationLineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   /** Retrieves the line items of a persisted tax calculation as a collection. */
@@ -153,13 +175,18 @@ public class Calculation extends ApiResource implements HasId {
   /** Retrieves the line items of a persisted tax calculation as a collection. */
   public CalculationLineItemCollection listLineItems(
       CalculationListLineItemsParams params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format("/v1/tax/calculations/%s/line_items", ApiResource.urlEncodeId(this.getId()));
+    ApiResource.checkNullTypedParams(path, params);
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            CalculationLineItemCollection.class,
             options,
-            String.format(
-                "/v1/tax/calculations/%s/line_items", ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.requestCollection(url, params, CalculationLineItemCollection.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -234,17 +261,19 @@ public class Calculation extends ApiResource implements HasId {
     @EqualsAndHashCode(callSuper = false)
     public static class TaxId extends StripeObject {
       /**
-       * The type of the tax ID, one of {@code eu_vat}, {@code br_cnpj}, {@code br_cpf}, {@code
-       * eu_oss_vat}, {@code gb_vat}, {@code nz_gst}, {@code au_abn}, {@code au_arn}, {@code
-       * in_gst}, {@code no_vat}, {@code za_vat}, {@code ch_vat}, {@code mx_rfc}, {@code sg_uen},
-       * {@code ru_inn}, {@code ru_kpp}, {@code ca_bn}, {@code hk_br}, {@code es_cif}, {@code
-       * tw_vat}, {@code th_vat}, {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code li_uid},
-       * {@code my_itn}, {@code us_ein}, {@code kr_brn}, {@code ca_qst}, {@code ca_gst_hst}, {@code
-       * ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code my_sst}, {@code sg_gst}, {@code
-       * ae_trn}, {@code cl_tin}, {@code sa_vat}, {@code id_npwp}, {@code my_frp}, {@code il_vat},
-       * {@code ge_vat}, {@code ua_vat}, {@code is_vat}, {@code bg_uic}, {@code hu_tin}, {@code
-       * si_tin}, {@code ke_pin}, {@code tr_tin}, {@code eg_tin}, {@code ph_tin}, or {@code
-       * unknown}.
+       * The type of the tax ID, one of {@code ad_nrt}, {@code ar_cuit}, {@code eu_vat}, {@code
+       * bo_tin}, {@code br_cnpj}, {@code br_cpf}, {@code cn_tin}, {@code co_nit}, {@code cr_tin},
+       * {@code do_rcn}, {@code ec_ruc}, {@code eu_oss_vat}, {@code pe_ruc}, {@code ro_tin}, {@code
+       * rs_pib}, {@code sv_nit}, {@code uy_ruc}, {@code ve_rif}, {@code vn_tin}, {@code gb_vat},
+       * {@code nz_gst}, {@code au_abn}, {@code au_arn}, {@code in_gst}, {@code no_vat}, {@code
+       * za_vat}, {@code ch_vat}, {@code mx_rfc}, {@code sg_uen}, {@code ru_inn}, {@code ru_kpp},
+       * {@code ca_bn}, {@code hk_br}, {@code es_cif}, {@code tw_vat}, {@code th_vat}, {@code
+       * jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code li_uid}, {@code my_itn}, {@code us_ein},
+       * {@code kr_brn}, {@code ca_qst}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb},
+       * {@code ca_pst_sk}, {@code my_sst}, {@code sg_gst}, {@code ae_trn}, {@code cl_tin}, {@code
+       * sa_vat}, {@code id_npwp}, {@code my_frp}, {@code il_vat}, {@code ge_vat}, {@code ua_vat},
+       * {@code is_vat}, {@code bg_uic}, {@code hu_tin}, {@code si_tin}, {@code ke_pin}, {@code
+       * tr_tin}, {@code eg_tin}, {@code ph_tin}, or {@code unknown}.
        */
       @SerializedName("type")
       String type;
@@ -272,7 +301,7 @@ public class Calculation extends ApiResource implements HasId {
 
     /**
      * The ID of an existing <a
-     * href="https://stripe.com/docs/api/shipping_rates/object">ShippingRate.</a>
+     * href="https://stripe.com/docs/api/shipping_rates/object">ShippingRate</a>.
      */
     @SerializedName("shipping_rate")
     String shippingRate;
@@ -286,11 +315,121 @@ public class Calculation extends ApiResource implements HasId {
     @SerializedName("tax_behavior")
     String taxBehavior;
 
+    /** Detailed account of taxes relevant to shipping cost. */
+    @SerializedName("tax_breakdown")
+    List<Calculation.ShippingCost.TaxBreakdown> taxBreakdown;
+
     /**
      * The <a href="https://stripe.com/docs/tax/tax-categories">tax code</a> ID used for shipping.
      */
     @SerializedName("tax_code")
     String taxCode;
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class TaxBreakdown extends StripeObject {
+      /** The amount of tax, in integer cents. */
+      @SerializedName("amount")
+      Long amount;
+
+      @SerializedName("jurisdiction")
+      Jurisdiction jurisdiction;
+
+      /**
+       * Indicates whether the jurisdiction was determined by the origin (merchant's address) or
+       * destination (customer's address).
+       *
+       * <p>One of {@code destination}, or {@code origin}.
+       */
+      @SerializedName("sourcing")
+      String sourcing;
+
+      /**
+       * Details regarding the rate for this tax. This field will be {@code null} when the tax is
+       * not imposed, for example if the product is exempt from tax.
+       */
+      @SerializedName("tax_rate_details")
+      TaxRateDetails taxRateDetails;
+
+      /**
+       * The reasoning behind this tax, for example, if the product is tax exempt. The possible
+       * values for this field may be extended as new tax rules are supported.
+       *
+       * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax},
+       * {@code not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated},
+       * {@code portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday},
+       * {@code proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code
+       * standard_rated}, {@code taxable_basis_reduced}, or {@code zero_rated}.
+       */
+      @SerializedName("taxability_reason")
+      String taxabilityReason;
+
+      /** The amount on which tax is calculated, in integer cents. */
+      @SerializedName("taxable_amount")
+      Long taxableAmount;
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class Jurisdiction extends StripeObject {
+        /**
+         * Two-letter country code (<a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">ISO
+         * 3166-1 alpha-2</a>).
+         */
+        @SerializedName("country")
+        String country;
+
+        /** A human-readable name for the jurisdiction imposing the tax. */
+        @SerializedName("display_name")
+        String displayName;
+
+        /**
+         * Indicates the level of the jurisdiction imposing the tax.
+         *
+         * <p>One of {@code city}, {@code country}, {@code county}, {@code district}, or {@code
+         * state}.
+         */
+        @SerializedName("level")
+        String level;
+
+        /**
+         * <a href="https://en.wikipedia.org/wiki/ISO_3166-2:US">ISO 3166-2 subdivision code</a>,
+         * without country prefix. For example, &quot;NY&quot; for New York, United States.
+         */
+        @SerializedName("state")
+        String state;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class TaxRateDetails extends StripeObject {
+        /**
+         * A localized display name for tax type, intended to be human-readable. For example,
+         * &quot;Local Sales and Use Tax&quot;, &quot;Value-added tax (VAT)&quot;, or
+         * &quot;Umsatzsteuer (USt.)&quot;.
+         */
+        @SerializedName("display_name")
+        String displayName;
+
+        /**
+         * The tax rate percentage as a string. For example, 8.5% is represented as &quot;8.5&quot;.
+         */
+        @SerializedName("percentage_decimal")
+        String percentageDecimal;
+
+        /**
+         * The tax type, such as {@code vat} or {@code sales_tax}.
+         *
+         * <p>One of {@code amusement_tax}, {@code communications_tax}, {@code gst}, {@code hst},
+         * {@code igst}, {@code jct}, {@code lease_tax}, {@code pst}, {@code qst}, {@code rst},
+         * {@code sales_tax}, or {@code vat}.
+         */
+        @SerializedName("tax_type")
+        String taxType;
+      }
+    }
   }
 
   @Getter
@@ -307,6 +446,19 @@ public class Calculation extends ApiResource implements HasId {
 
     @SerializedName("tax_rate_details")
     TaxRateDetails taxRateDetails;
+
+    /**
+     * The reasoning behind this tax, for example, if the product is tax exempt. We might extend the
+     * possible values for this field to support new tax rules.
+     *
+     * <p>One of {@code customer_exempt}, {@code not_collecting}, {@code not_subject_to_tax}, {@code
+     * not_supported}, {@code portion_product_exempt}, {@code portion_reduced_rated}, {@code
+     * portion_standard_rated}, {@code product_exempt}, {@code product_exempt_holiday}, {@code
+     * proportionally_rated}, {@code reduced_rated}, {@code reverse_charge}, {@code standard_rated},
+     * {@code taxable_basis_reduced}, or {@code zero_rated}.
+     */
+    @SerializedName("taxability_reason")
+    String taxabilityReason;
 
     /** The amount on which tax is calculated, in integer cents. */
     @SerializedName("taxable_amount")
@@ -334,11 +486,20 @@ public class Calculation extends ApiResource implements HasId {
       /**
        * The tax type, such as {@code vat} or {@code sales_tax}.
        *
-       * <p>One of {@code gst}, {@code hst}, {@code igst}, {@code jct}, {@code lease_tax}, {@code
-       * pst}, {@code qst}, {@code rst}, {@code sales_tax}, or {@code vat}.
+       * <p>One of {@code amusement_tax}, {@code communications_tax}, {@code gst}, {@code hst},
+       * {@code igst}, {@code jct}, {@code lease_tax}, {@code pst}, {@code qst}, {@code rst}, {@code
+       * sales_tax}, or {@code vat}.
        */
       @SerializedName("tax_type")
       String taxType;
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(customerDetails, responseGetter);
+    trySetResponseGetter(lineItems, responseGetter);
+    trySetResponseGetter(shippingCost, responseGetter);
   }
 }

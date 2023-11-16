@@ -13,6 +13,10 @@ import lombok.Getter;
 
 @Getter
 public class PersonCollectionCreateParams extends ApiRequestParams {
+  /** Details on the legal guardian's acceptance of the required Stripe agreements. */
+  @SerializedName("additional_tos_acceptances")
+  AdditionalTosAcceptances additionalTosAcceptances;
+
   /** The person's address. */
   @SerializedName("address")
   Address address;
@@ -76,8 +80,8 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
   /**
    * The person's ID number, as appropriate for their country. For example, a social security number
    * in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also
-   * provide a <a href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token
-   * provided by Stripe.js</a>.
+   * provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token provided
+   * by Stripe.js</a>.
    */
   @SerializedName("id_number")
   String idNumber;
@@ -86,7 +90,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
    * The person's secondary ID number, as appropriate for their country, will be used for enhanced
    * verification checks. In Thailand, this would be the laser code found on the back of an ID card.
    * Instead of the number itself, you can also provide a <a
-   * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided by
+   * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token provided by
    * Stripe.js</a>.
    */
   @SerializedName("id_number_secondary")
@@ -161,6 +165,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
   Verification verification;
 
   private PersonCollectionCreateParams(
+      AdditionalTosAcceptances additionalTosAcceptances,
       Address address,
       AddressKana addressKana,
       AddressKanji addressKanji,
@@ -189,6 +194,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
       Relationship relationship,
       String ssnLast4,
       Verification verification) {
+    this.additionalTosAcceptances = additionalTosAcceptances;
     this.address = address;
     this.addressKana = addressKana;
     this.addressKanji = addressKanji;
@@ -224,6 +230,8 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
   }
 
   public static class Builder {
+    private AdditionalTosAcceptances additionalTosAcceptances;
+
     private Address address;
 
     private AddressKana addressKana;
@@ -283,6 +291,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
     /** Finalize and obtain parameter instance from this builder. */
     public PersonCollectionCreateParams build() {
       return new PersonCollectionCreateParams(
+          this.additionalTosAcceptances,
           this.address,
           this.addressKana,
           this.addressKanji,
@@ -311,6 +320,13 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
           this.relationship,
           this.ssnLast4,
           this.verification);
+    }
+
+    /** Details on the legal guardian's acceptance of the required Stripe agreements. */
+    public Builder setAdditionalTosAcceptances(
+        PersonCollectionCreateParams.AdditionalTosAcceptances additionalTosAcceptances) {
+      this.additionalTosAcceptances = additionalTosAcceptances;
+      return this;
     }
 
     /** The person's address. */
@@ -431,7 +447,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
      * PersonCollectionCreateParams#fullNameAliases} for the field documentation.
      */
     @SuppressWarnings("unchecked")
-    public Builder addFullNameAliase(String element) {
+    public Builder addFullNameAlias(String element) {
       if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
         this.fullNameAliases = new ArrayList<String>();
       }
@@ -445,7 +461,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
      * PersonCollectionCreateParams#fullNameAliases} for the field documentation.
      */
     @SuppressWarnings("unchecked")
-    public Builder addAllFullNameAliase(List<String> elements) {
+    public Builder addAllFullNameAlias(List<String> elements) {
       if (this.fullNameAliases == null || this.fullNameAliases instanceof EmptyParam) {
         this.fullNameAliases = new ArrayList<String>();
       }
@@ -477,9 +493,8 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
     /**
      * The person's ID number, as appropriate for their country. For example, a social security
      * number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you
-     * can also provide a <a
-     * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided by
-     * Stripe.js</a>.
+     * can also provide a <a href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII
+     * token provided by Stripe.js</a>.
      */
     public Builder setIdNumber(String idNumber) {
       this.idNumber = idNumber;
@@ -490,7 +505,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
      * The person's secondary ID number, as appropriate for their country, will be used for enhanced
      * verification checks. In Thailand, this would be the laser code found on the back of an ID
      * card. Instead of the number itself, you can also provide a <a
-     * href="https://stripe.com/docs/js/tokens_sources/create_token?type=pii">PII token provided by
+     * href="https://stripe.com/docs/js/tokens/create_token?type=pii">PII token provided by
      * Stripe.js</a>.
      */
     public Builder setIdNumberSecondary(String idNumberSecondary) {
@@ -630,6 +645,197 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
     public Builder setVerification(PersonCollectionCreateParams.Verification verification) {
       this.verification = verification;
       return this;
+    }
+  }
+
+  @Getter
+  public static class AdditionalTosAcceptances {
+    /** Details on the legal guardian's acceptance of the main Stripe service agreement. */
+    @SerializedName("account")
+    Account account;
+
+    /**
+     * Map of extra parameters for custom features not available in this client library. The content
+     * in this map is not serialized under this field's {@code @SerializedName} value. Instead, each
+     * key/value pair is serialized as if the key is a root-level field (serialized) name in this
+     * param object. Effectively, this map is flattened to its parent instance.
+     */
+    @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+    Map<String, Object> extraParams;
+
+    private AdditionalTosAcceptances(Account account, Map<String, Object> extraParams) {
+      this.account = account;
+      this.extraParams = extraParams;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public static class Builder {
+      private Account account;
+
+      private Map<String, Object> extraParams;
+
+      /** Finalize and obtain parameter instance from this builder. */
+      public PersonCollectionCreateParams.AdditionalTosAcceptances build() {
+        return new PersonCollectionCreateParams.AdditionalTosAcceptances(
+            this.account, this.extraParams);
+      }
+
+      /** Details on the legal guardian's acceptance of the main Stripe service agreement. */
+      public Builder setAccount(
+          PersonCollectionCreateParams.AdditionalTosAcceptances.Account account) {
+        this.account = account;
+        return this;
+      }
+
+      /**
+       * Add a key/value pair to `extraParams` map. A map is initialized for the first `put/putAll`
+       * call, and subsequent calls add additional key/value pairs to the original map. See {@link
+       * PersonCollectionCreateParams.AdditionalTosAcceptances#extraParams} for the field
+       * documentation.
+       */
+      public Builder putExtraParam(String key, Object value) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.put(key, value);
+        return this;
+      }
+
+      /**
+       * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+       * `put/putAll` call, and subsequent calls add additional key/value pairs to the original map.
+       * See {@link PersonCollectionCreateParams.AdditionalTosAcceptances#extraParams} for the field
+       * documentation.
+       */
+      public Builder putAllExtraParam(Map<String, Object> map) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.putAll(map);
+        return this;
+      }
+    }
+
+    @Getter
+    public static class Account {
+      /**
+       * The Unix timestamp marking when the account representative accepted the service agreement.
+       */
+      @SerializedName("date")
+      Long date;
+
+      /**
+       * Map of extra parameters for custom features not available in this client library. The
+       * content in this map is not serialized under this field's {@code @SerializedName} value.
+       * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+       * name in this param object. Effectively, this map is flattened to its parent instance.
+       */
+      @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+      Map<String, Object> extraParams;
+
+      /** The IP address from which the account representative accepted the service agreement. */
+      @SerializedName("ip")
+      String ip;
+
+      /**
+       * The user agent of the browser from which the account representative accepted the service
+       * agreement.
+       */
+      @SerializedName("user_agent")
+      Object userAgent;
+
+      private Account(Long date, Map<String, Object> extraParams, String ip, Object userAgent) {
+        this.date = date;
+        this.extraParams = extraParams;
+        this.ip = ip;
+        this.userAgent = userAgent;
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        private Long date;
+
+        private Map<String, Object> extraParams;
+
+        private String ip;
+
+        private Object userAgent;
+
+        /** Finalize and obtain parameter instance from this builder. */
+        public PersonCollectionCreateParams.AdditionalTosAcceptances.Account build() {
+          return new PersonCollectionCreateParams.AdditionalTosAcceptances.Account(
+              this.date, this.extraParams, this.ip, this.userAgent);
+        }
+
+        /**
+         * The Unix timestamp marking when the account representative accepted the service
+         * agreement.
+         */
+        public Builder setDate(Long date) {
+          this.date = date;
+          return this;
+        }
+
+        /**
+         * Add a key/value pair to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link
+         * PersonCollectionCreateParams.AdditionalTosAcceptances.Account#extraParams} for the field
+         * documentation.
+         */
+        public Builder putExtraParam(String key, Object value) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.put(key, value);
+          return this;
+        }
+
+        /**
+         * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+         * `put/putAll` call, and subsequent calls add additional key/value pairs to the original
+         * map. See {@link
+         * PersonCollectionCreateParams.AdditionalTosAcceptances.Account#extraParams} for the field
+         * documentation.
+         */
+        public Builder putAllExtraParam(Map<String, Object> map) {
+          if (this.extraParams == null) {
+            this.extraParams = new HashMap<>();
+          }
+          this.extraParams.putAll(map);
+          return this;
+        }
+
+        /** The IP address from which the account representative accepted the service agreement. */
+        public Builder setIp(String ip) {
+          this.ip = ip;
+          return this;
+        }
+
+        /**
+         * The user agent of the browser from which the account representative accepted the service
+         * agreement.
+         */
+        public Builder setUserAgent(String userAgent) {
+          this.userAgent = userAgent;
+          return this;
+        }
+
+        /**
+         * The user agent of the browser from which the account representative accepted the service
+         * agreement.
+         */
+        public Builder setUserAgent(EmptyParam userAgent) {
+          this.userAgent = userAgent;
+          return this;
+        }
+      }
     }
   }
 
@@ -1796,6 +2002,10 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
     @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
     Map<String, Object> extraParams;
 
+    /** Whether the person is the legal guardian of the account's representative. */
+    @SerializedName("legal_guardian")
+    Boolean legalGuardian;
+
     /** Whether the person is an owner of the account’s legal entity. */
     @SerializedName("owner")
     Boolean owner;
@@ -1822,6 +2032,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
         Boolean director,
         Boolean executive,
         Map<String, Object> extraParams,
+        Boolean legalGuardian,
         Boolean owner,
         Object percentOwnership,
         Boolean representative,
@@ -1829,6 +2040,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
       this.director = director;
       this.executive = executive;
       this.extraParams = extraParams;
+      this.legalGuardian = legalGuardian;
       this.owner = owner;
       this.percentOwnership = percentOwnership;
       this.representative = representative;
@@ -1846,6 +2058,8 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
 
       private Map<String, Object> extraParams;
 
+      private Boolean legalGuardian;
+
       private Boolean owner;
 
       private Object percentOwnership;
@@ -1860,6 +2074,7 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
             this.director,
             this.executive,
             this.extraParams,
+            this.legalGuardian,
             this.owner,
             this.percentOwnership,
             this.representative,
@@ -1909,6 +2124,12 @@ public class PersonCollectionCreateParams extends ApiRequestParams {
           this.extraParams = new HashMap<>();
         }
         this.extraParams.putAll(map);
+        return this;
+      }
+
+      /** Whether the person is the legal guardian of the account's representative. */
+      public Builder setLegalGuardian(Boolean legalGuardian) {
+        this.legalGuardian = legalGuardian;
         return this;
       }
 

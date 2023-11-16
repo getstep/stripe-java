@@ -2,10 +2,12 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import java.util.Map;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -13,11 +15,12 @@ import lombok.Setter;
 
 /**
  * You can add one or multiple tax IDs to a <a
- * href="https://stripe.com/docs/api/customers">customer</a>. A customer's tax IDs are displayed on
- * invoices and credit notes issued for the customer.
+ * href="https://stripe.com/docs/api/customers">customer</a> or account. Customer and account tax
+ * IDs get displayed on related invoices and credit notes.
  *
- * <p>Related guide: <a href="https://stripe.com/docs/billing/taxes/tax-ids">Customer Tax
- * Identification Numbers</a>.
+ * <p>Related guides: <a href="https://stripe.com/docs/billing/taxes/tax-ids">Customer tax
+ * identification numbers</a>, <a
+ * href="https://stripe.com/docs/invoicing/connect#account-tax-ids">Account tax IDs</a>
  */
 @Getter
 @Setter
@@ -62,16 +65,19 @@ public class TaxId extends ApiResource implements HasId {
   String object;
 
   /**
-   * Type of the tax ID, one of {@code ae_trn}, {@code au_abn}, {@code au_arn}, {@code bg_uic},
-   * {@code br_cnpj}, {@code br_cpf}, {@code ca_bn}, {@code ca_gst_hst}, {@code ca_pst_bc}, {@code
-   * ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst}, {@code ch_vat}, {@code cl_tin}, {@code eg_tin},
-   * {@code es_cif}, {@code eu_oss_vat}, {@code eu_vat}, {@code gb_vat}, {@code ge_vat}, {@code
-   * hk_br}, {@code hu_tin}, {@code id_npwp}, {@code il_vat}, {@code in_gst}, {@code is_vat}, {@code
-   * jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code ke_pin}, {@code kr_brn}, {@code li_uid}, {@code
-   * mx_rfc}, {@code my_frp}, {@code my_itn}, {@code my_sst}, {@code no_vat}, {@code nz_gst}, {@code
-   * ph_tin}, {@code ru_inn}, {@code ru_kpp}, {@code sa_vat}, {@code sg_gst}, {@code sg_uen}, {@code
-   * si_tin}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code us_ein}, or
-   * {@code za_vat}. Note that some legacy tax IDs have type {@code unknown}
+   * Type of the tax ID, one of {@code ad_nrt}, {@code ae_trn}, {@code ar_cuit}, {@code au_abn},
+   * {@code au_arn}, {@code bg_uic}, {@code bo_tin}, {@code br_cnpj}, {@code br_cpf}, {@code ca_bn},
+   * {@code ca_gst_hst}, {@code ca_pst_bc}, {@code ca_pst_mb}, {@code ca_pst_sk}, {@code ca_qst},
+   * {@code ch_vat}, {@code cl_tin}, {@code cn_tin}, {@code co_nit}, {@code cr_tin}, {@code do_rcn},
+   * {@code ec_ruc}, {@code eg_tin}, {@code es_cif}, {@code eu_oss_vat}, {@code eu_vat}, {@code
+   * gb_vat}, {@code ge_vat}, {@code hk_br}, {@code hu_tin}, {@code id_npwp}, {@code il_vat}, {@code
+   * in_gst}, {@code is_vat}, {@code jp_cn}, {@code jp_rn}, {@code jp_trn}, {@code ke_pin}, {@code
+   * kr_brn}, {@code li_uid}, {@code mx_rfc}, {@code my_frp}, {@code my_itn}, {@code my_sst}, {@code
+   * no_vat}, {@code nz_gst}, {@code pe_ruc}, {@code ph_tin}, {@code ro_tin}, {@code rs_pib}, {@code
+   * ru_inn}, {@code ru_kpp}, {@code sa_vat}, {@code sg_gst}, {@code sg_uen}, {@code si_tin}, {@code
+   * sv_nit}, {@code th_vat}, {@code tr_tin}, {@code tw_vat}, {@code ua_vat}, {@code us_ein}, {@code
+   * uy_ruc}, {@code ve_rif}, {@code vn_tin}, or {@code za_vat}. Note that some legacy tax IDs have
+   * type {@code unknown}
    */
   @SerializedName("type")
   String type;
@@ -102,32 +108,36 @@ public class TaxId extends ApiResource implements HasId {
     this.customer = new ExpandableField<Customer>(expandableObject.getId(), expandableObject);
   }
 
-  /** Deletes an existing {@code TaxID} object. */
+  /** Deletes an existing {@code tax_id} object. */
   public TaxId delete() throws StripeException {
     return delete((Map<String, Object>) null, (RequestOptions) null);
   }
 
-  /** Deletes an existing {@code TaxID} object. */
+  /** Deletes an existing {@code tax_id} object. */
   public TaxId delete(RequestOptions options) throws StripeException {
     return delete((Map<String, Object>) null, options);
   }
 
-  /** Deletes an existing {@code TaxID} object. */
+  /** Deletes an existing {@code tax_id} object. */
   public TaxId delete(Map<String, Object> params) throws StripeException {
     return delete(params, (RequestOptions) null);
   }
 
-  /** Deletes an existing {@code TaxID} object. */
+  /** Deletes an existing {@code tax_id} object. */
   public TaxId delete(Map<String, Object> params, RequestOptions options) throws StripeException {
-    String url =
-        ApiResource.fullUrl(
-            Stripe.getApiBase(),
+    String path =
+        String.format(
+            "/v1/customers/%s/tax_ids/%s",
+            ApiResource.urlEncodeId(this.getCustomer()), ApiResource.urlEncodeId(this.getId()));
+    return getResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.DELETE,
+            path,
+            params,
+            TaxId.class,
             options,
-            String.format(
-                "/v1/customers/%s/tax_ids/%s",
-                ApiResource.urlEncodeId(this.getCustomer()),
-                ApiResource.urlEncodeId(this.getId())));
-    return ApiResource.request(ApiResource.RequestMethod.DELETE, url, params, TaxId.class, options);
+            ApiMode.V1);
   }
 
   @Getter
@@ -148,5 +158,12 @@ public class TaxId extends ApiResource implements HasId {
     /** Verified name. */
     @SerializedName("verified_name")
     String verifiedName;
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(verification, responseGetter);
   }
 }

@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.SetupAttemptListParams;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +18,8 @@ import lombok.Setter;
 
 /**
  * A SetupAttempt describes one attempted confirmation of a SetupIntent, whether that confirmation
- * was successful or unsuccessful. You can use SetupAttempts to inspect details of a specific
- * attempt at setting up a payment method using a SetupIntent.
+ * is successful or unsuccessful. You can use SetupAttempts to inspect details of a specific attempt
+ * at setting up a payment method using a SetupIntent.
  */
 @Getter
 @Setter
@@ -223,28 +226,45 @@ public class SetupAttempt extends ApiResource implements HasId {
     this.setupIntent = new ExpandableField<SetupIntent>(expandableObject.getId(), expandableObject);
   }
 
-  /** Returns a list of SetupAttempts associated with a provided SetupIntent. */
+  /** Returns a list of SetupAttempts that associate with a provided SetupIntent. */
   public static SetupAttemptCollection list(Map<String, Object> params) throws StripeException {
     return list(params, (RequestOptions) null);
   }
 
-  /** Returns a list of SetupAttempts associated with a provided SetupIntent. */
+  /** Returns a list of SetupAttempts that associate with a provided SetupIntent. */
   public static SetupAttemptCollection list(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/setup_attempts");
-    return ApiResource.requestCollection(url, params, SetupAttemptCollection.class, options);
+    String path = "/v1/setup_attempts";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            SetupAttemptCollection.class,
+            options,
+            ApiMode.V1);
   }
 
-  /** Returns a list of SetupAttempts associated with a provided SetupIntent. */
+  /** Returns a list of SetupAttempts that associate with a provided SetupIntent. */
   public static SetupAttemptCollection list(SetupAttemptListParams params) throws StripeException {
     return list(params, (RequestOptions) null);
   }
 
-  /** Returns a list of SetupAttempts associated with a provided SetupIntent. */
+  /** Returns a list of SetupAttempts that associate with a provided SetupIntent. */
   public static SetupAttemptCollection list(SetupAttemptListParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/setup_attempts");
-    return ApiResource.requestCollection(url, params, SetupAttemptCollection.class, options);
+    String path = "/v1/setup_attempts";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            SetupAttemptCollection.class,
+            options,
+            ApiMode.V1);
   }
 
   @Getter
@@ -262,9 +282,6 @@ public class SetupAttempt extends ApiResource implements HasId {
 
     @SerializedName("bancontact")
     Bancontact bancontact;
-
-    @SerializedName("blik")
-    Blik blik;
 
     @SerializedName("boleto")
     Boleto boleto;
@@ -286,6 +303,9 @@ public class SetupAttempt extends ApiResource implements HasId {
 
     @SerializedName("link")
     Link link;
+
+    @SerializedName("paypal")
+    Paypal paypal;
 
     @SerializedName("sepa_debit")
     SepaDebit sepaDebit;
@@ -415,20 +435,123 @@ public class SetupAttempt extends ApiResource implements HasId {
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
-    public static class Blik extends StripeObject {}
-
-    @Getter
-    @Setter
-    @EqualsAndHashCode(callSuper = false)
     public static class Boleto extends StripeObject {}
 
     @Getter
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Card extends StripeObject {
+      /**
+       * Card brand. Can be {@code amex}, {@code diners}, {@code discover}, {@code eftpos_au},
+       * {@code jcb}, {@code mastercard}, {@code unionpay}, {@code visa}, or {@code unknown}.
+       */
+      @SerializedName("brand")
+      String brand;
+
+      /** Check results by Card networks on Card address and CVC at the time of authorization. */
+      @SerializedName("checks")
+      Checks checks;
+
+      /**
+       * Two-letter ISO code representing the country of the card. You could use this attribute to
+       * get a sense of the international breakdown of cards you've collected.
+       */
+      @SerializedName("country")
+      String country;
+
+      /**
+       * A high-level description of the type of cards issued in this range. (For internal use only
+       * and not typically available in standard API requests.)
+       */
+      @SerializedName("description")
+      String description;
+
+      /** Two-digit number representing the card's expiration month. */
+      @SerializedName("exp_month")
+      Long expMonth;
+
+      /** Four-digit number representing the card's expiration year. */
+      @SerializedName("exp_year")
+      Long expYear;
+
+      /**
+       * Uniquely identifies this particular card number. You can use this attribute to check
+       * whether two customers who’ve signed up with you are using the same card number, for
+       * example. For payment methods that tokenize card information (Apple Pay, Google Pay), the
+       * tokenized number might be provided instead of the underlying card number.
+       *
+       * <p><em>As of May 1, 2021, card fingerprint in India for Connect changed to allow two
+       * fingerprints for the same card---one for India and one for the rest of the world.</em>
+       */
+      @SerializedName("fingerprint")
+      String fingerprint;
+
+      /**
+       * Card funding type. Can be {@code credit}, {@code debit}, {@code prepaid}, or {@code
+       * unknown}.
+       */
+      @SerializedName("funding")
+      String funding;
+
+      /**
+       * Issuer identification number of the card. (For internal use only and not typically
+       * available in standard API requests.)
+       */
+      @SerializedName("iin")
+      String iin;
+
+      /**
+       * The name of the card's issuing bank. (For internal use only and not typically available in
+       * standard API requests.)
+       */
+      @SerializedName("issuer")
+      String issuer;
+
+      /** The last four digits of the card. */
+      @SerializedName("last4")
+      String last4;
+
+      /**
+       * Identifies which network this charge was processed on. Can be {@code amex}, {@code
+       * cartes_bancaires}, {@code diners}, {@code discover}, {@code eftpos_au}, {@code interac},
+       * {@code jcb}, {@code mastercard}, {@code unionpay}, {@code visa}, or {@code unknown}.
+       */
+      @SerializedName("network")
+      String network;
+
       /** Populated if this authorization used 3D Secure authentication. */
       @SerializedName("three_d_secure")
       ThreeDSecure threeDSecure;
+
+      /** If this Card is part of a card wallet, this contains the details of the card wallet. */
+      @SerializedName("wallet")
+      Wallet wallet;
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class Checks extends StripeObject {
+        /**
+         * If a address line1 was provided, results of the check, one of {@code pass}, {@code fail},
+         * {@code unavailable}, or {@code unchecked}.
+         */
+        @SerializedName("address_line1_check")
+        String addressLine1Check;
+
+        /**
+         * If a address postal code was provided, results of the check, one of {@code pass}, {@code
+         * fail}, {@code unavailable}, or {@code unchecked}.
+         */
+        @SerializedName("address_postal_code_check")
+        String addressPostalCodeCheck;
+
+        /**
+         * If a CVC was provided, results of the check, one of {@code pass}, {@code fail}, {@code
+         * unavailable}, or {@code unchecked}.
+         */
+        @SerializedName("cvc_check")
+        String cvcCheck;
+      }
 
       @Getter
       @Setter
@@ -469,6 +592,35 @@ public class SetupAttempt extends ApiResource implements HasId {
          */
         @SerializedName("version")
         String version;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class Wallet extends StripeObject {
+        @SerializedName("apple_pay")
+        ApplePay applePay;
+
+        @SerializedName("google_pay")
+        GooglePay googlePay;
+
+        /**
+         * The type of the card wallet, one of {@code apple_pay}, {@code google_pay}, or {@code
+         * link}. An additional hash is included on the Wallet subhash with a name matching this
+         * value. It contains additional information specific to the card wallet type.
+         */
+        @SerializedName("type")
+        String type;
+
+        @Getter
+        @Setter
+        @EqualsAndHashCode(callSuper = false)
+        public static class ApplePay extends StripeObject {}
+
+        @Getter
+        @Setter
+        @EqualsAndHashCode(callSuper = false)
+        public static class GooglePay extends StripeObject {}
       }
     }
 
@@ -513,9 +665,9 @@ public class SetupAttempt extends ApiResource implements HasId {
     public static class Ideal extends StripeObject {
       /**
        * The customer's bank. Can be one of {@code abn_amro}, {@code asn_bank}, {@code bunq}, {@code
-       * handelsbanken}, {@code ing}, {@code knab}, {@code moneyou}, {@code rabobank}, {@code
-       * regiobank}, {@code revolut}, {@code sns_bank}, {@code triodos_bank}, {@code van_lanschot},
-       * or {@code yoursafe}.
+       * handelsbanken}, {@code ing}, {@code knab}, {@code moneyou}, {@code n26}, {@code rabobank},
+       * {@code regiobank}, {@code revolut}, {@code sns_bank}, {@code triodos_bank}, {@code
+       * van_lanschot}, or {@code yoursafe}.
        */
       @SerializedName("bank")
       String bank;
@@ -525,7 +677,8 @@ public class SetupAttempt extends ApiResource implements HasId {
        *
        * <p>One of {@code ABNANL2A}, {@code ASNBNL21}, {@code BITSNL2A}, {@code BUNQNL2A}, {@code
        * FVLBNL22}, {@code HANDNL2A}, {@code INGBNL2A}, {@code KNABNL2H}, {@code MOYONL21}, {@code
-       * RABONL2U}, {@code RBRBNL21}, {@code REVOLT21}, {@code SNSBNL2A}, or {@code TRIONL2U}.
+       * NTSBDEB1}, {@code RABONL2U}, {@code RBRBNL21}, {@code REVOIE23}, {@code REVOLT21}, {@code
+       * SNSBNL2A}, or {@code TRIONL2U}.
        */
       @SerializedName("bic")
       String bic;
@@ -609,6 +762,11 @@ public class SetupAttempt extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class Link extends StripeObject {}
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    public static class Paypal extends StripeObject {}
 
     @Getter
     @Setter
@@ -712,5 +870,17 @@ public class SetupAttempt extends ApiResource implements HasId {
     @Setter
     @EqualsAndHashCode(callSuper = false)
     public static class UsBankAccount extends StripeObject {}
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(application, responseGetter);
+    trySetResponseGetter(customer, responseGetter);
+    trySetResponseGetter(onBehalfOf, responseGetter);
+    trySetResponseGetter(paymentMethod, responseGetter);
+    trySetResponseGetter(paymentMethodDetails, responseGetter);
+    trySetResponseGetter(setupError, responseGetter);
+    trySetResponseGetter(setupIntent, responseGetter);
   }
 }

@@ -2,10 +2,13 @@
 package com.stripe.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.net.ApiMode;
+import com.stripe.net.ApiRequestParams;
 import com.stripe.net.ApiResource;
+import com.stripe.net.BaseAddress;
 import com.stripe.net.RequestOptions;
+import com.stripe.net.StripeResponseGetter;
 import com.stripe.param.BalanceRetrieveParams;
 import java.util.List;
 import java.util.Map;
@@ -25,29 +28,29 @@ import lombok.Setter;
  * types.
  *
  * <p>Related guide: <a href="https://stripe.com/docs/connect/account-balances">Understanding
- * Connect Account Balances</a>.
+ * Connect account balances</a>
  */
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class Balance extends ApiResource {
   /**
-   * Funds that are available to be transferred or paid out, whether automatically by Stripe or
-   * explicitly via the <a href="https://stripe.com/docs/api#transfers">Transfers API</a> or <a
-   * href="https://stripe.com/docs/api#payouts">Payouts API</a>. The available balance for each
-   * currency and payment type can be found in the {@code source_types} property.
+   * Available funds that you can transfer or pay out automatically by Stripe or explicitly through
+   * the <a href="https://stripe.com/docs/api#transfers">Transfers API</a> or <a
+   * href="https://stripe.com/docs/api#payouts">Payouts API</a>. You can find the available balance
+   * for each currency and payment type in the {@code source_types} property.
    */
   @SerializedName("available")
   List<Balance.Available> available;
 
   /**
-   * Funds held due to negative balances on connected Custom accounts. The connect reserve balance
-   * for each currency and payment type can be found in the {@code source_types} property.
+   * Funds held due to negative balances on connected Custom accounts. You can find the connect
+   * reserve balance for each currency and payment type in the {@code source_types} property.
    */
   @SerializedName("connect_reserved")
   List<Balance.ConnectReserved> connectReserved;
 
-  /** Funds that can be paid out using Instant Payouts. */
+  /** Funds that you can pay out using Instant Payouts. */
   @SerializedName("instant_available")
   List<Balance.InstantAvailable> instantAvailable;
 
@@ -70,9 +73,8 @@ public class Balance extends ApiResource {
   String object;
 
   /**
-   * Funds that are not yet available in the balance, due to the 7-day rolling pay cycle. The
-   * pending balance for each currency, and for each payment type, can be found in the {@code
-   * source_types} property.
+   * Funds that aren't available in the balance yet. You can find the pending balance for each
+   * currency and each payment type in the {@code source_types} property.
    */
   @SerializedName("pending")
   List<Balance.Pending> pending;
@@ -105,8 +107,16 @@ public class Balance extends ApiResource {
    */
   public static Balance retrieve(Map<String, Object> params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/balance");
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Balance.class, options);
+    String path = "/v1/balance";
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            params,
+            Balance.class,
+            options,
+            ApiMode.V1);
   }
 
   /**
@@ -117,8 +127,17 @@ public class Balance extends ApiResource {
    */
   public static Balance retrieve(BalanceRetrieveParams params, RequestOptions options)
       throws StripeException {
-    String url = ApiResource.fullUrl(Stripe.getApiBase(), options, "/v1/balance");
-    return ApiResource.request(ApiResource.RequestMethod.GET, url, params, Balance.class, options);
+    String path = "/v1/balance";
+    ApiResource.checkNullTypedParams(path, params);
+    return getGlobalResponseGetter()
+        .request(
+            BaseAddress.API,
+            ApiResource.RequestMethod.GET,
+            path,
+            ApiRequestParams.paramsToMap(params),
+            Balance.class,
+            options,
+            ApiMode.V1);
   }
 
   @Getter
@@ -313,5 +332,11 @@ public class Balance extends ApiResource {
       @SerializedName("fpx")
       Long fpx;
     }
+  }
+
+  @Override
+  public void setResponseGetter(StripeResponseGetter responseGetter) {
+    super.setResponseGetter(responseGetter);
+    trySetResponseGetter(issuing, responseGetter);
   }
 }
