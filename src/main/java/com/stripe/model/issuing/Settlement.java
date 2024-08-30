@@ -117,8 +117,7 @@ public class Settlement extends ApiResource implements HasId, MetadataStore<Sett
         ApiResource.RequestMethod.GET,
         path,
         params,
-        options,
-        ApiMode.V1);
+        options);
     return getGlobalResponseGetter().request(request, SettlementCollection.class);
   }
 
@@ -144,8 +143,7 @@ public class Settlement extends ApiResource implements HasId, MetadataStore<Sett
         ApiResource.RequestMethod.GET,
         path,
         params,
-        options,
-        ApiMode.V1);
+        options);
     return getGlobalResponseGetter().request(request, Settlement.class);
   }
 
@@ -172,8 +170,7 @@ public class Settlement extends ApiResource implements HasId, MetadataStore<Sett
         ApiResource.RequestMethod.POST,
         path,
         params,
-        options,
-        ApiMode.V1);
+        options);
     return getResponseGetter().request(request, Settlement.class);
   }
 }
