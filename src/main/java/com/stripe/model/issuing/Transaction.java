@@ -786,6 +786,16 @@ public class Transaction extends ApiResource
        */
       @SerializedName("unit_cost_decimal")
       BigDecimal unitCostDecimal;
+
+      /**
+       * Deprecated: This was removed in version 26.0.0. We are adding it back in on our fork to maintain
+       * backwards compatibility while we upgrade our Stripe API versions.
+       *
+       * The volume of the fuel that was pumped, represented as a decimal string with at most 12
+       * decimal places.
+       */
+      @SerializedName("volume_decimal")
+      BigDecimal volumeDecimal;
     }
 
     @Getter
