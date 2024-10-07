@@ -35,13 +35,17 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.0.12+7/Contents/Ho
 # Publish to jitpack
 We are hosting built library at JitPack.
 
-1. Look at the latest sha for the `step` branch, take first 7 chars and convert it into
-dependency as shown below:
-```
-compile("com.github.getstep:stripe-java:7aacbda")
-```
-1. The dependency fetch above will trigger a build on JitPack for the given sha.
-2. Go to https://jitpack.io/#getstep/stripe-java to see all the available builds.
+1. Look at the latest `sha` for the `step` branch, take first 8 chars.
+    ```
+    git log | head -1
+    commit 26989b1ab7c938c91b2e640b444ed430dd026891
+    ```
+2. Update `gradle/libs.versions.toml` in `server` repository with the `sha` from above.
+    ```
+    stripeJava = "26989b1a"
+    ```
+3. The dependency fetch above will trigger a build on JitPack for the given sha.
+4. Go to https://jitpack.io/#getstep/stripe-java to see all the available builds.
 
 # Update Stripe SDK
 ## Rebase `master` branch
