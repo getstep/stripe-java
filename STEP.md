@@ -41,7 +41,7 @@ dependency as shown below:
 compile("com.github.getstep:stripe-java:7aacbda")
 ```
 1. The dependency fetch above will trigger a build on JitPack for the given sha.
-1. Go to https://jitpack.io/#getstep/stripe-java to see all the available builds.
+2. Go to https://jitpack.io/#getstep/stripe-java to see all the available builds.
 
 # Update Stripe SDK
 ## Rebase `master` branch
@@ -159,10 +159,10 @@ git push
 Resolve any conflicts and build the SDK locally.
 
 ## Test staging branch
-Update `server/services/shared/stripe/build.gradle.kts` with the latest commit of your staging
-branch (first 8 characters of sha-1).
+Update `gradle/libs.versions.toml` in `server` repository with the latest commit of
+your staging branch (first 8 characters of sha-1).
 ```
-api("com.github.getstep:stripe-java:8e76c1e")
+stripeJava = "26989b1a"
 ```
 Build and test.
 
