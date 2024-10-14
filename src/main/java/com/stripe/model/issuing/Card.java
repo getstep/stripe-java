@@ -118,6 +118,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   @SerializedName("metadata")
   Map<String, String> metadata;
 
+  /** The name of the cardholder, printed on the card. */
+  @SerializedName("name")
+  String name;
+
   /**
    * The full unredacted card number. For security reasons, this is only available for virtual
    * cards, and will be omitted unless you explicitly request it with <a
@@ -142,6 +146,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   ExpandableField<PersonalizationDesign> personalizationDesign;
+
+  /** Metadata about the PIN on the card. */
+  @SerializedName("pin")
+  Pin pin;
 
   /** The latest card that replaces this card, if any. */
   @SerializedName("replaced_by")
@@ -227,6 +235,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   public void setReplacedByObject(Card expandableObject) {
     this.replacedBy = new ExpandableField<Card>(expandableObject.getId(), expandableObject);
   }
+
+  /** Card design template */
+  @SerializedName("design")
+  CardDesign design;
 
   /** Get ID of expandable {@code replacementFor} object. */
   public String getReplacementFor() {
@@ -404,6 +416,19 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
             ApiRequestParams.paramsToMap(params),
             options);
     return getResponseGetter().request(request, Card.class);
+  }
+
+  @Getter
+  @Setter
+  @EqualsAndHashCode(callSuper = false)
+  public static class Pin extends StripeObject {
+    /**
+     * Whether the PIN will be accepted or not.
+     *
+     * <p>One of {@code active}, or {@code blocked}.
+     */
+    @SerializedName("status")
+    String status;
   }
 
   @Getter
