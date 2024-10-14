@@ -11,16 +11,41 @@ To build locally, run:
 
 Skip tests because they don't work without a Stripe test server that we don't have access to.
 
+It is not uncommon to get JDK version error.
+```
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/Users/andrey/workspace/getstep/stripe-java/build.gradle' line: 31
+
+* What went wrong:
+A problem occurred evaluating root project 'stripe-java'.
+> JDK 17 is required to build Stripe
+```
+For the above error make sure you have `JAVA_HOME` set to the requested version.
+
+```
+asdf list-all java |grep temurin
+asdf install java temurin-17.0.12+7
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.0.12+7/Contents/Home
+```
+
 # Publish to jitpack
 We are hosting built library at JitPack.
 
-1. Look at the latest sha for the `step` branch, take first 7 chars and convert it into
-dependency as shown below:
-```
-compile("com.github.getstep:stripe-java:7aacbda")
-```
-1. The dependency fetch above will trigger a build on JitPack for the given sha.
-1. Go to https://jitpack.io/#getstep/stripe-java to see all the available builds.
+1. Look at the latest `sha` for the `step` branch, take first 8 chars.
+    ```
+    git log | head -1
+    commit 26989b1ab7c938c91b2e640b444ed430dd026891
+    ```
+2. Update `gradle/libs.versions.toml` in `server` repository with the `sha` from above.
+    ```
+    stripeJava = "26989b1a"
+    ```
+3. The dependency fetch above will trigger a build on JitPack for the given sha.
+4. Go to https://jitpack.io/#getstep/stripe-java to see all the available builds.
 
 # Update Stripe SDK
 ## Rebase `master` branch
@@ -96,9 +121,30 @@ git checkout -b step-with-19.37.0 # use version from above
 git push
 ```
 
-Confirm that last commits on both `step` and `step-with-19.37.0` are the same.
+Confirm that last commits on both `step` and `step-with-26.9.0` are the same.
+```
+git checkout step-with-26.9.0 # you should be on this branch already
+git show --summary
 
-## Rebase `step` branch
+commit 6ec4cc9f92d321fa17473400dfa52e16e92ca8f9 (HEAD -> step-with-26.9.0, origin/step-with-26.9.0, origin/step, step)
+Author: Jason Li <jason.li@step.com>
+Date:   Wed Sep 4 10:47:07 2024 -0400
+
+    add back in volumeDecimal (#35)
+```
+
+```
+git checkout step
+git show --summary
+
+commit 6ec4cc9f92d321fa17473400dfa52e16e92ca8f9 (HEAD -> step, origin/step-with-26.9.0, origin/step, step-with-26.9.0)
+Author: Jason Li <jason.li@step.com>
+Date:   Wed Sep 4 10:47:07 2024 -0400
+
+    add back in volumeDecimal (#35)
+```
+
+## Rebase `step` branch from `master`
 Note the latest version of Stripe SDK.
 ```
 git checkout master
@@ -116,11 +162,28 @@ git push
 ```
 Resolve any conflicts and build the SDK locally.
 
-## Test staging branch
-Update `server/services/shared/stripe/build.gradle.kts` with the latest commit of your staging
-branch (first 8 characters of sha-1).
+## Rebase `step` branch from a tag
+If you are updating to a specific version, you can rebase from a tag. Let's say we are updating to `26.12.0-beta.1`.
+Update repository with the latest tags from upstream/origin.
 ```
-api("com.github.getstep:stripe-java:8e76c1e")
+git fetch --all --tags --prune
+```
+Create a staging version of the rebase branch.
+```
+git checkout step
+git checkout -b am.step-with-26.12.0-beta.1 # use tag name
+# rebase staged branch from master onto beta tag
+git rebase --onto v26.12.0-beta.1 master am.step-with-26.12.0-beta.1
+# resolve any conflicts
+git push
+```
+Resolve any conflicts and build the SDK locally.
+
+## Test staging branch
+Update `gradle/libs.versions.toml` in `server` repository with the latest commit of
+your staging branch (first 8 characters of sha-1).
+```
+stripeJava = "26989b1a"
 ```
 Build and test.
 
