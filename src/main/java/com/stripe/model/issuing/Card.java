@@ -151,6 +151,10 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
   @SerializedName("pin")
   Pin pin;
 
+  /** The program that this card belongs to. */
+  @SerializedName("program")
+  String program;
+
   /** The latest card that replaces this card, if any. */
   @SerializedName("replaced_by")
   @Getter(lombok.AccessLevel.NONE)
