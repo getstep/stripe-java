@@ -253,7 +253,7 @@ public class Authorization extends ApiResource
   /**
    * The type of the authorization, whether it is for a payment or another type.
    *
-   * One of {@payment original_credit} or {@code payment}.
+   * One of {@code original_credit} or {@code payment}.
    */
   @SerializedName("type")
   String type;
