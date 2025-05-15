@@ -250,6 +250,14 @@ public class Authorization extends ApiResource
   @SerializedName("treasury")
   Treasury treasury;
 
+  /**
+   * The type of the authorization, whether it is for a payment or another type.
+   *
+   * One of {@payment original_credit} or {@code payment}.
+   */
+  @SerializedName("type")
+  String type;
+
   @SerializedName("verification_data")
   VerificationData verificationData;
 
