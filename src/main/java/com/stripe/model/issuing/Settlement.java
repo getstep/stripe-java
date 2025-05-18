@@ -85,6 +85,14 @@ public class Settlement extends ApiResource implements HasId, MetadataStore<Sett
   @SerializedName("network_settlement_identifier")
   String networkSettlementIdentifier;
 
+  /** The total amount of any additional fees assessed by the card network. */
+  @SerializedName("other_fees_amount")
+  Long otherFeesAmount;
+
+  /** The total number of additional fees assessed by the card network. */
+  @SerializedName("other_fees_count")
+  Long otherFeesCount;
+
   /** String representing the object's type. Objects of the same type share the same value. */
   @SerializedName("object")
   String object;
