@@ -83,6 +83,10 @@ public class AuthorizationCreateParams extends ApiRequestParams {
   @SerializedName("network_data")
   NetworkData networkData;
 
+  /** The type of the authorization object, if it is a payment authorization or an original credit authorization. */
+  @SerializedName("type")
+  String type;
+
   /**
    * Verifications that Stripe performed on information that the cardholder provided to the
    * merchant.
@@ -110,6 +114,7 @@ public class AuthorizationCreateParams extends ApiRequestParams {
       Boolean isAmountControllable,
       MerchantData merchantData,
       NetworkData networkData,
+      String type,
       VerificationData verificationData,
       Wallet wallet) {
     this.amount = amount;
@@ -124,6 +129,7 @@ public class AuthorizationCreateParams extends ApiRequestParams {
     this.isAmountControllable = isAmountControllable;
     this.merchantData = merchantData;
     this.networkData = networkData;
+    this.type = type;
     this.verificationData = verificationData;
     this.wallet = wallet;
   }
@@ -157,6 +163,8 @@ public class AuthorizationCreateParams extends ApiRequestParams {
 
     private NetworkData networkData;
 
+    private String type;
+
     private VerificationData verificationData;
 
     private Wallet wallet;
@@ -176,6 +184,7 @@ public class AuthorizationCreateParams extends ApiRequestParams {
           this.isAmountControllable,
           this.merchantData,
           this.networkData,
+          this.type,
           this.verificationData,
           this.wallet);
     }
@@ -310,6 +319,14 @@ public class AuthorizationCreateParams extends ApiRequestParams {
     /** Details about the authorization, such as identifiers, set by the card network. */
     public Builder setNetworkData(AuthorizationCreateParams.NetworkData networkData) {
       this.networkData = networkData;
+      return this;
+    }
+
+    /**
+     * The type of the authorization object, if it is a payment authorization or an original credit authorization.
+     */
+    public Builder setType(String type) {
+      this.type = type;
       return this;
     }
 
