@@ -83,6 +83,10 @@ public class AuthorizationCreateParams extends ApiRequestParams {
   @SerializedName("network_data")
   NetworkData networkData;
 
+  /** The sender data associated with the original credit. */
+  @SerializedName("sender_data")
+  SenderData senderData;
+
   /** The type of the authorization object, if it is a payment authorization or an original credit authorization. */
   @SerializedName("type")
   String type;
@@ -114,6 +118,7 @@ public class AuthorizationCreateParams extends ApiRequestParams {
       Boolean isAmountControllable,
       MerchantData merchantData,
       NetworkData networkData,
+      SenderData senderData,
       String type,
       VerificationData verificationData,
       Wallet wallet) {
@@ -129,6 +134,7 @@ public class AuthorizationCreateParams extends ApiRequestParams {
     this.isAmountControllable = isAmountControllable;
     this.merchantData = merchantData;
     this.networkData = networkData;
+    this.senderData = senderData;
     this.type = type;
     this.verificationData = verificationData;
     this.wallet = wallet;
@@ -163,6 +169,8 @@ public class AuthorizationCreateParams extends ApiRequestParams {
 
     private NetworkData networkData;
 
+    private SenderData senderData;
+
     private String type;
 
     private VerificationData verificationData;
@@ -184,6 +192,7 @@ public class AuthorizationCreateParams extends ApiRequestParams {
           this.isAmountControllable,
           this.merchantData,
           this.networkData,
+          this.senderData,
           this.type,
           this.verificationData,
           this.wallet);
@@ -319,6 +328,12 @@ public class AuthorizationCreateParams extends ApiRequestParams {
     /** Details about the authorization, such as identifiers, set by the card network. */
     public Builder setNetworkData(AuthorizationCreateParams.NetworkData networkData) {
       this.networkData = networkData;
+      return this;
+    }
+
+    /** The sender data associated with the original credit. */
+    public Builder setSenderData(AuthorizationCreateParams.SenderData senderData) {
+      this.senderData = senderData;
       return this;
     }
 
@@ -2513,6 +2528,137 @@ public class AuthorizationCreateParams extends ApiRequestParams {
           this.extraParams = new HashMap<>();
         }
         this.extraParams.putAll(map);
+        return this;
+      }
+    }
+  }
+
+  @Getter
+  public static class SenderData {
+    /**
+     * Map of extra parameters for custom features not available in this client library. The
+     * content in this map is not serialized under this field's {@code @SerializedName} value.
+     * Instead, each key/value pair is serialized as if the key is a root-level field (serialized)
+     * name in this param object. Effectively, this map is flattened to its parent instance.
+     */
+    @SerializedName(ApiRequestParams.EXTRA_PARAMS_KEY)
+    Map<String, Object> extraParams;
+
+    /**
+     * The city of the sender.
+     */
+    @SerializedName("sender_city")
+    String senderCity;
+
+    /**
+     * The country of the sender. Two-letter country code (ISO 3166-1 alpha-2).
+     */
+    @SerializedName("sender_country")
+    String senderCountry;
+
+    /**
+     * The name of the sender.
+     */
+    @SerializedName("sender_name")
+    String senderName;
+
+    /**
+     * The reference number used by the sender or originator.
+     */
+    @SerializedName("sender_reference_number")
+    String senderReferenceNumber;
+
+    private SenderData(
+      Map<String, Object> extraParams,
+      String senderCity,
+      String senderCountry,
+      String senderName,
+      String senderReferenceNumber) {
+      this.extraParams = extraParams;
+      this.senderCity = senderCity;
+      this.senderCountry = senderCountry;
+      this.senderName = senderName;
+      this.senderReferenceNumber = senderReferenceNumber;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static class Builder {
+      private Map<String, Object> extraParams;
+
+      private String senderCity;
+
+      private String senderCountry;
+
+      private String senderName;
+
+      private String senderReferenceNumber;
+
+      /** Finalize and obtain parameter instance from this builder. */
+      public AuthorizationCreateParams.SenderData build() {
+        return new AuthorizationCreateParams.SenderData(
+            this.extraParams,
+            this.senderCity,
+            this.senderCountry,
+            this.senderName,
+            this.senderReferenceNumber);
+      }
+
+      /**
+       * Add a key/value pair to `extraParams` map. A map is initialized for the first `put/putAll`
+       * call, and subsequent calls add additional key/value pairs to the original map. See {@link
+       * AuthorizationCreateParams.SenderData#extraParams} for the field documentation.
+       */
+      public Builder putExtraParam(String key, Object value) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.put(key, value);
+        return this;
+      }
+
+      /**
+       * Add all map key/value pairs to `extraParams` map. A map is initialized for the first
+       * `put/putAll` call, and subsequent calls add additional key/value pairs to the original map.
+       * See {@link AuthorizationCreateParams.SenderData#extraParams} for the field documentation.
+       */
+      public Builder putAllExtraParam(Map<String, Object> map) {
+        if (this.extraParams == null) {
+          this.extraParams = new HashMap<>();
+        }
+        this.extraParams.putAll(map);
+        return this;
+      }
+
+      /**
+       * The city of the sender.
+       */
+      public Builder setSenderCity(String senderCity) {
+        this.senderCity = senderCity;
+        return this;
+      }
+
+      /**
+       * The country of the sender. Two-letter country code (ISO 3166-1 alpha-2).
+       */
+      public Builder setSenderCountry(String senderCountry) {
+        this.senderCountry = senderCountry;
+        return this;
+      }
+
+      /**
+       * The name of the sender.
+       */
+      public Builder setSenderName(String senderName) {
+        this.senderName = senderName;
+        return this;
+      }
+
+      /**
+       * The reference number used by the sender or originator.
+       */
+      public Builder setSenderReferenceNumber(String senderReferenceNumber) {
+        this.senderReferenceNumber = senderReferenceNumber;
         return this;
       }
     }
