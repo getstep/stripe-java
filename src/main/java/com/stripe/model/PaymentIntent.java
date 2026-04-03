@@ -3325,6 +3325,14 @@ public class PaymentIntent extends ApiResource implements HasId, MetadataStore<P
       String requestExtendedAuthorization;
 
       /**
+       * Request partial authorization on this PaymentIntent.
+       *
+       * <p>One of {@code if_available}, or {@code never}.
+       */
+      @SerializedName("request_partial_authorization")
+      String requestPartialAuthorization;
+
+      /**
        * Request ability to <a
        * href="https://stripe.com/docs/payments/incremental-authorization">increment the
        * authorization</a> for this PaymentIntent.

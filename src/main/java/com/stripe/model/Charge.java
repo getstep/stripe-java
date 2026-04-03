@@ -1621,6 +1621,9 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
       @SerializedName("extended_authorization")
       ExtendedAuthorization extendedAuthorization;
 
+      @SerializedName("partial_authorization")
+      PartialAuthorization partialAuthorization;
+
       /**
        * Uniquely identifies this particular card number. You can use this attribute to check
        * whether two customers who’ve signed up with you are using the same card number, for
@@ -1755,6 +1758,18 @@ public class Charge extends ApiResource implements MetadataStore<Charge>, Balanc
          * authorization.
          *
          * <p>One of {@code disabled}, or {@code enabled}.
+         */
+        @SerializedName("status")
+        String status;
+      }
+
+      @Getter
+      @Setter
+      @EqualsAndHashCode(callSuper = false)
+      public static class PartialAuthorization extends StripeObject {
+        /**
+         * Status of partial authorization. One of {@code partially_authorized},
+         * {@code fully_authorized}, {@code declined}, or {@code not_requested}.
          */
         @SerializedName("status")
         String status;

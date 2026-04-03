@@ -14186,6 +14186,12 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
       RequestIncrementalAuthorization requestIncrementalAuthorization;
 
       /**
+       * Request partial authorization on this PaymentIntent.
+       */
+      @SerializedName("request_partial_authorization")
+      RequestPartialAuthorization requestPartialAuthorization;
+
+      /**
        * Request ability to make <a href="https://stripe.com/docs/payments/multicapture">multiple
        * captures</a> for this PaymentIntent.
        */
@@ -14291,6 +14297,7 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
           RequestDecrementalAuthorization requestDecrementalAuthorization,
           RequestExtendedAuthorization requestExtendedAuthorization,
           RequestIncrementalAuthorization requestIncrementalAuthorization,
+          RequestPartialAuthorization requestPartialAuthorization,
           RequestMulticapture requestMulticapture,
           RequestOvercapture requestOvercapture,
           RequestThreeDSecure requestThreeDSecure,
@@ -14310,6 +14317,7 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
         this.requestDecrementalAuthorization = requestDecrementalAuthorization;
         this.requestExtendedAuthorization = requestExtendedAuthorization;
         this.requestIncrementalAuthorization = requestIncrementalAuthorization;
+        this.requestPartialAuthorization = requestPartialAuthorization;
         this.requestMulticapture = requestMulticapture;
         this.requestOvercapture = requestOvercapture;
         this.requestThreeDSecure = requestThreeDSecure;
@@ -14346,6 +14354,8 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
 
         private RequestIncrementalAuthorization requestIncrementalAuthorization;
 
+        private RequestPartialAuthorization requestPartialAuthorization;
+
         private RequestMulticapture requestMulticapture;
 
         private RequestOvercapture requestOvercapture;
@@ -14377,6 +14387,7 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
               this.requestDecrementalAuthorization,
               this.requestExtendedAuthorization,
               this.requestIncrementalAuthorization,
+              this.requestPartialAuthorization,
               this.requestMulticapture,
               this.requestOvercapture,
               this.requestThreeDSecure,
@@ -14529,6 +14540,16 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
             PaymentIntentCreateParams.PaymentMethodOptions.Card.RequestIncrementalAuthorization
                 requestIncrementalAuthorization) {
           this.requestIncrementalAuthorization = requestIncrementalAuthorization;
+          return this;
+        }
+
+        /**
+         * Request partial authorization on this PaymentIntent.
+         */
+        public Builder setRequestPartialAuthorization(
+            PaymentIntentCreateParams.PaymentMethodOptions.Card.RequestPartialAuthorization
+                requestPartialAuthorization) {
+          this.requestPartialAuthorization = requestPartialAuthorization;
           return this;
         }
 
@@ -16198,6 +16219,21 @@ public class PaymentIntentCreateParams extends ApiRequestParams {
         private final String value;
 
         RequestIncrementalAuthorization(String value) {
+          this.value = value;
+        }
+      }
+
+      public enum RequestPartialAuthorization implements ApiRequestParams.EnumParam {
+        @SerializedName("if_available")
+        IF_AVAILABLE("if_available"),
+
+        @SerializedName("never")
+        NEVER("never");
+
+        @Getter(onMethod_ = {@Override})
+        private final String value;
+
+        RequestPartialAuthorization(String value) {
           this.value = value;
         }
       }
