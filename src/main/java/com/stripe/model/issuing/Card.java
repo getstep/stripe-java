@@ -492,6 +492,12 @@ public class Card extends ApiResource implements HasId, MetadataStore<Card> {
     String service;
 
     /**
+     * The time the card was reported as shipped. Null if Stripe has not recorded a shipment time.
+     */
+    @SerializedName("shipped_at")
+    Long shippedAt;
+
+    /**
      * The delivery status of the card.
      *
      * <p>One of {@code canceled}, {@code delivered}, {@code failure}, {@code pending}, {@code
